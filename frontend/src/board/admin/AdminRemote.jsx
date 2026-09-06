@@ -82,7 +82,7 @@ function ScreenPreviewCard({
       style={{
         background: '#FFFFFF',
         border: '1.5px solid #CBD5E1',
-        borderRadius: '16px',
+        borderRadius: '6px',
         padding: '1.25rem',
         marginBottom: '1.5rem',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
@@ -141,7 +141,7 @@ function ScreenPreviewCard({
                 background: '#1D4ED8',
                 color: '#FFFFFF',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 fontWeight: 800,
                 fontSize: '0.82rem',
                 cursor: 'pointer',
@@ -162,7 +162,7 @@ function ScreenPreviewCard({
               padding: '0.45rem',
               background: '#F1F5F9',
               border: '1px solid #CBD5E1',
-              borderRadius: '8px',
+              borderRadius: '4px',
               color: '#475569',
               cursor: 'pointer',
               display: 'flex',
@@ -179,7 +179,7 @@ function ScreenPreviewCard({
               padding: '0.45rem',
               background: '#F1F5F9',
               border: '1px solid #CBD5E1',
-              borderRadius: '8px',
+              borderRadius: '4px',
               color: '#475569',
               cursor: 'pointer',
               display: 'flex',
@@ -196,7 +196,7 @@ function ScreenPreviewCard({
               padding: '0.45rem',
               background: '#F1F5F9',
               border: '1px solid #CBD5E1',
-              borderRadius: '8px',
+              borderRadius: '4px',
               color: '#475569',
               cursor: 'pointer',
               display: 'flex',
@@ -214,7 +214,7 @@ function ScreenPreviewCard({
           style={{
             background: '#0B0F17',
             padding: '8px',
-            borderRadius: '12px',
+            borderRadius: '4px',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
             border: '2px solid #1E293B',
           }}
@@ -226,7 +226,7 @@ function ScreenPreviewCard({
               aspectRatio: '16 / 9',
               position: 'relative',
               overflow: 'hidden',
-              borderRadius: '6px',
+              borderRadius: '2px',
               background: '#000000',
             }}
           >
@@ -285,7 +285,7 @@ function ScreenPreviewCard({
                   style={{
                     width: '40px',
                     height: '40px',
-                    borderRadius: '50%',
+                    borderRadius: '4px',
                     background: 'rgba(255, 255, 255, 0.2)',
                     display: 'grid',
                     placeItems: 'center',
@@ -335,7 +335,7 @@ function ScreenPreviewCard({
                           background: 'rgba(15, 23, 42, 0.85)',
                           color: '#FFFFFF',
                           padding: '0.3rem 0.8rem',
-                          borderRadius: '16px',
+                          borderRadius: '4px',
                           fontSize: '0.78rem',
                           fontWeight: 700,
                           maxWidth: '90%',
@@ -354,7 +354,7 @@ function ScreenPreviewCard({
                         background: 'rgba(0, 0, 0, 0.7)',
                         color: '#FFFFFF',
                         padding: '0.2rem 0.5rem',
-                        borderRadius: '10px',
+                        borderRadius: '3px',
                         fontSize: '0.7rem',
                         fontWeight: 800,
                       }}
@@ -453,7 +453,7 @@ function ScreenPreviewCard({
                     background: '#DC2626',
                     color: '#FFFFFF',
                     padding: '0.2rem 0.5rem',
-                    borderRadius: '10px',
+                    borderRadius: '3px',
                     fontSize: '0.68rem',
                     fontWeight: 900,
                     display: 'flex',
@@ -812,7 +812,7 @@ export default function AdminRemote() {
           style={{
             background: '#FFFFFF',
             border: '1.5px solid #CBD5E1',
-            borderRadius: '16px',
+            borderRadius: '6px',
             padding: '2.5rem 2rem',
             width: '100%',
             maxWidth: '420px',
@@ -824,7 +824,7 @@ export default function AdminRemote() {
             style={{
               width: '64px',
               height: '64px',
-              borderRadius: '50%',
+              borderRadius: '4px',
               background: '#EFF6FF',
               border: '1.5px solid #BFDBFE',
               display: 'grid',
@@ -861,7 +861,7 @@ export default function AdminRemote() {
                 fontSize: '1.2rem',
                 textAlign: 'center',
                 letterSpacing: '0.2em',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 border: '2px solid #CBD5E1',
                 marginBottom: '1rem',
                 outline: 'none',
@@ -884,7 +884,7 @@ export default function AdminRemote() {
                 background: '#1D4ED8',
                 color: '#FFFFFF',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 fontSize: '1.1rem',
                 fontWeight: 800,
                 cursor: 'pointer',
@@ -937,7 +937,7 @@ export default function AdminRemote() {
               alignItems: 'center',
               gap: '0.35rem',
               padding: '0.2rem 0.6rem',
-              borderRadius: '999px',
+              borderRadius: '4px',
               background: connectedDisplays > 0 ? '#DCFCE7' : '#FEF2F2',
               color: connectedDisplays > 0 ? '#15803D' : '#991B1B',
               fontSize: '0.78rem',
@@ -963,7 +963,7 @@ export default function AdminRemote() {
               padding: '0.45rem 0.85rem',
               background: '#F1F5F9',
               border: '1px solid #CBD5E1',
-              borderRadius: '6px',
+              borderRadius: '4px',
               fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
@@ -1034,7 +1034,7 @@ export default function AdminRemote() {
                   background: isSelected ? '#1D4ED8' : '#FFFFFF',
                   color: isSelected ? '#FFFFFF' : '#0F172A',
                   border: isSelected ? '1.5px solid #1D4ED8' : '1.5px solid #CBD5E1',
-                  borderRadius: '10px',
+                  borderRadius: '4px',
                   fontWeight: 800,
                   fontSize: '0.95rem',
                   cursor: 'pointer',
@@ -1058,7 +1058,7 @@ export default function AdminRemote() {
             style={{
               background: '#FFFFFF',
               border: '1.5px solid #CBD5E1',
-              borderRadius: '12px',
+              borderRadius: '6px',
               padding: '1.5rem',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
             }}
@@ -1077,7 +1077,7 @@ export default function AdminRemote() {
                     background: '#1D4ED8',
                     color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '4px',
                     fontSize: '1rem',
                     fontWeight: 800,
                     cursor: 'pointer',
@@ -1099,7 +1099,7 @@ export default function AdminRemote() {
                         onClick={() => updateRemoteState({ mode: 'normal', frozenClass: cls })}
                         style={{
                           padding: '0.45rem 0.85rem',
-                          borderRadius: '6px',
+                          borderRadius: '3px',
                           border: remoteState.frozenClass === cls ? '2px solid #1D4ED8' : '1.5px solid #CBD5E1',
                           background: remoteState.frozenClass === cls ? '#EFF6FF' : '#FFFFFF',
                           color: remoteState.frozenClass === cls ? '#1D4ED8' : '#0F172A',
@@ -1123,7 +1123,7 @@ export default function AdminRemote() {
             style={{
               background: '#FFFFFF',
               border: '1.5px solid #CBD5E1',
-              borderRadius: '12px',
+              borderRadius: '6px',
               padding: '1.5rem',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
             }}
@@ -1140,7 +1140,7 @@ export default function AdminRemote() {
                   background: '#1D4ED8',
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   fontWeight: 800,
                   fontSize: '0.92rem',
                   cursor: 'pointer',
@@ -1159,7 +1159,7 @@ export default function AdminRemote() {
                 gap: '0.6rem',
                 padding: '1.5rem',
                 border: '2px dashed #CBD5E1',
-                borderRadius: '10px',
+                borderRadius: '4px',
                 background: '#F8FAFC',
                 cursor: 'pointer',
                 marginBottom: '1.5rem',
@@ -1181,7 +1181,7 @@ export default function AdminRemote() {
                   onClick={() => updateRemoteState({ slideIntervalMs: ms })}
                   style={{
                     padding: '0.35rem 0.75rem',
-                    borderRadius: '6px',
+                    borderRadius: '3px',
                     border: remoteState.slideIntervalMs === ms ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
                     background: remoteState.slideIntervalMs === ms ? '#EFF6FF' : '#FFFFFF',
                     color: remoteState.slideIntervalMs === ms ? '#1D4ED8' : '#0F172A',
@@ -1203,7 +1203,7 @@ export default function AdminRemote() {
                   style={{
                     position: 'relative',
                     border: '1.5px solid #CBD5E1',
-                    borderRadius: '8px',
+                    borderRadius: '4px',
                     overflow: 'hidden',
                     background: '#000000',
                     aspectRatio: '16/9',
@@ -1219,7 +1219,7 @@ export default function AdminRemote() {
                       background: 'rgba(220, 38, 38, 0.9)',
                       color: '#FFFFFF',
                       border: 'none',
-                      borderRadius: '4px',
+                      borderRadius: '3px',
                       padding: '0.3rem',
                       cursor: 'pointer',
                     }}
@@ -1256,7 +1256,7 @@ export default function AdminRemote() {
             style={{
               background: '#FFFFFF',
               border: '1.5px solid #CBD5E1',
-              borderRadius: '12px',
+              borderRadius: '6px',
               padding: '1.5rem',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
             }}
@@ -1282,7 +1282,7 @@ export default function AdminRemote() {
                   width: '100%',
                   padding: '0.8rem 1rem',
                   fontSize: '1rem',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   border: '1.5px solid #CBD5E1',
                   marginBottom: '1rem',
                   outline: 'none',
@@ -1306,7 +1306,7 @@ export default function AdminRemote() {
                       onClick={() => setUrlInput(p.url)}
                       style={{
                         padding: '0.35rem 0.75rem',
-                        borderRadius: '6px',
+                        borderRadius: '3px',
                         border: '1px solid #CBD5E1',
                         background: '#F8FAFC',
                         fontSize: '0.85rem',
@@ -1328,7 +1328,7 @@ export default function AdminRemote() {
                   background: '#1D4ED8',
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   fontSize: '1rem',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -1346,7 +1346,7 @@ export default function AdminRemote() {
             style={{
               background: '#FFFFFF',
               border: '1.5px solid #CBD5E1',
-              borderRadius: '12px',
+              borderRadius: '6px',
               padding: '1.5rem',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
               textAlign: 'center',
@@ -1356,7 +1356,7 @@ export default function AdminRemote() {
               style={{
                 width: '64px',
                 height: '64px',
-                borderRadius: '50%',
+                borderRadius: '4px',
                 background: isCasting ? '#FEE2E2' : '#EFF6FF',
                 color: isCasting ? '#DC2626' : '#1D4ED8',
                 display: 'grid',
@@ -1388,7 +1388,7 @@ export default function AdminRemote() {
                   background: '#1D4ED8',
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   fontSize: '1.05rem',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -1408,7 +1408,7 @@ export default function AdminRemote() {
                   background: '#DC2626',
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   fontSize: '1.05rem',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -1429,7 +1429,7 @@ export default function AdminRemote() {
             style={{
               background: '#FFFFFF',
               border: '1.5px solid #CBD5E1',
-              borderRadius: '12px',
+              borderRadius: '6px',
               padding: '1.5rem',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
             }}
@@ -1459,7 +1459,7 @@ export default function AdminRemote() {
                   width: '100%',
                   padding: '0.8rem 1rem',
                   fontSize: '1.1rem',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   border: '1.5px solid #CBD5E1',
                   marginBottom: '1rem',
                   outline: 'none',
@@ -1475,7 +1475,7 @@ export default function AdminRemote() {
                   onClick={() => setAlertLevelInput('critical')}
                   style={{
                     padding: '0.3rem 0.65rem',
-                    borderRadius: '6px',
+                    borderRadius: '4px',
                     border: alertLevelInput === 'critical' ? '2px solid #DC2626' : '1px solid #CBD5E1',
                     background: alertLevelInput === 'critical' ? '#FEE2E2' : '#FFFFFF',
                     color: alertLevelInput === 'critical' ? '#DC2626' : '#0F172A',
@@ -1491,7 +1491,7 @@ export default function AdminRemote() {
                   onClick={() => setAlertLevelInput('warning')}
                   style={{
                     padding: '0.3rem 0.65rem',
-                    borderRadius: '6px',
+                    borderRadius: '4px',
                     border: alertLevelInput === 'warning' ? '2px solid #D97706' : '1px solid #CBD5E1',
                     background: alertLevelInput === 'warning' ? '#FEF3C7' : '#FFFFFF',
                     color: alertLevelInput === 'warning' ? '#D97706' : '#0F172A',
@@ -1521,7 +1521,7 @@ export default function AdminRemote() {
                       onClick={() => setAlertInput(tpl)}
                       style={{
                         padding: '0.35rem 0.65rem',
-                        borderRadius: '6px',
+                        borderRadius: '3px',
                         border: '1px solid #CBD5E1',
                         background: '#F8FAFC',
                         fontSize: '0.8rem',
@@ -1545,7 +1545,7 @@ export default function AdminRemote() {
                     background: '#DC2626',
                     color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '4px',
                     fontSize: '1rem',
                     fontWeight: 900,
                     cursor: 'pointer',
@@ -1562,7 +1562,7 @@ export default function AdminRemote() {
                       padding: '0.85rem 1.25rem',
                       background: '#F1F5F9',
                       border: '1.5px solid #CBD5E1',
-                      borderRadius: '8px',
+                      borderRadius: '4px',
                       fontWeight: 800,
                       cursor: 'pointer',
                     }}
@@ -1581,7 +1581,7 @@ export default function AdminRemote() {
             marginTop: '1.5rem',
             background: '#FFFFFF',
             border: '1.5px solid #CBD5E1',
-            borderRadius: '12px',
+            borderRadius: '6px',
             padding: '1.25rem',
             display: 'grid',
             gap: '1rem',
@@ -1606,7 +1606,7 @@ export default function AdminRemote() {
                   onClick={() => updateRemoteState({ autoRevertSeconds: opt.sec })}
                   style={{
                     padding: '0.35rem 0.75rem',
-                    borderRadius: '6px',
+                    borderRadius: '3px',
                     border: remoteState.autoRevertSeconds === opt.sec ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
                     background: remoteState.autoRevertSeconds === opt.sec ? '#EFF6FF' : '#FFFFFF',
                     color: remoteState.autoRevertSeconds === opt.sec ? '#1D4ED8' : '#0F172A',
@@ -1632,7 +1632,7 @@ export default function AdminRemote() {
               onClick={() => updateRemoteState({ tvPower: !remoteState.tvPower })}
               style={{
                 padding: '0.5rem 1rem',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 border: 'none',
                 background: remoteState.tvPower ? '#DC2626' : '#16A34A',
                 color: '#FFFFFF',
