@@ -44,27 +44,21 @@ class AnimationEngine:
             pass
 
         is_256 = curses.COLORS >= 256
-        c_cyan = 39 if is_256 else curses.COLOR_CYAN
         c_mint = 48 if is_256 else curses.COLOR_GREEN
         c_amber = 214 if is_256 else curses.COLOR_YELLOW
         c_rose = 197 if is_256 else curses.COLOR_RED
-        c_violet = 141 if is_256 else curses.COLOR_MAGENTA
-        c_sky = 75 if is_256 else curses.COLOR_CYAN
         c_text = 255 if is_256 else curses.COLOR_WHITE
         c_border = 239 if is_256 else 8
         c_dim = 244 if is_256 else 8
 
         try:
-            curses.init_pair(1, c_cyan, -1)     # ℹ, ❯, ◇ (Electric Cyan)
-            curses.init_pair(2, c_mint, -1)     # ✔ (Mint / Emerald)
-            curses.init_pair(3, c_amber, -1)    # ⚠ (Amber Gold)
-            curses.init_pair(4, c_rose, -1)     # ✖ (Rose / Coral)
-            curses.init_pair(5, c_violet, -1)   # ◆, Badges (Violet / Lavender)
-            curses.init_pair(6, c_cyan, -1)     # Banner top gradient
-            curses.init_pair(7, c_sky, -1)      # Banner mid gradient
-            curses.init_pair(10, c_text, -1)    # Crisp clean text
-            curses.init_pair(11, c_border, -1)  # Muted borders
-            curses.init_pair(12, c_dim, -1)     # Dim timestamps & hints
+            curses.init_pair(1, c_text, -1)     # Neutral glyphs & text (White)
+            curses.init_pair(2, c_mint, -1)     # ✔ (Mint / Subtle Green)
+            curses.init_pair(3, c_amber, -1)    # ⚠ (Amber / Yellow)
+            curses.init_pair(4, c_rose, -1)     # ✖ (Coral / Red)
+            curses.init_pair(10, c_text, -1)    # Crisp clean white (text & logo)
+            curses.init_pair(11, c_border, -1)  # Muted borders (slate gray)
+            curses.init_pair(12, c_dim, -1)     # Dim timestamps & hints (muted gray)
         except curses.error:
             pass
 
@@ -106,11 +100,8 @@ class AnimationEngine:
         elif icon_char in ("⚠", "!"):
             color = curses.color_pair(3) | curses.A_BOLD
             is_icon = True
-        elif icon_char in ("ℹ", "❯", "◇", "→"):
-            color = curses.color_pair(1) | curses.A_BOLD
-            is_icon = True
-        elif icon_char in ("◆", "●", "•"):
-            color = curses.color_pair(5) | curses.A_BOLD
+        elif icon_char in ("ℹ", "❯", "◇", "→", "◆", "●", "•"):
+            color = curses.color_pair(10) | curses.A_BOLD
             is_icon = True
 
         # Print icon with spacing
@@ -231,12 +222,12 @@ class AnimationEngine:
             border_attr = curses.color_pair(11)
             text_attr = curses.color_pair(10) | curses.A_BOLD
 
-            # Top frame with NPX/CLI header
+            # Top frame with minimal header
             hdr_tag = " eduboard "
             hdr_sub = "❯ setup wizard "
             self.stdscr.addstr(y, x, "╭─", border_attr)
-            self.stdscr.addstr(hdr_tag, curses.color_pair(5) | curses.A_BOLD)
-            self.stdscr.addstr(hdr_sub, curses.color_pair(10) | curses.A_DIM)
+            self.stdscr.addstr(hdr_tag, curses.color_pair(10) | curses.A_BOLD)
+            self.stdscr.addstr(hdr_sub, curses.color_pair(12))
             bar_len = max(0, w - len(hdr_tag) - len(hdr_sub) - 4)
             self.stdscr.addstr("─" * bar_len + "╮", border_attr)
 
@@ -252,7 +243,7 @@ class AnimationEngine:
                 qy = y + 2 + i
                 if qy < y + h - 5:
                     if i == 0:
-                        self.stdscr.addstr(qy, x + 3, "◆", curses.color_pair(1) | curses.A_BOLD)
+                        self.stdscr.addstr(qy, x + 3, "◆", curses.color_pair(10) | curses.A_BOLD)
                         self.stdscr.addstr(qy, x + 5, line, text_attr)
                     else:
                         self.stdscr.addstr(qy, x + 5, line, text_attr)
@@ -404,14 +395,11 @@ class AnimationEngine:
             border_attr = curses.color_pair(11)
             hdr_badge = " eduboard "
             hdr_step = "❯ activity "
-            hdr_live = "● live"
             self.stdscr.addstr(start_y, start_x, "╭─", border_attr)
-            self.stdscr.addstr(hdr_badge, curses.color_pair(5) | curses.A_BOLD)
-            self.stdscr.addstr(hdr_step, curses.color_pair(10) | curses.A_DIM)
-            bar_len = max(0, win_w - len(hdr_badge) - len(hdr_step) - len(hdr_live) - 6)
-            self.stdscr.addstr("─" * bar_len, border_attr)
-            self.stdscr.addstr(" " + hdr_live + " ", curses.color_pair(2) | curses.A_BOLD)
-            self.stdscr.addstr("─╮", border_attr)
+            self.stdscr.addstr(hdr_badge, curses.color_pair(10) | curses.A_BOLD)
+            self.stdscr.addstr(hdr_step, curses.color_pair(12))
+            bar_len = max(0, win_w - len(hdr_badge) - len(hdr_step) - 4)
+            self.stdscr.addstr("─" * bar_len + "╮", border_attr)
 
             for i in range(1, win_h - 1):
                 self.stdscr.addstr(start_y + i, start_x, "│", border_attr)
@@ -505,32 +493,15 @@ class AnimationEngine:
                         ty = int(self.art_y) + i
                         if 0 <= ty < self.h:
                             sx = max(0, (self.w - len(line)) // 2)
-                            # Sleek multi-color gradient
-                            if i in (0, 1, 2):
-                                color = curses.color_pair(6) | curses.A_BOLD
-                            elif i in (3, 4):
-                                color = curses.color_pair(7) | curses.A_BOLD
-                            elif i in (5, 6):
-                                color = curses.color_pair(5) | curses.A_BOLD
-                            elif "┄" in line or "─" in line or "━" in line:
+                            if "┄" in line or "─" in line or "━" in line:
                                 color = curses.color_pair(11)
-                            else:
+                            elif "Commit :" in line:
                                 color = curses.color_pair(12)
+                            else:
+                                color = curses.color_pair(10) | curses.A_BOLD
 
                             try:
-                                if "Commit :" in line:
-                                    parts = line.split("Commit :", 1)
-                                    self.stdscr.addstr(ty, sx, parts[0], curses.color_pair(12))
-                                    self.stdscr.addstr("Commit :", curses.color_pair(12))
-                                    rem = parts[1]
-                                    if "," in rem:
-                                        c_part, rest = rem.split(",", 1)
-                                        self.stdscr.addstr(c_part, curses.color_pair(1) | curses.A_BOLD)
-                                        self.stdscr.addstr("," + rest, curses.color_pair(12))
-                                    else:
-                                        self.stdscr.addstr(rem, curses.color_pair(1) | curses.A_BOLD)
-                                else:
-                                    self.stdscr.addstr(ty, sx, line, color)
+                                self.stdscr.addstr(ty, sx, line, color)
                             except:
                                 pass
 

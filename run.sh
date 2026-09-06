@@ -3,28 +3,24 @@ set -e
 
 VENV_PATH="$1"
 
-# 256-color / modern minimal palette
+# Terminal setup - auto-detect terminal capabilities without manual export
+export TERM="${TERM:-xterm-256color}"
+[ "$TERM" = "dumb" ] && export TERM="xterm-256color"
+
+# Minimal palette: predominantly monochrome with color ONLY on status
 if [ -t 1 ] || [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
-    C_PURPLE='\033[38;5;141m'
-    C_CYAN='\033[38;5;39m'
-    C_MINT='\033[38;5;48m'
-    C_AMBER='\033[38;5;214m'
-    C_ROSE='\033[38;5;197m'
-    C_DIM='\033[38;5;244m'
-    C_BORDER='\033[38;5;239m'
+    C_GREEN='\033[0;32m'
+    C_YELLOW='\033[0;33m'
+    C_RED='\033[0;31m'
     C_WHITE='\033[1;37m'
-    C_BOLD='\033[1m'
+    C_DIM='\033[2m'
     C_RESET='\033[0m'
 else
-    C_PURPLE=''
-    C_CYAN=''
-    C_MINT=''
-    C_AMBER=''
-    C_ROSE=''
-    C_DIM=''
-    C_BORDER=''
+    C_GREEN=''
+    C_YELLOW=''
+    C_RED=''
     C_WHITE=''
-    C_BOLD=''
+    C_DIM=''
     C_RESET=''
 fi
 
@@ -38,31 +34,31 @@ log_item() {
     case "$status_type" in
         ok)
             icon="✔"
-            color="$C_MINT"
+            color="$C_GREEN"
             ;;
         warn)
             icon="⚠"
-            color="$C_AMBER"
+            color="$C_YELLOW"
             ;;
         err)
             icon="✖"
-            color="$C_ROSE"
+            color="$C_RED"
             ;;
         step)
             icon="❯"
-            color="$C_CYAN"
+            color="$C_WHITE"
             ;;
         live)
             icon="●"
-            color="$C_MINT"
+            color="$C_GREEN"
             ;;
         *)
             icon="ℹ"
-            color="$C_CYAN"
+            color="$C_WHITE"
             ;;
     esac
 
-    printf "  ${C_PURPLE}◇${C_RESET} %-14s ${color}${C_BOLD}%s${C_RESET} %s\n" "$category" "$icon" "$message"
+    printf "  ${C_DIM}◇${C_RESET} %-14s ${color}%s${C_RESET} %s\n" "$category" "$icon" "$message"
 }
 
 # Resolve Git metadata
@@ -73,12 +69,12 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 fi
 
-# Minimalist Card Header
+# Minimalist Monochrome Card Header
 printf "\n"
-printf "${C_BORDER}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
-printf "${C_BORDER}│${C_RESET}  ${C_PURPLE}${C_BOLD}eduboard${C_RESET} ${C_DIM}❯${C_RESET} ${C_WHITE}kiosk runtime${C_RESET}                                   ${C_BORDER}│${C_RESET}\n"
-printf "${C_BORDER}│${C_RESET}  ${C_DIM}branch:${C_RESET} ${C_CYAN}%-10s${C_RESET} ${C_DIM}commit:${C_RESET} ${C_CYAN}%-10s${C_RESET} ${C_DIM}target:${C_RESET} ${C_DIM}localhost:8000${C_RESET} ${C_BORDER}│${C_RESET}\n" "$BRANCH_NAME" "$COMMIT_HASH"
-printf "${C_BORDER}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
+printf "${C_DIM}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
+printf "${C_DIM}│${C_RESET}  ${C_WHITE}eduboard${C_RESET} ${C_DIM}❯ kiosk runtime${C_RESET}                                   ${C_DIM}│${C_RESET}\n"
+printf "${C_DIM}│${C_RESET}  ${C_DIM}branch:${C_RESET} %-10s  ${C_DIM}commit:${C_RESET} %-10s  ${C_DIM}target:${C_RESET} localhost:8000 ${C_DIM}│${C_RESET}\n" "$BRANCH_NAME" "$COMMIT_HASH"
+printf "${C_DIM}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
 
 # 1. Environment Setup
 if [ -n "$VENV_PATH" ]; then
@@ -112,7 +108,7 @@ fi
 
 # 3. Frontend Bundle Verification
 if [ ! -d "frontend/dist" ] || [ ! -d "frontend/node_modules" ] || [ "$REBUILD" = "1" ]; then
-    log_item "Frontend" "step" "Building production bundle..."
+    log_item "Frontend" "step" "Building production assets..."
     cd frontend
     if [ ! -d "node_modules" ]; then
         log_item "Frontend" "step" "Installing dependencies (npm install)..."

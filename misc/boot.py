@@ -3,6 +3,11 @@ import subprocess
 import os
 import sys
 import time
+
+# Ensure curses works properly on all tty consoles without manual export
+if os.environ.get("TERM") in (None, "", "dumb", "linux"):
+    os.environ["TERM"] = "xterm-256color"
+
 import curses
 import threading
 from pathlib import Path

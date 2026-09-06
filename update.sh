@@ -5,28 +5,24 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
-# 256-color / modern minimal palette
+# Terminal setup - auto-detect terminal capabilities
+export TERM="${TERM:-xterm-256color}"
+[ "$TERM" = "dumb" ] && export TERM="xterm-256color"
+
+# Minimal palette: predominantly monochrome with color ONLY on status
 if [ -t 1 ] || [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
-    C_PURPLE='\033[38;5;141m'
-    C_CYAN='\033[38;5;39m'
-    C_MINT='\033[38;5;48m'
-    C_AMBER='\033[38;5;214m'
-    C_ROSE='\033[38;5;197m'
-    C_DIM='\033[38;5;244m'
-    C_BORDER='\033[38;5;239m'
+    C_GREEN='\033[0;32m'
+    C_YELLOW='\033[0;33m'
+    C_RED='\033[0;31m'
     C_WHITE='\033[1;37m'
-    C_BOLD='\033[1m'
+    C_DIM='\033[2m'
     C_RESET='\033[0m'
 else
-    C_PURPLE=''
-    C_CYAN=''
-    C_MINT=''
-    C_AMBER=''
-    C_ROSE=''
-    C_DIM=''
-    C_BORDER=''
+    C_GREEN=''
+    C_YELLOW=''
+    C_RED=''
     C_WHITE=''
-    C_BOLD=''
+    C_DIM=''
     C_RESET=''
 fi
 
@@ -40,31 +36,31 @@ log_item() {
     case "$status_type" in
         ok)
             icon="✔"
-            color="$C_MINT"
+            color="$C_GREEN"
             ;;
         warn)
             icon="⚠"
-            color="$C_AMBER"
+            color="$C_YELLOW"
             ;;
         err)
             icon="✖"
-            color="$C_ROSE"
+            color="$C_RED"
             ;;
         step)
             icon="❯"
-            color="$C_CYAN"
+            color="$C_WHITE"
             ;;
         live)
             icon="●"
-            color="$C_MINT"
+            color="$C_GREEN"
             ;;
         *)
             icon="ℹ"
-            color="$C_CYAN"
+            color="$C_WHITE"
             ;;
     esac
 
-    printf "  ${C_PURPLE}◇${C_RESET} %-14s ${color}${C_BOLD}%s${C_RESET} %s\n" "$category" "$icon" "$message"
+    printf "  ${C_DIM}◇${C_RESET} %-14s ${color}%s${C_RESET} %s\n" "$category" "$icon" "$message"
 }
 
 print_header() {
@@ -73,11 +69,11 @@ print_header() {
     local dirty_status="$3"
 
     printf "\n"
-    printf "${C_BORDER}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
-    printf "${C_BORDER}│${C_RESET}  ${C_PURPLE}${C_BOLD}eduboard${C_RESET} ${C_DIM}❯${C_RESET} ${C_WHITE}updater & branch manager${C_RESET}                      ${C_BORDER}│${C_RESET}\n"
-    printf "${C_BORDER}│${C_RESET}  ${C_DIM}branch:${C_RESET} ${C_CYAN}%-10s${C_RESET} ${C_DIM}commit:${C_RESET} ${C_CYAN}%-10s${C_RESET} ${C_DIM}status:${C_RESET} %-16b ${C_BORDER}│${C_RESET}\n" \
+    printf "${C_DIM}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
+    printf "${C_DIM}│${C_RESET}  ${C_WHITE}eduboard${C_RESET} ${C_DIM}❯ updater & branch manager${C_RESET}                      ${C_DIM}│${C_RESET}\n"
+    printf "${C_DIM}│${C_RESET}  ${C_DIM}branch:${C_RESET} %-10s  ${C_DIM}commit:${C_RESET} %-10s  ${C_DIM}status:${C_RESET} %-16b ${C_DIM}│${C_RESET}\n" \
         "$active_branch" "$current_hash" "$dirty_status"
-    printf "${C_BORDER}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
+    printf "${C_DIM}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
 }
 
 print_summary() {
@@ -86,16 +82,16 @@ print_summary() {
     local new_c="$3"
 
     printf "\n"
-    printf "${C_BORDER}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
-    printf "${C_BORDER}│${C_RESET}  ${C_MINT}${C_BOLD}✔ eduboard updated successfully${C_RESET}                            ${C_BORDER}│${C_RESET}\n"
+    printf "${C_DIM}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
+    printf "${C_DIM}│${C_RESET}  ${C_GREEN}✔${C_RESET} ${C_WHITE}eduboard updated successfully${C_RESET}                            ${C_DIM}│${C_RESET}\n"
     if [ "$old_c" = "$new_c" ]; then
-        printf "${C_BORDER}│${C_RESET}  ${C_DIM}branch:${C_RESET} ${C_CYAN}%-10s${C_RESET} ${C_DIM}commit:${C_RESET} ${C_CYAN}%-10s (up to date)${C_RESET}       ${C_BORDER}│${C_RESET}\n" \
+        printf "${C_DIM}│${C_RESET}  ${C_DIM}branch:${C_RESET} %-10s  ${C_DIM}commit:${C_RESET} %-10s (up to date)       ${C_DIM}│${C_RESET}\n" \
             "$branch" "$new_c"
     else
-        printf "${C_BORDER}│${C_RESET}  ${C_DIM}branch:${C_RESET} ${C_CYAN}%-10s${C_RESET} ${C_DIM}version:${C_RESET} ${C_DIM}%s${C_RESET} ${C_BOLD}❯${C_RESET} ${C_MINT}%-10s${C_RESET}        ${C_BORDER}│${C_RESET}\n" \
+        printf "${C_DIM}│${C_RESET}  ${C_DIM}branch:${C_RESET} %-10s  ${C_DIM}version:${C_RESET} %s ❯ ${C_GREEN}%-10s${C_RESET}        ${C_DIM}│${C_RESET}\n" \
             "$branch" "$old_c" "$new_c"
     fi
-    printf "${C_BORDER}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
+    printf "${C_DIM}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
 }
 
 # Verify Git environment
@@ -248,25 +244,25 @@ select_branch_menu() {
         [ -n "$line" ] && branches+=("$line")
     done < <(get_branches)
 
-    printf "  ${C_PURPLE}◇${C_RESET} ${C_BOLD}Available branches:${C_RESET}\n"
+    printf "  ${C_DIM}◇${C_RESET} ${C_WHITE}Available branches:${C_RESET}\n"
     local idx=1
     for b in "${branches[@]}"; do
         if [ "$b" = "$current" ]; then
-            printf "    ${C_CYAN}%2d)${C_RESET} ${C_BOLD}%-24s${C_RESET} ${C_MINT}[active]${C_RESET}\n" "$idx" "$b"
+            printf "    %2d) %-24s ${C_GREEN}[active]${C_RESET}\n" "$idx" "$b"
         else
-            printf "    ${C_PURPLE}%2d)${C_RESET} %-24s\n" "$idx" "$b"
+            printf "    %2d) %-24s\n" "$idx" "$b"
         fi
         ((idx++))
     done
-    printf "    ${C_PURPLE}%2d)${C_RESET} Enter custom branch name\n" "$idx"
-    printf "  ${C_CYAN}❯${C_RESET} Select branch [1-%d]: " "$idx"
+    printf "    %2d) Enter custom branch name\n" "$idx"
+    printf "  ${C_WHITE}❯${C_RESET} Select branch [1-%d]: " "$idx"
     read -r b_choice
 
     if [[ "$b_choice" =~ ^[0-9]+$ ]] && [ "$b_choice" -ge 1 ] && [ "$b_choice" -lt "$idx" ]; then
         local picked="${branches[$((b_choice - 1))]}"
         switch_branch "$picked"
     elif [ "$b_choice" -eq "$idx" ]; then
-        printf "  ${C_CYAN}❯${C_RESET} Enter branch name: "
+        printf "  ${C_WHITE}❯${C_RESET} Enter branch name: "
         read -r custom_b
         if [ -n "$custom_b" ]; then
             switch_branch "$custom_b"
@@ -459,14 +455,14 @@ fi
 
 # --- Interactive Menu ---
 fetch_remotes
-printf "  ${C_PURPLE}◇${C_RESET} ${C_BOLD}Select an operation:${C_RESET}\n"
-printf "    ${C_PURPLE}1)${C_RESET} Fast update current branch (${C_CYAN}%s${C_RESET})\n" "$START_BRANCH"
-printf "    ${C_PURPLE}2)${C_RESET} Switch branch & update (select from list)\n"
-printf "    ${C_PURPLE}3)${C_RESET} Rebuild frontend production bundle only\n"
-printf "    ${C_PURPLE}4)${C_RESET} Update Python dependencies only\n"
-printf "    ${C_PURPLE}5)${C_RESET} Restart EduBoard kiosk service\n"
-printf "    ${C_PURPLE}6)${C_RESET} Exit\n"
-printf "  ${C_CYAN}❯${C_RESET} Choice [1-6] (default 1): "
+printf "  ${C_DIM}◇${C_RESET} ${C_WHITE}Select an operation:${C_RESET}\n"
+printf "    1) Fast update current branch (%s)\n" "$START_BRANCH"
+printf "    2) Switch branch & update (select from list)\n"
+printf "    3) Rebuild frontend production bundle only\n"
+printf "    4) Update Python dependencies only\n"
+printf "    5) Restart EduBoard kiosk service\n"
+printf "    6) Exit\n"
+printf "  ${C_WHITE}❯${C_RESET} Choice [1-6] (default 1): "
 read -r menu_choice
 
 case "$menu_choice" in

@@ -4,6 +4,11 @@ import shutil
 import time
 import traceback
 from pathlib import Path
+
+# Ensure curses works properly on all tty consoles without manual export
+if os.environ.get("TERM") in (None, "", "dumb", "linux"):
+    os.environ["TERM"] = "xterm-256color"
+
 from aengine import AnimationEngine
 from logo import get_logo_text
 import curses

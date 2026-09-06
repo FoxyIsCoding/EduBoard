@@ -1,28 +1,24 @@
 #!/bin/bash
 set -e
 
-# 256-color / modern minimal palette
+# Terminal setup - auto-detect terminal capabilities without manual export
+export TERM="${TERM:-xterm-256color}"
+[ "$TERM" = "dumb" ] && export TERM="xterm-256color"
+
+# Minimal palette: predominantly monochrome with color ONLY on status
 if [ -t 1 ] || [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
-    C_PURPLE='\033[38;5;141m'
-    C_CYAN='\033[38;5;39m'
-    C_MINT='\033[38;5;48m'
-    C_AMBER='\033[38;5;214m'
-    C_ROSE='\033[38;5;197m'
-    C_DIM='\033[38;5;244m'
-    C_BORDER='\033[38;5;239m'
+    C_GREEN='\033[0;32m'
+    C_YELLOW='\033[0;33m'
+    C_RED='\033[0;31m'
     C_WHITE='\033[1;37m'
-    C_BOLD='\033[1m'
+    C_DIM='\033[2m'
     C_RESET='\033[0m'
 else
-    C_PURPLE=''
-    C_CYAN=''
-    C_MINT=''
-    C_AMBER=''
-    C_ROSE=''
-    C_DIM=''
-    C_BORDER=''
+    C_GREEN=''
+    C_YELLOW=''
+    C_RED=''
     C_WHITE=''
-    C_BOLD=''
+    C_DIM=''
     C_RESET=''
 fi
 
@@ -36,49 +32,63 @@ log_item() {
     case "$status_type" in
         ok)
             icon="✔"
-            color="$C_MINT"
+            color="$C_GREEN"
             ;;
         warn)
             icon="⚠"
-            color="$C_AMBER"
+            color="$C_YELLOW"
             ;;
         err)
             icon="✖"
-            color="$C_ROSE"
+            color="$C_RED"
             ;;
         step)
             icon="❯"
-            color="$C_CYAN"
+            color="$C_WHITE"
             ;;
         live)
             icon="●"
-            color="$C_MINT"
+            color="$C_GREEN"
             ;;
         *)
             icon="ℹ"
-            color="$C_CYAN"
+            color="$C_WHITE"
             ;;
     esac
 
-    printf "  ${C_PURPLE}◇${C_RESET} %-14s ${color}${C_BOLD}%s${C_RESET} %s\n" "$category" "$icon" "$message"
+    printf "  ${C_DIM}◇${C_RESET} %-14s ${color}%s${C_RESET} %s\n" "$category" "$icon" "$message"
 }
 
+# Require or elevate sudo privileges
+if [ "$EUID" -ne 0 ]; then
+    if command -v sudo >/dev/null 2>&1; then
+        sudo -v </dev/tty || { echo "Administrator / root privileges required."; exit 1; }
+        SUDO="sudo"
+    else
+        echo "Root privileges required to install system packages and services."
+        exit 1
+    fi
+else
+    SUDO=""
+fi
+
 printf "\n"
-printf "${C_BORDER}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
-printf "${C_BORDER}│${C_RESET}  ${C_PURPLE}${C_BOLD}eduboard${C_RESET} ${C_DIM}❯${C_RESET} ${C_WHITE}installer bootstrap${C_RESET}                              ${C_BORDER}│${C_RESET}\n"
-printf "${C_BORDER}│${C_RESET}  ${C_DIM}source:${C_RESET} ${C_CYAN}FoxyIsCoding/EduBoard${C_RESET}  ${C_DIM}target:${C_RESET} ${C_DIM}ubuntu / raspberry pi${C_RESET} ${C_BORDER}│${C_RESET}\n"
-printf "${C_BORDER}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
+printf "${C_DIM}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
+printf "${C_DIM}│${C_RESET}  ${C_WHITE}eduboard${C_RESET} ${C_DIM}❯ installer bootstrap${C_RESET}                              ${C_DIM}│${C_RESET}\n"
+printf "${C_DIM}│${C_RESET}  ${C_DIM}source:${C_RESET} FoxyIsCoding/EduBoard  ${C_DIM}target:${C_RESET} ubuntu / rpi          ${C_DIM}│${C_RESET}\n"
+printf "${C_DIM}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
 
 log_item "System" "step" "Refreshing package repositories..."
-sudo rm -rf /var/lib/apt/lists/*
-sudo apt clean
-sudo apt update -qq && sudo apt upgrade -y -qq
-sudo apt install -y -qq python3-full python3-pip python3-venv git build-essential
+$SUDO rm -rf /var/lib/apt/lists/*
+$SUDO apt clean
+$SUDO apt update -qq && $SUDO apt upgrade -y -qq
+$SUDO apt install -y -qq python3-full python3-pip python3-venv git build-essential
 log_item "System" "ok" "Base dependencies installed"
 
 TEMP_DIR="/tmp/eduboard_setup"
 log_item "Installer" "step" "Fetching setup bundle to $TEMP_DIR..."
 
+$SUDO rm -rf "$TEMP_DIR"
 mkdir -p "$TEMP_DIR"
 cd "$TEMP_DIR" || exit
 
@@ -101,4 +111,10 @@ log_item "Environment" "ok" "Installer environment ready"
 
 log_item "Wizard" "live" "Launching EduBoard interactive setup..."
 printf "\n"
-sudo "$TEMP_DIR/venv/bin/python3" misc/install.py
+
+# Attach /dev/tty so curses has direct keyboard input when piped from curl
+if [ -e /dev/tty ]; then
+    $SUDO TERM=xterm-256color "$TEMP_DIR/venv/bin/python3" misc/install.py </dev/tty
+else
+    $SUDO TERM=xterm-256color "$TEMP_DIR/venv/bin/python3" misc/install.py
+fi

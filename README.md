@@ -67,8 +67,12 @@ The built frontend is mounted at `/`.
 If you are starting with a fresh Ubuntu Server 24.04 install and want the machine to turn into an EduBoard kiosk automatically, run:
 
 ```bash
-export TERM=xterm-256color
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/FoxyIsCoding/EduBoard/refs/heads/main/misc/install.sh)"
+curl -sSL https://raw.githubusercontent.com/FoxyIsCoding/EduBoard/refs/heads/main/install.sh | bash
+```
+
+Or using your custom domain (if configured):
+```bash
+curl -sSL edupage.yourdomain.com/install.sh | bash
 ```
 
 The installer will:
