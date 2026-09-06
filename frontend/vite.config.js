@@ -5,7 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '../', '')
   const isLocalMode =
-    mode === 'local' ||
+    mode === 'mock' ||
+    mode === 'demo' ||
     env.VITE_LOCAL_MODE === 'true' ||
     env.LOCAL_MODE === '1'
 

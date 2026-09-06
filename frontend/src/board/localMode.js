@@ -11,7 +11,8 @@ export function checkIsLocalMode() {
   if (
     import.meta.env.VITE_LOCAL_MODE === 'true' ||
     import.meta.env.VITE_LOCAL_MODE === true ||
-    import.meta.env.MODE === 'local'
+    import.meta.env.MODE === 'mock' ||
+    import.meta.env.MODE === 'demo'
   ) {
     return true
   }

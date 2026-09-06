@@ -96,7 +96,7 @@ if [ "$1" = "local" ] || [ "$1" = "--local" ] || [ "$1" = "mock" ] || [ "$1" = "
     log_item "Local Mode" "live" "Launching frontend on http://localhost:8000"
     printf "\n"
     export VITE_LOCAL_MODE="true"
-    exec npx vite --host 0.0.0.0 --port 8000 --mode local
+    exec npx vite --host 0.0.0.0 --port 8000 --mode mock
 fi
 
 # 1. Environment Setup
