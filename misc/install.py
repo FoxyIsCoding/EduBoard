@@ -207,34 +207,50 @@ def main(stdscr):
     # --- Configuration Wizard ---
     hostname = engine.ask("System Hostname", "tv1", hint="Device network hostname (e.g. tv-hall, eduboard-1)", max_length=16) or "tv1"
     username = engine.ask("Kiosk User Account", "kiosk", hint="Dedicated non-root Linux user for kiosk auto-login", max_length=32) or "kiosk"
+    password = engine.ask("Kiosk User Password", "123456", hint="Password for the local kiosk user account", max_length=32) or "123456"
+
+    # Regional & Localization
+    keyboard_layout = engine.ask("Keyboard Layout", "cz", hint="Console & Sway keyboard layout code (e.g. cz, sk, us, de, uk)", max_length=12) or "cz"
+    system_locale = engine.ask("System Locale / Language", "cs_CZ.UTF-8", hint="Linux system locale (e.g. cs_CZ.UTF-8, sk_SK.UTF-8, en_US.UTF-8)", max_length=24) or "cs_CZ.UTF-8"
+    timezone = engine.ask("System Timezone", "Europe/Prague", hint="System timezone (e.g. Europe/Prague, Europe/Bratislava, UTC)", max_length=32) or "Europe/Prague"
+
+    # Display & Presentation
+    screen_rotation = engine.ask("Display Orientation", "normal", hint="Screen rotation: normal (landscape), 90 (portrait), 180, 270", max_length=10) or "normal"
     subdomain = engine.ask("School Subdomain", "school", hint="EduPage subdomain (e.g. gymnasium for gymnasium.edupage.org)", max_length=32) or "school"
     screen_id = engine.ask("Timetable Screen ID", "1", hint="EduPage timetable display screen ID number", max_length=6) or "1"
     events_screen_id = engine.ask("Events Screen ID", "5", hint="EduPage events presentation screen ID number", max_length=6) or "5"
-    password = engine.ask("Kiosk User Password", "123456", hint="Password for the local kiosk user account", max_length=32) or "123456"
-    use_light_theme = (
-        engine.ask("Interface Theme (dark / light)", "dark", hint="UI theme palette: dark or light", max_length=5).lower() in ("light", "l")
-    )
+
+    # Power & Operations
     enable_break_overlay = (
         engine.ask("Break-Only Standby Overlay (Y/n)", "Y", hint="Display black screen only during school breaks to preserve TV backlight", max_length=1).lower() != "n"
     )
-    debug_mode = (
-        engine.ask("Verbose Debug Mode (y/N)", "N", hint="Show verbose diagnostics and system logs on boot", max_length=1).lower() == "y"
+    auto_reboot_time = engine.ask("Nightly Reboot Time (HH:MM / off)", "03:00", hint="Scheduled daily reboot to refresh browser (e.g. 03:00, or off)", max_length=8) or "03:00"
+    use_light_theme = (
+        engine.ask("Interface Theme (dark / light)", "dark", hint="UI theme palette: dark or light", max_length=5).lower() in ("light", "l")
     )
     website_url = (
         engine.ask("Kiosk Target URL", "http://localhost:8000", hint="Web server endpoint loaded by Firefox kiosk", max_length=128) or "http://localhost:8000"
     )
 
-    # Tailscale option
+    # Tailscale & Diagnostics
     tailscale_token = (
         engine.ask("Tailscale Auth Key (optional)", "", hint="Pre-authenticated key to join your Tailscale mesh VPN, or leave blank to skip", max_length=64) or ""
+    )
+    debug_mode = (
+        engine.ask("Verbose Debug Mode (y/N)", "N", hint="Show verbose diagnostics and system logs on boot", max_length=1).lower() == "y"
     )
 
     engine.log("◇ Configuration Summary")
     engine.log(f"  ● Hostname:        {hostname}")
     engine.log(f"  ● Kiosk User:      {username}")
+    engine.log(f"  ● Keyboard Layout: {keyboard_layout}")
+    engine.log(f"  ● System Locale:   {system_locale}")
+    engine.log(f"  ● Timezone:        {timezone}")
+    engine.log(f"  ● Display Mode:    {screen_rotation}")
     engine.log(f"  ● EduPage School:  {subdomain}")
     engine.log(f"  ● Screens:         Timetable #{screen_id}, Events #{events_screen_id}")
     engine.log(f"  ● Standby Overlay: {'Enabled (break-only)' if enable_break_overlay else 'Disabled'}")
+    engine.log(f"  ● Nightly Reboot:  {auto_reboot_time}")
     engine.log(f"  ● Theme:           {'Light' if use_light_theme else 'Dark'}")
     engine.log(f"  ● Target URL:      {website_url}")
     if tailscale_token.strip():
@@ -264,6 +280,39 @@ def main(stdscr):
         )
         engine.log(f"✔ Created user account '{username}'")
 
+    # Timezone configuration
+    try:
+        engine.log(f"❯ Configuring timezone ({timezone})...")
+        run_command(f"sudo timedatectl set-timezone {timezone}", log_callback=engine.log)
+        engine.log(f"✔ Timezone configured ({timezone})")
+    except Exception as e:
+        engine.log(f"⚠ Could not set timezone: {e}")
+
+    # Locale configuration
+    try:
+        engine.log(f"❯ Configuring system locale ({system_locale})...")
+        run_command(f"sudo locale-gen {system_locale}", log_callback=engine.log)
+        run_command(f"sudo update-locale LANG={system_locale} LC_ALL={system_locale}", log_callback=engine.log)
+        write_file("/etc/default/locale", f"LANG={system_locale}\nLC_ALL={system_locale}\n")
+        engine.log(f"✔ System locale configured ({system_locale})")
+    except Exception as e:
+        engine.log(f"⚠ Could not configure locale: {e}")
+
+    # Console & System Keyboard Layout
+    try:
+        engine.log(f"❯ Configuring keyboard layout ({keyboard_layout})...")
+        run_command(f"sudo localectl set-x11-keymap {keyboard_layout}", log_callback=engine.log)
+        keyboard_conf = f"""XKBMODEL="pc105"
+XKBLAYOUT="{keyboard_layout}"
+XKBVARIANT=""
+XKBOPTIONS=""
+BACKSPACE="guess"
+"""
+        write_file("/etc/default/keyboard", keyboard_conf)
+        engine.log(f"✔ System keyboard layout configured ({keyboard_layout})")
+    except Exception as e:
+        engine.log(f"⚠ Could not configure keyboard: {e}")
+
     # --- 2/6 Package Dependencies ---
     engine.log("")
     engine.log("◇ 2/6 System Dependencies")
@@ -290,6 +339,9 @@ Pin-Priority: 1001
         "python3-full",
         "python3-venv",
         "nodejs",
+        "locales",
+        "keyboard-configuration",
+        "cron",
         "fonts-symbola",
         "fonts-noto-core",
         "fonts-dejavu",
@@ -418,9 +470,10 @@ WantedBy=multi-user.target
     write_file("/etc/systemd/system/EduBoard.service", service_content)
     engine.log("✔ EduBoard systemd service created")
 
-    kmscon_conf_content = """font-name=DejaVu Sans Mono, WenQuanYi Micro Hei Mono
+    kmscon_conf_content = f"""font-name=DejaVu Sans Mono, WenQuanYi Micro Hei Mono
 font-size=14
 term=xterm-256color
+xkb-layout={keyboard_layout}
 hwaccel
 """
     write_file("/etc/kmscon/kmscon.conf", kmscon_conf_content)
@@ -434,14 +487,20 @@ gaps inner 0
 bar {{
     swaybar_command :
 }}
-output * dpms on
+input * {{
+    xkb_layout "{keyboard_layout}"
+}}
+output * {{
+    dpms on
+    transform {screen_rotation}
+}}
 exec sh -lc 'set -a; [ -f "{repo_dir}/.env" ] && . "{repo_dir}/.env"; set +a; exec firefox-esr --kiosk "${{WEBSITE_URL:-http://localhost:8000}}"'
 for_window [app_id="firefox"] fullscreen global
 bindsym Mod4+Shift+q kill
 bindsym Ctrl+Alt+Delete exec swaymsg exit # emergency exit to tty
 """
     write_file(f"{home_dir}/.config/sway/config", sway_config_content, user=username)
-    engine.log("✔ Sway kiosk config written (DPMS locked on)")
+    engine.log(f"✔ Sway kiosk config written (layout: {keyboard_layout}, rotation: {screen_rotation})")
 
     kmscon_bin = shutil.which("kmscon") or "/usr/bin/kmscon"
     for candidate in ["/usr/bin/kmscon", "/usr/libexec/kmscon/kmscon", "/usr/lib/kmscon/kmscon"]:
@@ -491,6 +550,19 @@ ExecStart={kmscon_bin} --vt tty1 --seats seat0 --configdir /etc/kmscon --term xt
     run_command("sudo systemctl enable seatd", log_callback=engine.log)
     run_command(f"sudo loginctl enable-linger {username}", log_callback=engine.log)
     engine.log("✔ EduBoard background service & seatd enabled")
+
+    # Nightly maintenance reboot
+    if auto_reboot_time.lower() != "off" and ":" in auto_reboot_time:
+        try:
+            parts = auto_reboot_time.split(":")
+            h = int(parts[0].strip())
+            m = int(parts[1].strip())
+            cron_line = f"{m} {h} * * * root /sbin/shutdown -r +1 'EduBoard nightly scheduled reboot' >/dev/null 2>&1\n"
+            write_file("/etc/cron.d/eduboard-nightly-reboot", cron_line)
+            run_command("sudo systemctl enable cron 2>/dev/null || true")
+            engine.log(f"✔ Nightly maintenance reboot scheduled for {h:02d}:{m:02d}")
+        except Exception as e:
+            engine.log(f"⚠ Could not schedule nightly reboot: {e}")
 
     engine.log("")
     engine.log("✔ Installation complete! System will reboot in 3 seconds...")
