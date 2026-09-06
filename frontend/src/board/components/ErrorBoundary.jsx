@@ -33,18 +33,28 @@ export default class ErrorBoundary extends Component {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'var(--md-sys-color-surface, #131416)',
+              background: 'var(--kiosk-bg, #070A12)',
               display: 'grid',
               placeItems: 'center',
-              color: 'var(--md-sys-color-on-surface, #e4e6eb)',
+              color: 'var(--kiosk-text-primary, #F1F5F9)',
               fontSize: '1.2rem',
               padding: '2rem',
               textAlign: 'center',
             }}
           >
-            <div>
-              <h2>Došlo k chybě</h2>
-              <p style={{ marginTop: '0.5rem', opacity: 0.7 }}>
+            <div
+              className="kiosk-module"
+              style={{
+                padding: '2.5rem 3.5rem',
+                maxWidth: '600px',
+                borderRadius: 'var(--kiosk-radius-xl)',
+                border: '1.5px solid var(--kiosk-border-strong)',
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, color: 'var(--kiosk-text-white)' }}>
+                Došlo k chybě
+              </h2>
+              <p style={{ marginTop: '0.8rem', color: 'var(--kiosk-text-secondary)', fontSize: '1.1rem' }}>
                 Obrazovka se automaticky obnoví za několik sekund...
               </p>
             </div>

@@ -15,154 +15,181 @@ body,
   user-select: none;
   -webkit-user-select: none;
   cursor: none;
-  background: var(--board-bg);
-  color: var(--board-text-primary);
-  font-family: var(--board-font-family);
+  background: var(--kiosk-bg);
+  color: var(--kiosk-text-primary);
+  font-family: var(--kiosk-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* Kiosk Layout Shell (overscan-safe) */
-.board-shell {
+/* Master Kiosk Viewport Shell */
+.kiosk-shell {
   width: 100%;
   height: 100%;
-  padding: var(--board-kiosk-gutter);
+  padding: var(--kiosk-gutter);
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  gap: var(--board-kiosk-gap);
-  background: var(--board-bg);
+  gap: var(--kiosk-gap);
+  background: var(--kiosk-bg);
 }
 
-/* Base Surface Card Container */
-.board-surface {
-  border-radius: var(--board-radius-large);
-  border: 1.5px solid var(--board-border);
-  background: var(--board-surface);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+/* Base Structural Container */
+.kiosk-surface {
+  background: var(--kiosk-surface);
+  border: 1.5px solid var(--kiosk-border);
+  border-radius: var(--kiosk-radius-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
 
-/* Card Component (replacing md-card) */
-.edusign-card {
+/* Card Module */
+.kiosk-module {
   position: relative;
-  border-radius: var(--board-radius-medium);
-  border: 1.5px solid var(--board-border);
-  background: var(--board-surface-card);
-  transition: border-color 0.2s ease, background 0.2s ease;
+  background: var(--kiosk-card);
+  border: 1.5px solid var(--kiosk-border);
+  border-radius: var(--kiosk-radius-lg);
+  transition: all 0.2s ease;
   overflow: hidden;
 }
 
-.edusign-card.active-period {
-  border-color: var(--board-active-period-border) !important;
+.kiosk-module:hover {
+  background: var(--kiosk-card-hover);
+}
+
+/* Highlighted / Active States */
+.kiosk-module.is-active-period {
+  border-color: var(--kiosk-cyan) !important;
   border-width: 2px !important;
-  box-shadow: 0 0 16px var(--board-accent-glow);
+  box-shadow: 0 0 20px var(--kiosk-cyan-glow);
 }
 
-/* Status variants for cards */
-.edusign-card.tone-changed {
-  border-color: var(--board-status-changed-border);
-  background: var(--board-status-changed-bg);
+.kiosk-module.is-substitution {
+  border-color: var(--kiosk-amber) !important;
+  background: var(--kiosk-amber-subtle) !important;
 }
 
-.edusign-card.tone-cancelled {
-  border-color: var(--board-status-cancelled-border);
-  background: var(--board-status-cancelled-bg);
+.kiosk-module.is-cancelled {
+  border-color: var(--kiosk-rose) !important;
+  background: var(--kiosk-rose-subtle) !important;
 }
 
-.edusign-card.tone-event {
-  border-color: var(--board-status-event-border);
-  background: var(--board-status-event-bg);
+.kiosk-module.is-event {
+  border-color: var(--kiosk-cyan) !important;
+  background: var(--kiosk-cyan-subtle) !important;
 }
 
-/* High-visibility pill badge */
-.edusign-badge {
+/* High-Contrast Pill Badges */
+.kiosk-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   padding: 0.2rem 0.65rem;
-  border-radius: var(--board-radius-pill);
+  border-radius: var(--kiosk-radius-pill);
   font-size: clamp(0.72rem, 0.85vw, 0.95rem);
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
 }
 
-.edusign-badge.badge-changed {
-  background: var(--board-status-changed-badge-bg);
-  color: var(--board-status-changed-badge-text);
+.kiosk-pill.pill-room {
+  background: #1E293B;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--kiosk-cyan);
 }
 
-.edusign-badge.badge-cancelled {
-  background: var(--board-status-cancelled-badge-bg);
-  color: var(--board-status-cancelled-badge-text);
+.kiosk-pill.pill-amber {
+  background: var(--kiosk-amber);
+  color: #000000;
+  box-shadow: 0 0 10px var(--kiosk-amber-glow);
 }
 
-.edusign-badge.badge-event {
-  background: var(--board-status-event-badge-bg);
-  color: var(--board-status-event-badge-text);
+.kiosk-pill.pill-rose {
+  background: var(--kiosk-rose);
+  color: #FFFFFF;
+  box-shadow: 0 0 10px var(--kiosk-rose-glow);
 }
 
-.edusign-badge.badge-room {
-  background: var(--board-room-bg);
-  border: 1px solid var(--board-room-border);
-  color: var(--board-room-text);
+.kiosk-pill.pill-cyan {
+  background: var(--kiosk-cyan);
+  color: #000000;
+  box-shadow: 0 0 10px var(--kiosk-cyan-glow);
 }
 
-/* Progress rail */
-.expressive-progress-track {
+.kiosk-pill.pill-emerald {
+  background: var(--kiosk-emerald);
+  color: #FFFFFF;
+  box-shadow: 0 0 10px var(--kiosk-emerald-glow);
+}
+
+/* Pulsing Status Dot */
+.kiosk-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+  animation: pulse-live 2s infinite ease-in-out;
+}
+
+@keyframes pulse-live {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.4;
+  }
+}
+
+/* Sleek Luminous Progress Track */
+.kiosk-progress-rail {
   position: relative;
-  height: 10px;
+  height: 8px;
   width: 100%;
-  border-radius: var(--board-radius-pill);
+  border-radius: var(--kiosk-radius-pill);
+  background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
-  background: var(--board-progress-track);
+  border: 1px solid var(--kiosk-border-subtle);
 }
 
-.expressive-progress-active {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  border-radius: var(--board-radius-pill);
-  overflow: hidden;
-  min-width: 8px;
-  background: var(--board-progress-bar);
-  transition: width 220ms linear;
-}
-
-.expressive-progress-wave {
-  width: 220%;
+.kiosk-progress-fill {
   height: 100%;
-  fill: var(--board-progress-bar);
-  animation: waveDrift var(--expressive-wave-duration, 1200ms) linear infinite;
+  background: linear-gradient(90deg, #0284C7, #38BDF8);
+  border-radius: var(--kiosk-radius-pill);
+  box-shadow: 0 0 12px var(--kiosk-cyan-glow);
+  transition: width 200ms linear;
 }
 
-.expressive-progress-stop {
-  position: absolute;
-  top: 50%;
-  inset-inline-end: 0;
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  transform: translate(-4px, -50%);
-  background: var(--board-progress-bar);
+.kiosk-progress-fill.is-indeterminate {
+  animation: kioskIndeterminate 1.5s infinite ease-in-out;
 }
 
-.expressive-progress-active.is-indeterminate {
-  animation: indeterminateTravel calc(var(--expressive-wave-duration, 1200ms) * 1.8) ease-in-out infinite;
+@keyframes kioskIndeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
 }
 
-@keyframes waveDrift {
-  from { transform: translateX(0); }
-  to { transform: translateX(-54.545%); }
+/* Page Transition */
+.kiosk-page-view {
+  width: 100%;
+  height: 100%;
+  animation: kioskPageIn 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes indeterminateTravel {
-  0% { inset-inline-start: -40%; }
-  50% { inset-inline-start: 30%; }
-  100% { inset-inline-start: 100%; }
+@keyframes kioskPageIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Standby Overlay */
@@ -209,8 +236,8 @@ body,
 }
 
 .board-ascii-indicator.top-right {
-  top: var(--board-kiosk-gutter);
-  right: var(--board-kiosk-gutter);
+  top: var(--kiosk-gutter);
+  right: var(--kiosk-gutter);
 }
 
 .board-ascii-blink {

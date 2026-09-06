@@ -76,29 +76,30 @@ export default function App() {
   }, [])
 
   return (
-    <div className="board-shell">
+    <div className="kiosk-shell">
       <div className={`board-overlay${showOverlay ? '' : ' hidden'}`}>
         {showOverlay && overlayReason === 'in_class' && (
           <>
             <div className="board-ascii-indicator top-right" aria-label="System active">
               [ <span className="board-ascii-blink">*</span> ]
             </div>
-            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.45)' }}>
-              <div className="board-overlay-indicator" style={{ margin: '0 auto 1.2rem' }} />
-              <div style={{ fontSize: '1.25rem', letterSpacing: '0.04em', fontWeight: 500 }}>
+            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.55)' }}>
+              <div className="board-overlay-indicator" style={{ margin: '0 auto 1.4rem' }} />
+              <div style={{ fontSize: 'clamp(1.4rem, 2vw, 2.2rem)', letterSpacing: '0.04em', fontWeight: 800, color: 'var(--kiosk-text-white)' }}>
                 Výuka probíhá
               </div>
-              <div style={{ fontSize: '0.95rem', marginTop: '0.4rem', opacity: 0.7 }}>
+              <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.4rem)', marginTop: '0.5rem', color: 'var(--kiosk-text-secondary)' }}>
                 Obrazovka se aktivuje o přestávce
               </div>
               <div
                 style={{
-                  fontSize: '1.75rem',
-                  fontWeight: 600,
-                  marginTop: '1.25rem',
-                  opacity: 0.55,
-                  letterSpacing: '0.05em',
+                  fontSize: 'clamp(2.5rem, 3.8vw, 4.5rem)',
+                  fontWeight: 900,
+                  marginTop: '1.5rem',
+                  color: 'var(--kiosk-cyan)',
+                  letterSpacing: '0.02em',
                   fontVariantNumeric: 'tabular-nums',
+                  textShadow: '0 0 24px var(--kiosk-cyan-glow)',
                 }}
               >
                 {clockLabel}
@@ -110,7 +111,7 @@ export default function App() {
 
       {!showOverlay && (
         <>
-          <div className="board-surface">
+          <div className="kiosk-surface">
             <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} />
           </div>
 
@@ -118,17 +119,17 @@ export default function App() {
 
           <ErrorBoundary>
             <section
-              className="board-surface"
+              className="kiosk-surface"
               style={{
                 minHeight: 0,
                 minWidth: 0,
                 overflow: 'hidden',
-                padding: 'clamp(0.5rem, 0.8vw, 1rem)',
+                padding: 'var(--kiosk-gap)',
               }}
             >
               <div
                 key={activePageKey}
-                style={{ height: '100%', animation: 'fadeIn 220ms ease-out' }}
+                className="kiosk-page-view"
               >
                 {loading && !hasBoardData ? (
                   <EmptyPage title="Načítám Přehled" copy="Připravuji rozvrh a školní akce." />

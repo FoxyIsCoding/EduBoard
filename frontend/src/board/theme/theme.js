@@ -1,113 +1,108 @@
 /**
- * EduSign 2.0 - High-Contrast Accessible Theme System
- * Specially calibrated for public displays, digital signage kiosks,
- * and older/lower-brightness TVs in hallway ambient lighting.
+ * EduSign 2.0 - Airport-grade High-Contrast Digital Signage Theme
+ * Optimized for distance legibility, high glare corridors, and older dim TV panels.
  */
 
 const DARK_TOKENS = {
-  '--board-bg': '#070A13',
-  '--board-surface': '#0D1322',
-  '--board-surface-card': '#131B2E',
-  '--board-surface-highlight': '#1A243B',
-  '--board-border': 'rgba(255, 255, 255, 0.14)',
-  '--board-border-strong': 'rgba(255, 255, 255, 0.28)',
-  '--board-text-primary': '#FFFFFF',
-  '--board-text-secondary': '#94A3B8',
-  '--board-text-muted': '#64748B',
+  // Deep space canvas & structural surfaces
+  '--kiosk-bg': '#070A12',
+  '--kiosk-surface': '#0C111E',
+  '--kiosk-card': '#111728',
+  '--kiosk-card-hover': '#162035',
+  '--kiosk-card-raised': '#1A243C',
+  
+  // Structural borders with high visibility (prevents muddy display on older panels)
+  '--kiosk-border-subtle': 'rgba(255, 255, 255, 0.08)',
+  '--kiosk-border': 'rgba(255, 255, 255, 0.16)',
+  '--kiosk-border-strong': 'rgba(255, 255, 255, 0.28)',
+  '--kiosk-border-accent': 'rgba(56, 189, 248, 0.5)',
 
-  // High-visibility accents
-  '--board-accent-primary': '#38BDF8',
-  '--board-accent-glow': 'rgba(56, 189, 248, 0.25)',
-  '--board-accent-active-period': '#3B82F6',
-  '--board-active-period-border': '#60A5FA',
+  // Text Hierarchy (WCAG AAA compliant against #070A12)
+  '--kiosk-text-white': '#FFFFFF',
+  '--kiosk-text-primary': '#F1F5F9',
+  '--kiosk-text-secondary': '#94A3B8',
+  '--kiosk-text-muted': '#64748B',
 
-  // Status tokens: Changed / Substitution
-  '--board-status-changed-bg': 'rgba(245, 158, 11, 0.16)',
-  '--board-status-changed-border': '#F59E0B',
-  '--board-status-changed-text': '#FDE68A',
-  '--board-status-changed-badge-bg': '#D97706',
-  '--board-status-changed-badge-text': '#FFFFFF',
+  // Electric Signage Accents
+  '--kiosk-cyan': '#38BDF8',
+  '--kiosk-cyan-glow': 'rgba(56, 189, 248, 0.25)',
+  '--kiosk-cyan-dark': '#0369A1',
+  '--kiosk-cyan-subtle': 'rgba(56, 189, 248, 0.12)',
 
-  // Status tokens: Cancelled / Odpadá
-  '--board-status-cancelled-bg': 'rgba(239, 68, 68, 0.16)',
-  '--board-status-cancelled-border': '#EF4444',
-  '--board-status-cancelled-text': '#FECACA',
-  '--board-status-cancelled-badge-bg': '#DC2626',
-  '--board-status-cancelled-badge-text': '#FFFFFF',
+  '--kiosk-emerald': '#10B981',
+  '--kiosk-emerald-glow': 'rgba(16, 185, 129, 0.25)',
+  '--kiosk-emerald-subtle': 'rgba(16, 185, 129, 0.14)',
 
-  // Status tokens: Event
-  '--board-status-event-bg': 'rgba(14, 165, 233, 0.16)',
-  '--board-status-event-border': '#38BDF8',
-  '--board-status-event-text': '#BAE6FD',
-  '--board-status-event-badge-bg': '#0284C7',
-  '--board-status-event-badge-text': '#FFFFFF',
+  '--kiosk-amber': '#F59E0B',
+  '--kiosk-amber-glow': 'rgba(245, 158, 11, 0.28)',
+  '--kiosk-amber-subtle': 'rgba(245, 158, 11, 0.15)',
+  '--kiosk-amber-text': '#FDE68A',
 
-  // Classroom / Room badge
-  '--board-room-bg': '#1E293B',
-  '--board-room-border': 'rgba(255, 255, 255, 0.2)',
-  '--board-room-text': '#38BDF8',
+  '--kiosk-rose': '#F43F5E',
+  '--kiosk-rose-glow': 'rgba(244, 63, 94, 0.28)',
+  '--kiosk-rose-subtle': 'rgba(244, 63, 94, 0.15)',
+  '--kiosk-rose-text': '#FECDD3',
 
-  // Progress Bar
-  '--board-progress-track': 'rgba(56, 189, 248, 0.15)',
-  '--board-progress-bar': '#38BDF8',
+  '--kiosk-purple': '#A855F7',
+  '--kiosk-purple-subtle': 'rgba(168, 85, 247, 0.14)',
+
+  // Active period column glow
+  '--kiosk-active-col-border': '#38BDF8',
+  '--kiosk-active-col-bg': 'rgba(56, 189, 248, 0.04)',
 }
 
 const LIGHT_TOKENS = {
-  '--board-bg': '#F1F5F9',
-  '--board-surface': '#FFFFFF',
-  '--board-surface-card': '#FFFFFF',
-  '--board-surface-highlight': '#E2E8F0',
-  '--board-border': 'rgba(15, 23, 42, 0.14)',
-  '--board-border-strong': 'rgba(15, 23, 42, 0.3)',
-  '--board-text-primary': '#0F172A',
-  '--board-text-secondary': '#475569',
-  '--board-text-muted': '#64748B',
+  '--kiosk-bg': '#F1F5F9',
+  '--kiosk-surface': '#FFFFFF',
+  '--kiosk-card': '#F8FAFC',
+  '--kiosk-card-hover': '#F1F5F9',
+  '--kiosk-card-raised': '#E2E8F0',
 
-  // High-visibility accents
-  '--board-accent-primary': '#0284C7',
-  '--board-accent-glow': 'rgba(2, 132, 199, 0.2)',
-  '--board-accent-active-period': '#2563EB',
-  '--board-active-period-border': '#2563EB',
+  '--kiosk-border-subtle': 'rgba(15, 23, 42, 0.08)',
+  '--kiosk-border': 'rgba(15, 23, 42, 0.16)',
+  '--kiosk-border-strong': 'rgba(15, 23, 42, 0.32)',
+  '--kiosk-border-accent': 'rgba(2, 132, 199, 0.6)',
 
-  // Status tokens: Changed / Substitution
-  '--board-status-changed-bg': '#FEF3C7',
-  '--board-status-changed-border': '#D97706',
-  '--board-status-changed-text': '#92400E',
-  '--board-status-changed-badge-bg': '#D97706',
-  '--board-status-changed-badge-text': '#FFFFFF',
+  '--kiosk-text-white': '#0F172A',
+  '--kiosk-text-primary': '#0F172A',
+  '--kiosk-text-secondary': '#475569',
+  '--kiosk-text-muted': '#64748B',
 
-  // Status tokens: Cancelled / Odpadá
-  '--board-status-cancelled-bg': '#FEE2E2',
-  '--board-status-cancelled-border': '#DC2626',
-  '--board-status-cancelled-text': '#991B1B',
-  '--board-status-cancelled-badge-bg': '#DC2626',
-  '--board-status-cancelled-badge-text': '#FFFFFF',
+  '--kiosk-cyan': '#0284C7',
+  '--kiosk-cyan-glow': 'rgba(2, 132, 199, 0.2)',
+  '--kiosk-cyan-dark': '#0369A1',
+  '--kiosk-cyan-subtle': '#E0F2FE',
 
-  // Status tokens: Event
-  '--board-status-event-bg': '#E0F2FE',
-  '--board-status-event-border': '#0284C7',
-  '--board-status-event-text': '#0369A1',
-  '--board-status-event-badge-bg': '#0284C7',
-  '--board-status-event-badge-text': '#FFFFFF',
+  '--kiosk-emerald': '#059669',
+  '--kiosk-emerald-glow': 'rgba(5, 150, 105, 0.2)',
+  '--kiosk-emerald-subtle': '#D1FAE5',
 
-  // Classroom / Room badge
-  '--board-room-bg': '#E2E8F0',
-  '--board-room-border': 'rgba(15, 23, 42, 0.2)',
-  '--board-room-text': '#0369A1',
+  '--kiosk-amber': '#D97706',
+  '--kiosk-amber-glow': 'rgba(217, 119, 6, 0.2)',
+  '--kiosk-amber-subtle': '#FEF3C7',
+  '--kiosk-amber-text': '#78350F',
 
-  // Progress Bar
-  '--board-progress-track': 'rgba(2, 132, 199, 0.15)',
-  '--board-progress-bar': '#0284C7',
+  '--kiosk-rose': '#E11D48',
+  '--kiosk-rose-glow': 'rgba(225, 29, 72, 0.2)',
+  '--kiosk-rose-subtle': '#FFE4E6',
+  '--kiosk-rose-text': '#881337',
+
+  '--kiosk-purple': '#7E22CE',
+  '--kiosk-purple-subtle': '#F3E8FF',
+
+  '--kiosk-active-col-border': '#0284C7',
+  '--kiosk-active-col-bg': 'rgba(2, 132, 199, 0.06)',
 }
 
 const SHARED_TOKENS = {
-  '--board-font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-  '--board-kiosk-gutter': 'clamp(1rem, 1.8vw, 2.2rem)',
-  '--board-kiosk-gap': 'clamp(0.45rem, 0.7vw, 1rem)',
-  '--board-radius-large': '16px',
-  '--board-radius-medium': '12px',
-  '--board-radius-small': '8px',
-  '--board-radius-pill': '999px',
+  '--kiosk-font': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  '--kiosk-gutter': 'clamp(1rem, 1.6vw, 2.2rem)',
+  '--kiosk-gap': 'clamp(0.45rem, 0.75vw, 1rem)',
+  '--kiosk-radius-xl': '18px',
+  '--kiosk-radius-lg': '14px',
+  '--kiosk-radius-md': '10px',
+  '--kiosk-radius-sm': '6px',
+  '--kiosk-radius-pill': '999px',
 }
 
 function applyTokens(tokens) {

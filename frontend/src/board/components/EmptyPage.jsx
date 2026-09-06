@@ -3,41 +3,43 @@ export default function EmptyPage({ title, copy }) {
     <section
       style={{
         height: '100%',
-        borderRadius: 'var(--board-radius-large)',
+        borderRadius: 'var(--kiosk-radius-xl)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        background: 'var(--board-surface)',
         padding: '2rem',
       }}
     >
       <div
-        className="edusign-card"
+        className="kiosk-module"
         style={{
-          padding: '2.5rem 3.2rem',
-          maxWidth: '650px',
-          background: 'var(--board-surface-card)',
-          border: '1.5px solid var(--board-border-strong)',
+          padding: '2.8rem 3.8rem',
+          maxWidth: '680px',
+          background: 'var(--kiosk-card)',
+          border: '1.5px solid var(--kiosk-border-strong)',
+          borderRadius: 'var(--kiosk-radius-xl)',
         }}
       >
         <h2
           style={{
             margin: 0,
-            fontSize: 'clamp(2rem, 3.2vw, 3.6rem)',
-            fontWeight: 800,
+            fontSize: 'clamp(2.2rem, 3.4vw, 3.8rem)',
+            fontWeight: 900,
             lineHeight: 1.1,
-            color: 'var(--board-text-primary)',
+            color: 'var(--kiosk-text-white)',
+            letterSpacing: '-0.02em',
           }}
         >
           {title}
         </h2>
         <p
           style={{
-            margin: '1rem 0 0',
-            color: 'var(--board-text-secondary)',
-            fontSize: 'clamp(1.1rem, 1.5vw, 1.6rem)',
-            lineHeight: 1.45,
+            margin: '1.2rem 0 0',
+            color: 'var(--kiosk-text-secondary)',
+            fontSize: 'clamp(1.15rem, 1.5vw, 1.7rem)',
+            lineHeight: 1.5,
+            fontWeight: 500,
           }}
         >
           {copy}
