@@ -16,7 +16,7 @@ export default function EmptyPage({ title, copy }) {
           padding: '2.2rem 2.6rem',
           borderRadius: '12px',
           maxWidth: '70ch',
-          borderColor: 'color-mix(in srgb, var(--md-sys-color-outline) 40%, transparent)',
+          borderColor: 'var(--board-border-medium)',
           background: 'var(--md-sys-color-surface-container-high)',
         }}
       >

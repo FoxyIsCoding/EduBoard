@@ -1,40 +1,43 @@
 import { useEffect, useRef, useState } from 'react'
-import { logBorder, logScreenState, logScreenTick, logScreenChange, logError } from '../logger'
+
+function shiftMinutes(timeStr, deltaMinutes) {
+  const [h, m] = (timeStr || '00:00').split(':').map(Number)
+  const total = h * 60 + m + deltaMinutes
+  if (total <= 0) return '00:00'
+  if (total >= 1440) return '23:59'
+  const newH = Math.floor(total / 60)
+  const newM = total % 60
+  return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
+}
 
 export function useScreenState(timetable, loading, hasBoardData) {
   const [showOverlay, setShowOverlay] = useState(false)
+  const [overlayReason, setOverlayReason] = useState('in_class')
   const showOverlayRef = useRef(false)
   const timetableRef = useRef(timetable)
   const loadingRef = useRef(loading)
   const hasDataRef = useRef(hasBoardData)
 
-  logBorder('📟 useScreenState MOUNTED — checking overlay logic every 1s', 'big')
-  logScreenState('INITIALIZED', JSON.stringify({
-    loading,
-    hasBoardData,
-    timetableAvailable: Boolean(timetable?.classes),
-    classCount: timetable?.classes?.length ?? 0,
-  }))
-
-  // Keep refs current so the 1s interval always reads fresh values
-  timetableRef.current = timetable
-  loadingRef.current = loading
-  hasDataRef.current = hasBoardData
+  const isOverlayFeatureEnabled = import.meta.env.VITE_ENABLE_BREAK_ONLY_OVERLAY === 'true'
 
   useEffect(() => {
-    logScreenState('⏱ Interval started (1s tick)', '')
+    timetableRef.current = timetable
+    loadingRef.current = loading
+    hasDataRef.current = hasBoardData
+  }, [timetable, loading, hasBoardData])
+
+  useEffect(() => {
+    if (!isOverlayFeatureEnabled) {
+      return undefined
+    }
 
     const timer = setInterval(() => {
       const t = new Date()
-      const timeStr = `${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}:${t.getSeconds().toString().padStart(2, '0')}`
       const deviceTime = `${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}`
-      const nowHrs = t.getHours() + t.getMinutes() / 60
 
-      // No data loaded yet — show content (no overlay)
-      if (loadingRef.current && !hasDataRef.current) {
-        logScreenTick(`⌛ loading=true, no data yet — showing content (overlay off) [${timeStr}]`, '')
+      // No data loaded yet or still loading — show content
+      if (loadingRef.current || !hasDataRef.current) {
         if (showOverlayRef.current) {
-          logScreenChange('⛔ overlay→off (was on, now data loading)', `time=${deviceTime}`)
           showOverlayRef.current = false
           setShowOverlay(false)
         }
@@ -43,9 +46,7 @@ export function useScreenState(timetable, loading, hasBoardData) {
 
       // No timetable available — show content
       if (!timetableRef.current?.classes) {
-        logScreenTick(`⚠️ no timetable.classes — overlay off [${timeStr}]`, `timetable=${Boolean(timetableRef.current)}`)
         if (showOverlayRef.current) {
-          logScreenChange('⛔ overlay→off (no timetable data)', `time=${deviceTime}`)
           showOverlayRef.current = false
           setShowOverlay(false)
         }
@@ -55,13 +56,11 @@ export function useScreenState(timetable, loading, hasBoardData) {
       const nowStr = deviceTime
       const allItems = timetableRef.current.classes.flatMap((cls) => cls.ttitems ?? [])
 
-      logScreenTick(`⚡ [${timeStr}] checking ${allItems.length} timetable items`, '')
-
+      // Weekend or holiday (no items) — show standby overlay (pure black)
       if (allItems.length === 0) {
-        logScreenTick('📭 no ttitems — treating as break (overlay on)', '')
         if (!showOverlayRef.current) {
-          logScreenChange('✅ overlay→ON (no ttitems, break time)', `time=${deviceTime}`)
           showOverlayRef.current = true
+          setOverlayReason('after_school')
           setShowOverlay(true)
         }
         return
@@ -74,47 +73,30 @@ export function useScreenState(timetable, loading, hasBoardData) {
       const endTimes = allItems.map((i) => i.endtime).filter(Boolean)
 
       if (startTimes.length === 0 || endTimes.length === 0) {
-        logScreenTick('⚠️ empty start/end times — overlay on', '')
-        if (!showOverlayRef.current) {
-          logScreenChange('✅ overlay→ON (missing time boundaries)', `time=${deviceTime}`)
-          showOverlayRef.current = true
-          setShowOverlay(true)
+        if (showOverlayRef.current) {
+          showOverlayRef.current = false
+          setShowOverlay(false)
         }
         return
       }
 
       const schoolStart = startTimes.reduce((a, b) => (a < b ? a : b))
       const schoolEnd = endTimes.reduce((a, b) => (a > b ? a : b))
-      const isSchoolTime = nowStr >= schoolStart && nowStr < schoolEnd
-      const next = !(isSchoolTime && !isInClass)
+      const morningStart = shiftMinutes(schoolStart, -45)
 
-      // Log time comparison every tick
-      logScreenTick(
-        `⏳ school=${schoolStart}-${schoolEnd} now=${nowStr} inClass=${isInClass} isSchoolTime=${isSchoolTime} overlay=${next}`,
-        `deviceHours=${nowHrs.toFixed(2)}`,
-      )
+      const isSchoolTime = nowStr >= schoolStart && nowStr < schoolEnd
+      const isMorning = nowStr >= morningStart && nowStr < schoolStart
+      const isBreak = isSchoolTime && !isInClass
+
+      // Content displays only during morning arrival (45m before first period) and class breaks
+      const shouldShowContent = isMorning || isBreak
+      const next = !shouldShowContent
+
+      if (next) {
+        setOverlayReason(isInClass ? 'in_class' : 'after_school')
+      }
 
       if (next !== showOverlayRef.current) {
-        if (next) {
-          logScreenChange(
-            `✅ overlay→ON (transition)`,
-            `time=${deviceTime} school=${schoolStart}-${schoolEnd} inClass=${isInClass} isSchoolTime=${isSchoolTime}`,
-          )
-          logBorder(
-            `🔲🔲🔲 OVERLAY ACTIVATED [${deviceTime}] — ` +
-            (isInClass ? 'IN CLASS (showing lesson info)' : 'BREAK / AFTER SCHOOL'),
-            'warning',
-          )
-        } else {
-          logScreenChange(
-            `⛔ overlay→OFF (transition)`,
-            `time=${deviceTime} school=${schoolStart}-${schoolEnd} inClass=${isInClass} isSchoolTime=${isSchoolTime}`,
-          )
-          logBorder(
-            `🟢🟢🟢 OVERLAY DEACTIVATED [${deviceTime}] — content visible`,
-            'success',
-          )
-        }
         showOverlayRef.current = next
         setShowOverlay(next)
       }
@@ -122,9 +104,11 @@ export function useScreenState(timetable, loading, hasBoardData) {
 
     return () => {
       clearInterval(timer)
-      logScreenState('⏱ Interval CLEARED (unmount)', '')
     }
-  }, [])
+  }, [isOverlayFeatureEnabled])
 
-  return { showOverlay }
+  return {
+    showOverlay: isOverlayFeatureEnabled ? showOverlay : false,
+    overlayReason,
+  }
 }

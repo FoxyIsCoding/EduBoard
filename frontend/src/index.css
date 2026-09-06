@@ -16,6 +16,9 @@ body,
   height: 100%;
   margin: 0;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: none;
 }
 
 body {
@@ -53,7 +56,7 @@ body {
 
 .board-surface {
   border-radius: var(--board-shape-large);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 38%, transparent);
+  border: 1px solid var(--board-border-subtle);
   background: var(--md-sys-color-surface-container);
 }
 
@@ -63,7 +66,7 @@ body {
   width: 100%;
   border-radius: 10px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--md-sys-color-primary) 22%, var(--md-sys-color-surface-container-highest));
+  background: var(--board-progress-track-bg);
 }
 
 .expressive-progress-active {
@@ -184,4 +187,41 @@ body {
 @keyframes overlay-breath {
   0%, 100% { opacity: 0.02; transform: scale(1); }
   50% { opacity: 0.06; transform: scale(1.05); }
+}
+
+/* Blinking ASCII activity indicator during lesson standby */
+.board-ascii-indicator {
+  position: absolute;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: clamp(1rem, 1.4vw, 1.25rem);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.45);
+  user-select: none;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+.board-ascii-indicator.top-right {
+  top: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
+  right: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
+}
+
+.board-ascii-indicator.bottom-right {
+  bottom: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
+  right: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
+}
+
+.board-ascii-blink {
+  display: inline-block;
+  animation: ascii-blink 1.2s steps(1, start) infinite;
+}
+
+@keyframes ascii-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.08;
+  }
 }

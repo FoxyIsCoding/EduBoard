@@ -12,6 +12,17 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('[ErrorBoundary]', error, info?.componentStack)
+    if (!this.recoveryTimer && typeof window !== 'undefined') {
+      this.recoveryTimer = setTimeout(() => {
+        window.location.reload()
+      }, 20000)
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.recoveryTimer) {
+      clearTimeout(this.recoveryTimer)
+    }
   }
 
   render() {
@@ -34,7 +45,7 @@ export default class ErrorBoundary extends Component {
             <div>
               <h2>Došlo k chybě</h2>
               <p style={{ marginTop: '0.5rem', opacity: 0.7 }}>
-                Obrazovka bude brzy obnovena.
+                Obrazovka se automaticky obnoví za několik sekund...
               </p>
             </div>
           </div>

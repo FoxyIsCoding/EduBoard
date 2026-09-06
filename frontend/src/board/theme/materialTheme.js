@@ -18,6 +18,11 @@ const DARK_TOKENS = {
   '--md-sys-color-on-error': '#690005',
   '--md-sys-color-badge-success': '#baf7cf',
   '--md-sys-color-badge-warning': '#ffe1a6',
+  '--board-border-subtle': 'rgba(141, 145, 154, 0.22)',
+  '--board-border-medium': 'rgba(141, 145, 154, 0.35)',
+  '--board-border-strong': 'rgba(141, 145, 154, 0.48)',
+  '--board-surface-dim': 'rgba(33, 35, 40, 0.72)',
+  '--board-progress-track-bg': 'rgba(159, 197, 255, 0.16)',
 }
 
 const LIGHT_TOKENS = {
@@ -40,15 +45,21 @@ const LIGHT_TOKENS = {
   '--md-sys-color-on-error': '#ffffff',
   '--md-sys-color-badge-success': '#baf7cf',
   '--md-sys-color-badge-warning': '#ffe1a6',
+  '--board-border-subtle': 'rgba(115, 119, 127, 0.22)',
+  '--board-border-medium': 'rgba(115, 119, 127, 0.35)',
+  '--board-border-strong': 'rgba(115, 119, 127, 0.48)',
+  '--board-surface-dim': 'rgba(209, 211, 217, 0.72)',
+  '--board-progress-track-bg': 'rgba(0, 82, 165, 0.16)',
 }
 
 const SHARED_TOKENS = {
   '--board-font-family': '"Roboto", "Segoe UI", sans-serif',
-  '--board-kiosk-gutter': 'clamp(1rem, 1.3vw, 2rem)',
-  '--board-kiosk-gap': 'clamp(0.75rem, 1vw, 1.4rem)',
-  '--board-title-size': 'clamp(2.1rem, 2.8vw, 4rem)',
-  '--board-clock-size': 'clamp(4rem, 6vw, 7.25rem)',
-  '--board-text-size': 'clamp(1rem, 1.15vw, 1.5rem)',
+  // TV HDMI overscan safe-area padding:
+  '--board-kiosk-gutter': 'clamp(1.5rem, 2.5vw, 2.85rem)',
+  '--board-kiosk-gap': 'clamp(0.5rem, 0.8vw, 1.2rem)',
+  '--board-title-size': 'clamp(2rem, 2.6vw, 3.8rem)',
+  '--board-clock-size': 'clamp(3.8rem, 5.5vw, 6.8rem)',
+  '--board-text-size': 'clamp(0.95rem, 1.1vw, 1.45rem)',
 }
 
 function applyTokens(tokens) {

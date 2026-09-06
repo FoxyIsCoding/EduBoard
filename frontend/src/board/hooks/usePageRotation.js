@@ -1,17 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { logPageRotation, logScreenChange, logBorder } from '../logger'
+import { logPageRotation, logBorder } from '../logger'
 import { DEBUG_HOLD_SECONDS, ROTATE_SECONDS } from '../constants'
 
 export function usePageRotation(pages, paused = false) {
   const [pageIndex, setPageIndex] = useState(0)
   const [progress, setProgress] = useState(0)
   const manualPageUntilRef = useRef(0)
-  const cycleStartedAtRef = useRef(0)
+  const cycleStartedAtRef = useRef(Date.now())
   const pageCount = pages.length
   const safePageIndex = pageCount > 0 ? Math.min(pageIndex, pageCount - 1) : 0
   const activePage = pages[safePageIndex] ?? pages[0]
   const prevPausedRef = useRef(paused)
-  const tickIndexRef = useRef(0)
+  const pausedRef = useRef(paused)
+  const pageCountRef = useRef(pageCount)
+  const pageIndexRef = useRef(safePageIndex)
+
+  useEffect(() => {
+    pausedRef.current = paused
+    pageCountRef.current = pageCount
+    pageIndexRef.current = safePageIndex
+  }, [paused, pageCount, safePageIndex])
 
   // Log mount
   useEffect(() => {
@@ -41,69 +49,62 @@ export function usePageRotation(pages, paused = false) {
     logPageRotation(`📄 showing page #${safePageIndex + 1}/${pageCount}`, `type=${activePage?.type} id=${activePage?.id}`)
   }, [safePageIndex, pageCount, activePage?.id, activePage?.type])
 
+  const hasMultiplePages = pageCount > 1
+
   useEffect(() => {
-    if (pageCount <= 1) {
-      logPageRotation(`⏸ only ${pageCount} page(s) — rotation disabled`, '')
+    if (!hasMultiplePages) {
+      logPageRotation('⏸ only 1 page — rotation disabled', '')
       return undefined
     }
 
-    const timer = window.setInterval(() => {
-      tickIndexRef.current++
+    cycleStartedAtRef.current = Date.now()
 
-      if (Date.now() < manualPageUntilRef.current) {
+    const timer = window.setInterval(() => {
+      if (pausedRef.current || pageCountRef.current <= 1) {
         cycleStartedAtRef.current = Date.now()
-        if (progress !== 0) setProgress(0)
-        if (tickIndexRef.current % 25 === 0) {
-          logPageRotation(`⏳ holding manual page (${Math.ceil((manualPageUntilRef.current - Date.now()) / 1000)}s remaining)`, '')
-        }
+        setProgress(0)
         return
       }
 
-      if (paused) {
+      if (Date.now() < manualPageUntilRef.current) {
         cycleStartedAtRef.current = Date.now()
-        if (progress !== 0) setProgress(0)
+        setProgress(0)
         return
       }
 
       const elapsed = Date.now() - cycleStartedAtRef.current
-      const nextProgress = Math.min(100, (elapsed / (ROTATE_SECONDS * 1000)) * 100)
-
-      // Log progress milestones
-      if (tickIndexRef.current % 50 === 0) {
-        logPageRotation(
-          `⏩ progress=${nextProgress.toFixed(1)}% elapsed=${(elapsed / 1000).toFixed(1)}s/${ROTATE_SECONDS}s page=#${safePageIndex + 1}/${pageCount}`,
-          '',
-        )
-      }
+      const durationMs = ROTATE_SECONDS * 1000
+      const nextProgress = Math.min(100, (elapsed / durationMs) * 100)
 
       if (nextProgress >= 100) {
-        const nextIdx = ((safePageIndex + 1) % pageCount)
-        logBorder(
-          `📄📄📄 PAGE ROTATION: #${safePageIndex + 1} → #${nextIdx + 1}/${pageCount} (timer complete)`,
-          'info',
-        )
         cycleStartedAtRef.current = Date.now()
         setProgress(0)
-        setPageIndex(nextIdx)
+        setPageIndex((prev) => {
+          const count = pageCountRef.current
+          return count > 0 ? (prev + 1) % count : 0
+        })
         return
       }
 
       setProgress(nextProgress)
-    }, 200)
+    }, 250)
 
     return () => {
       window.clearInterval(timer)
       logPageRotation('⏱ rotation interval CLEARED', '')
     }
-  }, [pageCount, paused, safePageIndex, progress])
+  }, [hasMultiplePages])
 
   useEffect(() => {
-    globalThis.__boardDebug = {
+    const globalScope = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this)
+    if (!globalScope) return
+
+    globalScope.__boardDebug = {
       pageCount,
-      getPageIndex: () => safePageIndex,
+      getPageIndex: () => pageIndexRef.current,
       setPageIndex: (nextIndex) => {
         const safeIndex = Math.max(0, Math.min(pageCount - 1, Number(nextIndex) || 0))
-        logPageRotation(`🔄 MANUAL page set to #${safeIndex + 1}`, `from #${safePageIndex + 1}`)
+        logPageRotation(`🔄 MANUAL page set to #${safeIndex + 1}`, `from #${pageIndexRef.current + 1}`)
         manualPageUntilRef.current = Date.now() + DEBUG_HOLD_SECONDS * 1000
         cycleStartedAtRef.current = Date.now()
         setProgress(0)
@@ -120,9 +121,13 @@ export function usePageRotation(pages, paused = false) {
     }
 
     return () => {
-      delete globalThis.__boardDebug
+      try {
+        delete globalScope.__boardDebug
+      } catch {
+        globalScope.__boardDebug = undefined
+      }
     }
-  }, [pageCount, pages, safePageIndex])
+  }, [pageCount, pages])
 
   return {
     activePage,

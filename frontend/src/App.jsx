@@ -11,42 +11,43 @@ import { useBoardClock } from './board/hooks/useBoardClock'
 import { useBoardData } from './board/hooks/useBoardData'
 import { usePageRotation } from './board/hooks/usePageRotation'
 import { useScreenState } from './board/hooks/useScreenState'
-import { logBorder, logScreenState, logScreenChange, logError } from './board/logger'
+import { logBorder, logScreenState, logScreenChange } from './board/logger'
 
 export default function App() {
   const { loading, hasBoardData, pages, periods, timetable } = useBoardData()
-  const { showOverlay } = useScreenState(timetable, loading, hasBoardData)
+  const { showOverlay, overlayReason } = useScreenState(timetable, loading, hasBoardData)
   const { activePage, progress, pageIndex, pageCount } = usePageRotation(pages, showOverlay)
   const { clockLabel, dateParts } = useBoardClock()
   const pageTitle = getPageTitle(activePage)
   const activePageKey = activePage?.id ?? 'empty'
   const prevOverlayRef = useRef(showOverlay)
-  const renderCountRef = useRef(0)
+  const isMountedRef = useRef(false)
 
-  renderCountRef.current++
-
-  if (renderCountRef.current === 1) {
-    logBorder('🚀 EduBoard APP MOUNTED', 'big')
-    logScreenState('First render', JSON.stringify({
-      loading,
-      hasBoardData,
-      pagesCount: pages.length,
-      periodsCount: periods.length,
-      hasTimetable: Boolean(timetable),
-    }))
-  }
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true
+      logBorder('🚀 EduBoard APP MOUNTED', 'big')
+      logScreenState('First render', JSON.stringify({
+        loading,
+        hasBoardData,
+        pagesCount: pages.length,
+        periodsCount: periods.length,
+        hasTimetable: Boolean(timetable),
+      }))
+    }
+  }, [loading, hasBoardData, pages.length, periods.length, timetable])
 
   useEffect(() => {
     if (prevOverlayRef.current !== showOverlay) {
       prevOverlayRef.current = showOverlay
       if (showOverlay) {
         logBorder(
-          `🔲🔲🔲 App RERENDER — overlay ON (pageRotation paused, content hidden) [render #${renderCountRef.current}]`,
+          '🔲🔲🔲 App — overlay ON (pageRotation paused, content hidden)',
           'warning',
         )
       } else {
         logBorder(
-          `🟢🟢🟢 App RERENDER — overlay OFF (pageRotation resumed, content visible) [render #${renderCountRef.current}]`,
+          '🟢🟢🟢 App — overlay OFF (pageRotation resumed, content visible)',
           'success',
         )
       }
@@ -60,10 +61,49 @@ export default function App() {
     )
   }, [activePageKey, pageTitle, pageIndex, pageCount, activePage?.type])
 
+  // 24/7 Digital Signage Longevity: Soft reload at 03:00 AM to purge browser memory on Raspberry Pi
+  useEffect(() => {
+    const checkNightlyReload = () => {
+      const now = new Date()
+      if (now.getHours() === 3 && now.getMinutes() < 5) {
+        window.location.reload()
+      }
+    }
+    const timer = setInterval(checkNightlyReload, 60000)
+    return () => clearInterval(timer)
+  }, [])
+
   return (
     <div className="board-shell">
       <div className={`board-overlay${showOverlay ? '' : ' hidden'}`}>
-        {showOverlay && <div className="board-overlay-indicator" />}
+        {showOverlay && overlayReason === 'in_class' && (
+          <>
+            <div className="board-ascii-indicator top-right" aria-label="System active">
+              [ <span className="board-ascii-blink">*</span> ]
+            </div>
+            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.45)' }}>
+              <div className="board-overlay-indicator" style={{ margin: '0 auto 1.2rem' }} />
+              <div style={{ fontSize: '1.25rem', letterSpacing: '0.04em', fontWeight: 500 }}>
+                Výuka probíhá
+              </div>
+              <div style={{ fontSize: '0.95rem', marginTop: '0.4rem', opacity: 0.7 }}>
+                Obrazovka se aktivuje o přestávce
+              </div>
+              <div
+                style={{
+                  fontSize: '1.75rem',
+                  fontWeight: 600,
+                  marginTop: '1.25rem',
+                  opacity: 0.55,
+                  letterSpacing: '0.05em',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {clockLabel}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {!showOverlay && (

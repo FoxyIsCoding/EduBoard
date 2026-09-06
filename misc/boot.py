@@ -9,13 +9,13 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 from aengine import AnimationEngine
-from logo import text as logo_ascii
+from logo import get_logo_text
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
-WEBSITE_URL = os.environ["WEBSITE_URL"]
-DEBUG = os.environ["DEBUG"]
+WEBSITE_URL = os.getenv("WEBSITE_URL", "http://localhost:8000")
+DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
 
 
 def main(stdscr):
@@ -26,32 +26,30 @@ def main(stdscr):
 
         if DEBUG:
             try:
-                # result = subprocess.run(
-                #     ["fastfetch", "--logo", "none", "--structure-disabled", "colors"],
-                #     capture_output=True, text=True
-                # )
-                result = subprocess.run(
-                    ["neofetch", "--stdout"],
-                    capture_output=True,
-                    text=True,
-                )
-                for line in result.stdout.splitlines():
-                    if line.strip():
-                        engine.log(line)
+                for cmd in [["fastfetch", "--logo", "none"], ["neofetch", "--stdout"], ["uname", "-a"]]:
+                    try:
+                        result = subprocess.run(cmd, capture_output=True, text=True)
+                        if result.returncode == 0 and result.stdout.strip():
+                            for line in result.stdout.splitlines():
+                                if line.strip():
+                                    engine.log(line)
+                            break
+                    except FileNotFoundError:
+                        continue
             except Exception:
                 pass
 
             engine.sleep(3)
 
         engine.clear_logs()
-        engine.set_ascii(logo_ascii)
+        engine.set_ascii(get_logo_text())
         engine.ensure_healthy()
 
         ready_event = threading.Event()
 
         def wait_for_website():
             try:
-                engine.log(f"→ Waiting for {WEBSITE_URL} to be ready...")
+                engine.log(f"ℹ Probing backend at {WEBSITE_URL}...")
                 start_time = time.time()
                 timeout = 60
 
@@ -60,7 +58,7 @@ def main(stdscr):
                         resp = httpx.get(WEBSITE_URL, timeout=2)
                         if resp.status_code < 400:
                             engine.log(
-                                f"✓ {WEBSITE_URL} is ready (status {resp.status_code})"
+                                f"✔ Backend ready ({WEBSITE_URL} status {resp.status_code})"
                             )
                             ready_event.set()
                             return
@@ -71,11 +69,11 @@ def main(stdscr):
 
                 if not ready_event.is_set():
                     engine.log(
-                        f"✗ Timeout waiting for {WEBSITE_URL} (continuing anyway)"
+                        f"⚠ Timeout waiting for {WEBSITE_URL} (continuing anyway)"
                     )
                     ready_event.set()
             except Exception as exc:
-                engine.log(f"✗ Startup check failed: {exc}")
+                engine.log(f"✖ Startup check failed: {exc}")
                 ready_event.set()
 
         threading.Thread(target=wait_for_website, daemon=True).start()
@@ -90,7 +88,7 @@ def main(stdscr):
             engine.animate_ascii_move(duration=3, direction="out")
 
         engine.ensure_healthy()
-        engine.log("→ Switching to tty2...")
+        engine.log("❯ Switching to tty2...")
         subprocess.run(["sudo", "chvt", "2"])
 
         env = os.environ.copy()
@@ -108,11 +106,11 @@ def main(stdscr):
         )
 
         # Start Sway
-        engine.log("→ Launching Sway...")
+        engine.log("❯ Launching Sway kiosk...")
         try:
             subprocess.run("sway -d > ~/sway.log 2>&1", env=env, check=True, shell=True)
         except Exception as e:
-            engine.log(f"✗ Failed to start Sway: {e}")
+            engine.log(f"✖ Failed to start Sway: {e}")
             engine.sleep(10)
     finally:
         if engine is not None:

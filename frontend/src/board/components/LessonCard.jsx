@@ -17,7 +17,7 @@ function toneStyle(tone) {
       rail: '#ffb020',
     }
   }
-  return { borderColor: 'color-mix(in srgb, var(--md-sys-color-outline) 42%, transparent)', background: 'var(--md-sys-color-surface-container-high)' }
+  return { borderColor: 'var(--board-border-subtle)', background: 'var(--md-sys-color-surface-container-high)' }
 }
 
 function LessonEntry({ entry, compact = false }) {
@@ -79,7 +79,7 @@ export default function LessonCard({ cell }) {
           height: '100%',
           borderRadius: 'var(--board-shape-medium)',
           background: 'var(--md-sys-color-surface-container)',
-          border: '1px solid color-mix(in srgb, var(--md-sys-color-outline) 28%, transparent)',
+          border: '1px solid var(--board-border-subtle)',
         }}
       />
     )
@@ -143,7 +143,7 @@ export default function LessonCard({ cell }) {
               style={{
                 minHeight: 0,
                 overflow: 'hidden',
-                borderTop: index > 0 ? '1px solid color-mix(in srgb, var(--md-sys-color-outline) 25%, transparent)' : 'none',
+                borderTop: index > 0 ? '1px solid var(--board-border-subtle)' : 'none',
                 paddingTop: index > 0 ? (compactSplit ? '0.16rem' : '0.35rem') : 0,
               }}
             >

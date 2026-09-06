@@ -63,18 +63,36 @@ function sortItemsByPeriod(items) {
   })
 }
 
-async function requestJson(path) {
-  const response = await fetch(path)
-
-  if (!response.ok) {
-    throw new Error(`${path} vrátilo ${response.status}`)
+function allSettledSafe(promises) {
+  if (typeof Promise.allSettled === 'function') {
+    return Promise.allSettled(promises)
   }
+  return Promise.all(
+    promises.map((p) =>
+      p
+        .then((value) => ({ status: 'fulfilled', value }))
+        .catch((reason) => ({ status: 'rejected', reason })),
+    ),
+  )
+}
 
-  return response.json()
+async function requestJson(path, timeoutMs = 12000) {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+  const timeoutId = controller ? setTimeout(() => controller.abort(), timeoutMs) : null
+
+  try {
+    const response = await fetch(path, controller ? { signal: controller.signal } : {})
+    if (!response.ok) {
+      throw new Error(`${path} vrátilo ${response.status}`)
+    }
+    return await response.json()
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+  }
 }
 
 export async function fetchBoardPayload() {
-  const [lookup, timetable, events] = await Promise.allSettled([
+  const [lookup, timetable, events] = await allSettledSafe([
     requestJson('/api/data'),
     requestJson('/api/timetable'),
     requestJson('/api/events'),
@@ -347,12 +365,9 @@ export function buildPages(rows, events, substitutions) {
     })
   }
 
-  /* 
   const substitutionPages = chunk(substitutions, SUBSTITUTIONS_PER_PAGE)
 
-  if (substitutionPages.length === 0) {
-    pages.push({ id: 'substitutions-empty', type: 'substitutions', substitutions: [] })
-  } else {
+  if (substitutionPages.length > 0) {
     substitutionPages.forEach((pageSubstitutions, index) => {
       pages.push({
         id: `substitutions-${index}`,
@@ -361,7 +376,6 @@ export function buildPages(rows, events, substitutions) {
       })
     })
   }
-  */
 
   if (pages.length === 0) pages.push({ id: 'empty', type: 'empty' })
 

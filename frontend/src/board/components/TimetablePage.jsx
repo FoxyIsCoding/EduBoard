@@ -55,7 +55,7 @@ export default function TimetablePage({ rows, periods }) {
             borderRadius: '12px',
             borderColor: pIdx === activePeriod
               ? 'var(--md-sys-color-primary)'
-              : 'color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent)',
+              : 'var(--board-border-subtle)',
             borderStyle: 'solid',
             borderWidth: pIdx === activePeriod ? '2px' : '1px',
             padding: '0',
@@ -103,14 +103,12 @@ export default function TimetablePage({ rows, periods }) {
                 borderRadius: '12px',
                 display: 'grid',
                 placeItems: 'center',
-                borderColor: row
-                  ? 'color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent)'
-                  : 'color-mix(in srgb, var(--md-sys-color-outline) 26%, transparent)',
+                borderColor: 'var(--board-border-subtle)',
                 borderStyle: 'solid',
-                borderWidth: row ? '1px' : '1px',
+                borderWidth: '1px',
                 background: row
                   ? 'var(--md-sys-color-surface-container-high)'
-                  : 'color-mix(in srgb, var(--md-sys-color-surface-container-high) 76%, transparent)',
+                  : 'var(--board-surface-dim)',
                 padding: '0.45rem',
               }}
             >
@@ -140,9 +138,7 @@ export default function TimetablePage({ rows, periods }) {
                     borderRadius: '12px',
                     borderColor: isActiveCol && cell && cell.layout !== 'blank'
                       ? 'var(--md-sys-color-primary)'
-                      : cell && cell.layout !== 'blank'
-                        ? 'color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent)'
-                        : 'color-mix(in srgb, var(--md-sys-color-outline) 12%, transparent)',
+                      : 'var(--board-border-subtle)',
                     borderStyle: 'solid',
                     borderWidth: isActiveCol && cell && cell.layout !== 'blank' ? '2px' : '1px',
                     overflow: 'hidden',

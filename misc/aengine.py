@@ -9,7 +9,7 @@ class AnimationEngine:
     CONFIG = {
         "FPS": 30,
         "CHARS": ".:*+@#",
-        "PARTICLE_CHANCE": 0.65,
+        "PARTICLE_CHANCE": 0.0,
         "COLORS": {"ascii": 6, "logs": 10, "border": 11},
         "GAP_PERCENT": 0.10
     }
@@ -40,12 +40,68 @@ class AnimationEngine:
         curses.start_color()
         curses.use_default_colors()
         try:
-            for i in range(1, 7):
-                curses.init_pair(i, 231 + (i * 4), -1)
-            curses.init_pair(10, curses.COLOR_WHITE, -1)
-            curses.init_pair(11, 8, -1)
+            curses.init_pair(1, curses.COLOR_CYAN, -1)     # ℹ, ❯, ◇ (Cyan)
+            curses.init_pair(2, curses.COLOR_GREEN, -1)    # ✔ (Green)
+            curses.init_pair(3, curses.COLOR_YELLOW, -1)   # ⚠ (Yellow)
+            curses.init_pair(4, curses.COLOR_RED, -1)      # ✖ (Red)
+            curses.init_pair(5, curses.COLOR_MAGENTA, -1)  # Tags
+            curses.init_pair(6, curses.COLOR_CYAN, -1)     # Banner title
+            curses.init_pair(10, curses.COLOR_WHITE, -1)   # Text
+            curses.init_pair(11, 8, -1)                    # Dim border / timestamps
         except curses.error:
             pass
+
+    def _print_styled_line(self, y, x, raw_line, max_w):
+        if y < 0 or y >= self.h or x >= self.w:
+            return
+
+        cur_x = x
+        limit_x = min(self.w, x + max_w)
+        line = raw_line
+
+        # Format timestamp [HH:MM:SS] in dim gray
+        if line.startswith("[") and "]" in line[:12]:
+            idx = line.find("]") + 1
+            ts = line[:idx]
+            rem = line[idx:].lstrip()
+            avail = limit_x - cur_x
+            if avail > 0:
+                self.stdscr.addstr(y, cur_x, ts[:avail], curses.color_pair(11))
+                cur_x += min(len(ts), avail)
+            if cur_x < limit_x:
+                self.stdscr.addstr(y, cur_x, " ")
+                cur_x += 1
+            line = rem
+
+        if not line or cur_x >= limit_x:
+            return
+
+        # Check for NPX/CLI icon
+        icon_char = line[0]
+        color = curses.color_pair(10)
+        if icon_char in ("✔", "✓"):
+            color = curses.color_pair(2) | curses.A_BOLD
+        elif icon_char in ("✖", "✗"):
+            color = curses.color_pair(4) | curses.A_BOLD
+        elif icon_char in ("⚠", "!"):
+            color = curses.color_pair(3) | curses.A_BOLD
+        elif icon_char in ("ℹ", "❯", "◇", "→"):
+            color = curses.color_pair(1) | curses.A_BOLD
+        elif icon_char in ("●", "•"):
+            color = curses.color_pair(1)
+
+        # Print icon with spacing
+        if len(line) >= 2 and line[1] == " ":
+            avail = limit_x - cur_x
+            if avail > 0:
+                self.stdscr.addstr(y, cur_x, line[:2], color)
+                cur_x += min(2, avail)
+            line = line[2:]
+
+        # Print remaining text
+        avail = limit_x - cur_x
+        if avail > 0 and line:
+            self.stdscr.addstr(y, cur_x, line[:avail], curses.color_pair(10))
 
     def clear_logs(self):
         self.logs = []
@@ -151,26 +207,35 @@ class AnimationEngine:
             border_attr = curses.color_pair(11)
             text_attr = curses.color_pair(10) | curses.A_BOLD
 
-            # Border
-            self.stdscr.addstr(y, x, "┌" + "─" * (w - 2) + "┐", border_attr)
+            # Top frame with NPX/CLI header
+            hdr_tag = " eduboard "
+            hdr_sub = "❯ setup wizard "
+            self.stdscr.addstr(y, x, "┌─", border_attr)
+            self.stdscr.addstr(hdr_tag, curses.color_pair(1) | curses.A_BOLD)
+            self.stdscr.addstr(hdr_sub, curses.color_pair(10) | curses.A_DIM)
+            bar_len = max(0, w - len(hdr_tag) - len(hdr_sub) - 4)
+            self.stdscr.addstr("─" * bar_len + "┐", border_attr)
+
             for i in range(1, h - 1):
                 self.stdscr.addstr(y + i, x, "│", border_attr)
                 self.stdscr.addstr(y + i, x + w - 1, "│", border_attr)
-            self.stdscr.addstr(y + h - 1, x, "└" + "─" * (w - 2) + "┘", border_attr)
 
             # Clear interior
             for i in range(1, h - 1):
                 self.stdscr.addstr(y + i, x + 1, " " * (w - 2))
 
-            # Question (compact)
-            q_lines = [info['question'][i:i + w - 8] for i in range(0, len(info['question']), w - 8)]
+            # Question in Clack/NPX style with diamond icon
+            q_lines = [info['question'][i:i + w - 10] for i in range(0, len(info['question']), w - 10)]
             for i, line in enumerate(q_lines[:3]):
                 qy = y + 2 + i
                 if qy < y + h - 5:
-                    qx = x + (w - len(line)) // 2
-                    self.stdscr.addstr(qy, qx, line, text_attr)
+                    if i == 0:
+                        self.stdscr.addstr(qy, x + 3, "◇", curses.color_pair(1) | curses.A_BOLD)
+                        self.stdscr.addstr(qy, x + 5, line, text_attr)
+                    else:
+                        self.stdscr.addstr(qy, x + 5, line, text_attr)
 
-            # Input area - tighter spacing
+            # Input area with arrow icon
             input_start_y = y + len(q_lines) + 3
             visible_lines_count = h - len(q_lines) - 6
 
@@ -186,6 +251,8 @@ class AnimationEngine:
                 iy = input_start_y + i
                 if iy >= y + h - 2:
                     break
+                if i == 0:
+                    self.stdscr.addstr(iy, x + 3, "❯", curses.color_pair(1) | curses.A_BOLD)
                 self.stdscr.addstr(iy, x + 5, " " * input_width, curses.A_REVERSE)
                 for j, char in enumerate(line):
                     self.stdscr.addch(iy, x + 5 + j, char, curses.A_REVERSE)
@@ -203,9 +270,15 @@ class AnimationEngine:
                     blink = '█' if time.time() % 1 < 0.5 else '_'
                     self.stdscr.addch(cursor_y, cursor_x, blink, curses.A_REVERSE | curses.A_STANDOUT)
 
-            # Counter (moved closer)
-            count_text = f"{len(info['input'])}/{info['max_length']}"
-            self.stdscr.addstr(y + h - 2, x + w - len(count_text) - 3, count_text, curses.color_pair(10))
+            # Footer with counter and hint
+            ftr_hint = " Enter to submit "
+            count_text = f" {len(info['input'])}/{info['max_length']} "
+            mid_bar = max(0, w - len(ftr_hint) - len(count_text) - 4)
+            self.stdscr.addstr(y + h - 1, x, "└─", border_attr)
+            self.stdscr.addstr(ftr_hint, curses.color_pair(11))
+            self.stdscr.addstr("─" * mid_bar, border_attr)
+            self.stdscr.addstr(count_text, curses.color_pair(11))
+            self.stdscr.addstr("─┘", border_attr)
 
         except curses.error:
             pass
@@ -290,21 +363,30 @@ class AnimationEngine:
             start_y = self.h - len(display) - 2
             for i, line in enumerate(display):
                 if 0 <= start_y + i < self.h:
-                    try:
-                        self.stdscr.addstr(start_y + i, 2, line, curses.color_pair(10))
-                    except:
-                        pass
+                    self._print_styled_line(start_y + i, 2, line, self.w - 4)
             return
 
         start_y, start_x, win_h, win_w = self._get_win_coords()
         try:
             border_attr = curses.color_pair(11)
-            self.stdscr.addstr(start_y, start_x, "┌" + "─" * (win_w - 2) + "┐", border_attr)
+            hdr_badge = " eduboard "
+            hdr_step = "❯ live log "
+            self.stdscr.addstr(start_y, start_x, "┌─", border_attr)
+            self.stdscr.addstr(hdr_badge, curses.color_pair(1) | curses.A_BOLD)
+            self.stdscr.addstr(hdr_step, curses.color_pair(10) | curses.A_DIM)
+            bar_len = max(0, win_w - len(hdr_badge) - len(hdr_step) - 4)
+            self.stdscr.addstr("─" * bar_len + "┐", border_attr)
+
             for i in range(1, win_h - 1):
                 self.stdscr.addstr(start_y + i, start_x, "│", border_attr)
                 self.stdscr.addstr(start_y + i, start_x + win_w - 1, "│", border_attr)
-            self.stdscr.addstr(start_y + win_h - 1, start_x, "└" + "─" * (win_w - 2) + "┘", border_attr)
-        except:
+
+            ftr_badge = " live "
+            ftr_bar = max(0, win_w - len(ftr_badge) - 4)
+            self.stdscr.addstr(start_y + win_h - 1, start_x, "└" + "─" * ftr_bar, border_attr)
+            self.stdscr.addstr(ftr_badge, curses.color_pair(2) | curses.A_DIM)
+            self.stdscr.addstr("─┘", border_attr)
+        except Exception:
             pass
 
         max_lines = win_h - 2
@@ -314,10 +396,7 @@ class AnimationEngine:
         display = all_wrapped[-max_lines:]
 
         for i, line in enumerate(display):
-            try:
-                self.stdscr.addstr(start_y + 1 + i, start_x + 2, line[:win_w-4], curses.color_pair(10))
-            except:
-                pass
+            self._print_styled_line(start_y + 1 + i, start_x + 2, line, win_w - 4)
 
     def _render_loop(self):
         while self.running:
@@ -335,7 +414,7 @@ class AnimationEngine:
                     self.input_win_info['input_width'] = self.input_win_info['w'] - 10
 
                 # Particles
-                if random.random() < self.CONFIG["PARTICLE_CHANCE"]:
+                if self.CONFIG["PARTICLE_CHANCE"] > 0 and random.random() < self.CONFIG["PARTICLE_CHANCE"]:
                     self.particles.append({
                         "x": random.randint(0, self.w - 1),
                         "y": float(self.h - 1),
@@ -345,7 +424,8 @@ class AnimationEngine:
                     })
 
                 new_particles = []
-                wy, wx, wh, ww = self._get_win_coords()
+                if self.particles:
+                    wy, wx, wh, ww = self._get_win_coords()
 
                 for p in self.particles:
                     p["y"] -= p["speed"]

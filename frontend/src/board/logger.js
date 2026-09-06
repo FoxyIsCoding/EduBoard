@@ -9,13 +9,17 @@ const BORDERS = {
   warn: 'border:2px solid #eab308; background:#854d0e22; color:#fde047; padding:2px 6px; border-radius:4px;',
 }
 
+const isDebug = import.meta.env.VITE_DEBUG === 'true' || import.meta.env.DEV
+
 let tickCounter = 0
 
 export function logScreenState(msg, data = '') {
+  if (!isDebug) return
   console.log(`%c🖥 SCREEN ${msg}`, BORDERS.screen, data)
 }
 
 export function logScreenTick(msg, data = '') {
+  if (!isDebug) return
   tickCounter++
   if (tickCounter % 10 === 0) {
     console.log(`%c  ⏱ tick#${tickCounter} ${msg}`, BORDERS.tick, data)
@@ -23,30 +27,35 @@ export function logScreenTick(msg, data = '') {
 }
 
 export function logScreenChange(msg, data = '') {
+  if (!isDebug) return
   console.log(`%c🔲 OVERLAY ${msg}`, BORDERS.screenOff, data)
 }
 
 export function logPageRotation(msg, data = '') {
+  if (!isDebug) return
   console.log(`%c🔄 PAGE ${msg}`, BORDERS.page, data)
 }
 
 export function logDataRefresh(msg, data = '') {
+  if (!isDebug) return
   console.log(`%c📦 DATA ${msg}`, BORDERS.data, data)
 }
 
 export function logClockTick(msg, data = '') {
+  if (!isDebug) return
   console.log(`%c⏰ CLOCK ${msg}`, BORDERS.clock, data)
 }
 
 export function logError(msg, data = '') {
-  console.log(`%c❌ ERROR ${msg}`, BORDERS.error, data)
+  console.error(`%c❌ ERROR ${msg}`, BORDERS.error, data)
 }
 
 export function logWarn(msg, data = '') {
-  console.log(`%c⚠️ WARN ${msg}`, BORDERS.warn, data)
+  console.warn(`%c⚠️ WARN ${msg}`, BORDERS.warn, data)
 }
 
 export function logBorder(msg, style = 'info') {
+  if (!isDebug && style !== 'error') return
   const s = {
     info: 'border:1px solid #3b82f6; background:#1e3a5f; color:#bfdbfe; padding:4px 8px; border-radius:6px; font-size:13px;',
     success: 'border:2px solid #22c55e; background:#14532d; color:#bbf7d0; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold;',

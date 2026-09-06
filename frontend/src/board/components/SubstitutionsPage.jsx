@@ -3,14 +3,14 @@ function SubstitutionCard({ item, compact = false }) {
   const stateColor = isCancelled ? 'var(--md-sys-color-error)' : 'var(--md-sys-color-tertiary)'
   const stateOnColor = isCancelled ? 'var(--md-sys-color-on-error)' : 'var(--md-sys-color-on-tertiary)'
   const containerColor = isCancelled
-    ? 'color-mix(in srgb, var(--md-sys-color-error) 12%, var(--md-sys-color-surface-container-high))'
-    : 'color-mix(in srgb, var(--md-sys-color-tertiary) 12%, var(--md-sys-color-surface-container-high))'
+    ? 'rgba(255, 180, 171, 0.12)'
+    : 'rgba(201, 198, 220, 0.12)'
 
   return (
     <md-outlined-card
       style={{
         '--md-outlined-card-container-color': containerColor,
-        '--md-outlined-card-outline-color': `color-mix(in srgb, ${stateColor} 30%, transparent)`,
+        '--md-outlined-card-outline-color': isCancelled ? 'rgba(255, 180, 171, 0.35)' : 'rgba(201, 198, 220, 0.35)',
         borderRadius: 'var(--board-shape-medium)',
         height: '100%',
         display: 'flex',

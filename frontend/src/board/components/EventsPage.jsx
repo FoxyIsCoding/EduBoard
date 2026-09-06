@@ -98,7 +98,7 @@ function EventCard({ event, config }) {
         height: '100%',
         overflow: 'hidden',
         background: 'var(--md-sys-color-surface-container-high)',
-        border: '1px solid color-mix(in srgb, var(--md-sys-color-outline) 34%, transparent)',
+        border: '1px solid var(--board-border-subtle)',
         boxShadow: 'none',
       }}
     >
