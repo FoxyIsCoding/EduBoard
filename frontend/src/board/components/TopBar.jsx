@@ -1,5 +1,3 @@
-import { Monitor } from 'lucide-react'
-
 export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode = false }) {
   // Czech academic calendar: determine even (sudý) or odd (lichý) week
   const now = new Date()
@@ -10,46 +8,24 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
 
   return (
     <header className="edupage-topbar">
-      {/* Left Column: School / System Brand & View Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+      {/* Left Column: View Title */}
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.3rem 0.65rem',
-            borderRadius: 'var(--kiosk-radius-sm)',
-            background: 'var(--kiosk-active-cell-bg)',
-            border: '1.5px solid var(--kiosk-grid-border)',
-            color: 'var(--kiosk-brand-blue)',
-            fontWeight: 800,
-            fontSize: 'clamp(0.85rem, 1vw, 1.15rem)',
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
+            fontSize: 'clamp(1.4rem, 1.9vw, 2.4rem)',
+            fontWeight: 900,
+            letterSpacing: '-0.02em',
+            color: 'var(--kiosk-text-primary)',
+            lineHeight: 1.1,
           }}
         >
-          <Monitor size={18} color="var(--kiosk-brand-blue)" />
-          <span style={{ color: 'var(--kiosk-text-primary)' }}>EduPage</span>
+          {pageTitle}
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div
-            style={{
-              fontSize: 'clamp(1.2rem, 1.6vw, 2rem)',
-              fontWeight: 900,
-              letterSpacing: '-0.01em',
-              color: 'var(--kiosk-text-primary)',
-              lineHeight: 1.15,
-            }}
-          >
-            {pageTitle}
-          </div>
-          {isLocalMode && (
-            <span style={{ fontSize: '0.7rem', color: 'var(--kiosk-brand-blue)', fontWeight: 700 }}>
-              MOCK DATA / DEMO MODE
-            </span>
-          )}
-        </div>
+        {isLocalMode && (
+          <span style={{ fontSize: '0.72rem', color: 'var(--kiosk-brand-blue)', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '0.15rem' }}>
+            Demo Mode
+          </span>
+        )}
       </div>
 
       {/* Center Column: Large Authoritative Digital Clock */}
