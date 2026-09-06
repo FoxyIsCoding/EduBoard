@@ -19,17 +19,17 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
             gap: '0.5rem',
             padding: '0.3rem 0.65rem',
             borderRadius: 'var(--kiosk-radius-sm)',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            color: '#FFFFFF',
+            background: 'var(--kiosk-active-cell-bg)',
+            border: '1.5px solid var(--kiosk-grid-border)',
+            color: 'var(--kiosk-brand-blue)',
             fontWeight: 800,
             fontSize: 'clamp(0.85rem, 1vw, 1.15rem)',
             letterSpacing: '0.04em',
             textTransform: 'uppercase',
           }}
         >
-          <Monitor size={18} color="var(--kiosk-nav-accent)" />
-          <span>EduPage</span>
+          <Monitor size={18} color="var(--kiosk-brand-blue)" />
+          <span style={{ color: 'var(--kiosk-text-primary)' }}>EduPage</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -38,14 +38,14 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
               fontSize: 'clamp(1.2rem, 1.6vw, 2rem)',
               fontWeight: 900,
               letterSpacing: '-0.01em',
-              color: '#FFFFFF',
+              color: 'var(--kiosk-text-primary)',
               lineHeight: 1.15,
             }}
           >
             {pageTitle}
           </div>
           {isLocalMode && (
-            <span style={{ fontSize: '0.7rem', color: 'var(--kiosk-nav-accent)', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--kiosk-brand-blue)', fontWeight: 700 }}>
               MOCK DATA / DEMO MODE
             </span>
           )}
@@ -65,7 +65,7 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
             fontSize: 'clamp(2.6rem, 3.8vw, 4.6rem)',
             fontWeight: 900,
             letterSpacing: '-0.02em',
-            color: '#FFFFFF',
+            color: 'var(--kiosk-text-primary)',
             fontVariantNumeric: 'tabular-nums',
             lineHeight: 1,
           }}
@@ -88,7 +88,7 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
           style={{
             fontSize: 'clamp(1.15rem, 1.45vw, 1.7rem)',
             fontWeight: 800,
-            color: '#FFFFFF',
+            color: 'var(--kiosk-text-primary)',
             lineHeight: 1.15,
           }}
         >
@@ -99,7 +99,7 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
           <span
             style={{
               fontSize: 'clamp(0.85rem, 1.05vw, 1.25rem)',
-              color: 'var(--kiosk-nav-subtext)',
+              color: 'var(--kiosk-text-secondary)',
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
             }}
@@ -111,9 +111,9 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
             style={{
               padding: '0.12rem 0.45rem',
               borderRadius: 'var(--kiosk-radius-sm)',
-              background: 'rgba(255, 255, 255, 0.12)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              color: '#FFFFFF',
+              background: 'var(--kiosk-header-bg)',
+              border: '1px solid var(--kiosk-grid-border)',
+              color: 'var(--kiosk-text-secondary)',
               fontSize: 'clamp(0.68rem, 0.75vw, 0.85rem)',
               fontWeight: 700,
               letterSpacing: '0.04em',

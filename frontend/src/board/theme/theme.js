@@ -1,31 +1,31 @@
 /**
- * Authentic EduPage & School Kiosk Design System
- * Faithfully adapted from official aSc EduPage Infoscreen and European school hallway displays.
- * Clean, high-contrast institutional design engineered for maximum distance readability.
+ * Pure White Mode School Kiosk Design System
+ * 100% Light Mode: Pure white topbar, bright daylight canvas, crisp white cards, and high-contrast ink typography.
  */
 
 const LIGHT_TOKENS = {
-  // TopBar / Navigation Banner (EduPage deep navy header)
-  '--kiosk-nav-bg': '#0F1E36',
-  '--kiosk-nav-text': '#FFFFFF',
-  '--kiosk-nav-subtext': '#94A3B8',
-  '--kiosk-nav-accent': '#38BDF8',
+  // TopBar / Navigation Banner (Pure White)
+  '--kiosk-nav-bg': '#FFFFFF',
+  '--kiosk-nav-border': '#E2E8F0',
+  '--kiosk-nav-text': '#0F172A',
+  '--kiosk-nav-subtext': '#475569',
+  '--kiosk-nav-accent': '#1D4ED8',
 
   // Grid Canvas & Surfaces
-  '--kiosk-bg': '#E2E8F0',
+  '--kiosk-bg': '#F8FAFC',
   '--kiosk-surface': '#FFFFFF',
   '--kiosk-grid-border': '#CBD5E1',
   '--kiosk-header-bg': '#F1F5F9',
   '--kiosk-card-bg': '#FFFFFF',
   '--kiosk-card-empty': '#F8FAFC',
 
-  // Active period highlight (EduPage royal blue)
+  // Active period highlight (Royal Blue)
   '--kiosk-active-header-bg': '#1D4ED8',
   '--kiosk-active-header-text': '#FFFFFF',
   '--kiosk-active-cell-border': '#2563EB',
   '--kiosk-active-cell-bg': '#EFF6FF',
 
-  // Typography
+  // Typography (High-contrast deep ink slate)
   '--kiosk-text-primary': '#0F172A',
   '--kiosk-text-secondary': '#475569',
   '--kiosk-text-muted': '#64748B',
@@ -46,8 +46,8 @@ const LIGHT_TOKENS = {
   '--kiosk-status-event-badge': '#059669',
   '--kiosk-status-event-text': '#166534',
 
-  // Room pill
-  '--kiosk-room-bg': '#1E293B',
+  // Room pill (Classroom badge)
+  '--kiosk-room-bg': '#0F172A',
   '--kiosk-room-text': '#FFFFFF',
 
   // Brand accents
@@ -56,14 +56,15 @@ const LIGHT_TOKENS = {
 }
 
 const DARK_TOKENS = {
-  // Slate Dark fallback if requested
-  '--kiosk-nav-bg': '#090D16',
+  // Dark mode fallback ONLY if ?theme=dark is passed
+  '--kiosk-nav-bg': '#0F172A',
+  '--kiosk-nav-border': '#1E293B',
   '--kiosk-nav-text': '#FFFFFF',
   '--kiosk-nav-subtext': '#94A3B8',
   '--kiosk-nav-accent': '#38BDF8',
 
-  '--kiosk-bg': '#0F172A',
-  '--kiosk-surface': '#1E293B',
+  '--kiosk-bg': '#0B0F19',
+  '--kiosk-surface': '#111827',
   '--kiosk-grid-border': 'rgba(255, 255, 255, 0.15)',
   '--kiosk-header-bg': '#1E293B',
   '--kiosk-card-bg': '#182234',
@@ -118,19 +119,9 @@ function applyTokens(tokens) {
 export function applyKioskTheme() {
   const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
   const urlTheme = urlParams?.get('theme')
-  const envTheme = import.meta.env.VITE_USE_LIGHT_THEME
 
-  // Default to official institutional Light Mode
-  let isLight = true
-  if (urlTheme === 'dark') {
-    isLight = false
-  } else if (urlTheme === 'light') {
-    isLight = true
-  } else if (envTheme === 'false') {
-    isLight = false
-  } else if (envTheme === 'true') {
-    isLight = true
-  }
+  // Always default to pure white mode unless ?theme=dark is explicitly specified
+  const isLight = urlTheme !== 'dark'
 
   const tokens = isLight ? LIGHT_TOKENS : DARK_TOKENS
   applyTokens({ ...tokens, ...SHARED_TOKENS })

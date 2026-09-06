@@ -33,10 +33,11 @@ body,
   overflow: hidden;
 }
 
-/* Top Navigation Banner */
+/* Pure White Top Navigation Banner */
 .edupage-topbar {
   background: var(--kiosk-nav-bg);
   color: var(--kiosk-nav-text);
+  border-bottom: 1.5px solid var(--kiosk-nav-border);
   min-height: clamp(52px, 7.5vh, 76px);
   padding: 0 clamp(1rem, 1.8vw, 2.4rem);
   display: grid;
@@ -44,7 +45,7 @@ body,
   align-items: center;
   gap: 1rem;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   z-index: 10;
 }
 
@@ -52,7 +53,7 @@ body,
 .edupage-progress-rail {
   height: 3px;
   width: 100%;
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--kiosk-nav-border);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -104,10 +105,10 @@ body,
   padding: clamp(3px, 0.35vw, 6px);
   border-radius: var(--kiosk-radius-md);
   border: 1.5px solid var(--kiosk-grid-border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-/* Timetable Cell / Module */
+/* Timetable Cell / Card */
 .edupage-card {
   position: relative;
   background: var(--kiosk-card-bg);
@@ -193,11 +194,12 @@ body,
   color: var(--kiosk-brand-blue);
 }
 
-/* Standby Overlay */
+/* Standby Overlay in White Mode */
 .board-overlay {
   position: fixed;
   inset: 0;
-  background: #0F1E36;
+  background: var(--kiosk-bg);
+  color: var(--kiosk-text-primary);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -215,7 +217,7 @@ body,
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(15, 23, 42, 0.15);
   animation: overlay-breath 3s ease-in-out infinite;
 }
 
@@ -230,7 +232,7 @@ body,
   font-size: clamp(0.9rem, 1.2vw, 1.15rem);
   font-weight: 600;
   letter-spacing: 0.15em;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--kiosk-text-muted);
   user-select: none;
   pointer-events: none;
   z-index: 10000;

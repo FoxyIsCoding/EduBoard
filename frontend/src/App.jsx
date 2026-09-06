@@ -85,10 +85,10 @@ export default function App() {
             </div>
             <div style={{ textAlign: 'center' }}>
               <div className="board-overlay-indicator" style={{ margin: '0 auto 1.4rem' }} />
-              <div style={{ fontSize: 'clamp(1.5rem, 2.2vw, 2.4rem)', letterSpacing: '0.04em', fontWeight: 900, color: '#FFFFFF' }}>
+              <div style={{ fontSize: 'clamp(1.5rem, 2.2vw, 2.4rem)', letterSpacing: '0.04em', fontWeight: 900, color: 'var(--kiosk-text-primary)' }}>
                 Výuka probíhá
               </div>
-              <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.45rem)', marginTop: '0.5rem', color: '#94A3B8' }}>
+              <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.45rem)', marginTop: '0.5rem', color: 'var(--kiosk-text-secondary)' }}>
                 Obrazovka se aktivuje o přestávce
               </div>
               <div
@@ -96,7 +96,7 @@ export default function App() {
                   fontSize: 'clamp(2.6rem, 4vw, 4.8rem)',
                   fontWeight: 900,
                   marginTop: '1.5rem',
-                  color: '#FFFFFF',
+                  color: 'var(--kiosk-text-primary)',
                   letterSpacing: '0.02em',
                   fontVariantNumeric: 'tabular-nums',
                 }}
