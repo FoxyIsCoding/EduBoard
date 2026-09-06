@@ -116,11 +116,25 @@ export default function App() {
 
   const isAdmin = route.startsWith('/admin') || route.includes('#admin')
 
+  useEffect(() => {
+    if (isAdmin) {
+      document.body.classList.add('admin-mode')
+      document.body.style.cursor = 'auto'
+      document.documentElement.style.cursor = 'auto'
+    } else {
+      document.body.classList.remove('admin-mode')
+      document.body.style.cursor = ''
+      document.documentElement.style.cursor = ''
+    }
+  }, [isAdmin])
+
   // If navigating to /admin or #admin, show Admin Remote Control panel
   if (isAdmin) {
     return (
       <ErrorBoundary>
-        <AdminRemote />
+        <div className="admin-scope" style={{ width: '100%', height: '100%', overflowY: 'auto', background: '#F8FAFC' }}>
+          <AdminRemote />
+        </div>
       </ErrorBoundary>
     )
   }

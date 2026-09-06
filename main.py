@@ -608,6 +608,13 @@ async def websocket_kiosk(websocket: WebSocket, role: str = "display"):
                         await websocket.send_json({"type": "error", "message": "Neplatný PIN / heslo"})
         except WebSocketDisconnect:
             remote_hub.disconnect_controller(websocket)
+    elif role == "preview":
+        await remote_hub.connect_preview(websocket)
+        try:
+            while True:
+                await websocket.receive_text()
+        except WebSocketDisconnect:
+            remote_hub.disconnect_preview(websocket)
     else:
         await remote_hub.connect_display(websocket)
         try:

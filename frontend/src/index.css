@@ -23,6 +23,44 @@ body,
   text-rendering: optimizeLegibility;
 }
 
+/* Admin Remote Controller: Restore visible pointer and text cursors */
+body.admin-mode,
+body.admin-mode *,
+.admin-scope,
+.admin-scope * {
+  cursor: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+}
+
+body.admin-mode button,
+body.admin-mode a,
+body.admin-mode input,
+body.admin-mode select,
+body.admin-mode label,
+body.admin-mode [role="button"],
+.admin-scope button,
+.admin-scope a,
+.admin-scope input,
+.admin-scope select,
+.admin-scope label,
+.admin-scope [role="button"] {
+  cursor: pointer !important;
+}
+
+body.admin-mode input[type="text"],
+body.admin-mode input[type="password"],
+body.admin-mode input[type="number"],
+body.admin-mode input[type="url"],
+body.admin-mode textarea,
+.admin-scope input[type="text"],
+.admin-scope input[type="password"],
+.admin-scope input[type="number"],
+.admin-scope input[type="url"],
+.admin-scope textarea {
+  cursor: text !important;
+}
+
 /* Master Kiosk Viewport Shell */
 .edupage-shell {
   width: 100vw;

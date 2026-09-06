@@ -12,8 +12,484 @@ import {
   Lock,
   LogOut,
   Monitor,
-  RotateCcw
+  RotateCcw,
+  ExternalLink,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Radio,
 } from 'lucide-react'
+
+function ScreenPreviewCard({
+  remoteState,
+  currentMode,
+  isCasting,
+  localStreamRef,
+  onRevertToNormal,
+  connectedDisplays,
+}) {
+  const containerRef = useRef(null)
+  const [scale, setScale] = useState(0.3)
+  const [activeSlideIdx, setActiveSlideIdx] = useState(0)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [iframeKey, setIframeKey] = useState(0)
+  const videoRef = useRef(null)
+
+  // Auto-cycle slide in preview if slideshow is active
+  useEffect(() => {
+    if (currentMode !== 'slideshow' || !remoteState.images?.length) return
+    const interval = remoteState.slideIntervalMs || 8000
+    const timer = setInterval(() => {
+      setActiveSlideIdx((prev) => (prev + 1) % remoteState.images.length)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [currentMode, remoteState.images, remoteState.slideIntervalMs])
+
+  // Attach cast stream to video preview if casting
+  useEffect(() => {
+    if (videoRef.current && localStreamRef?.current) {
+      videoRef.current.srcObject = localStreamRef.current
+    }
+  }, [localStreamRef, isCasting, currentMode])
+
+  // Measure container for 16:9 iframe transform scale (base 1280x720)
+  useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.getBoundingClientRect().width
+        if (w > 0) setScale(w / 1280)
+      }
+    }
+    updateScale()
+    const ro = new ResizeObserver(updateScale)
+    if (containerRef.current) ro.observe(containerRef.current)
+    return () => ro.disconnect()
+  }, [isCollapsed, currentMode])
+
+  const currentSlide = remoteState.images?.[activeSlideIdx] || remoteState.images?.[0]
+
+  let previewEmbedUrl = remoteState.browserUrl
+  if (previewEmbedUrl?.includes('youtube.com/watch?v=')) {
+    const videoId = previewEmbedUrl.split('v=')[1]?.split('&')[0]
+    if (videoId) previewEmbedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`
+  } else if (previewEmbedUrl?.includes('youtu.be/')) {
+    const videoId = previewEmbedUrl.split('youtu.be/')[1]?.split('?')[0]
+    if (videoId) previewEmbedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`
+  }
+
+  return (
+    <div
+      style={{
+        background: '#FFFFFF',
+        border: '1.5px solid #CBD5E1',
+        borderRadius: '16px',
+        padding: '1.25rem',
+        marginBottom: '1.5rem',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+      }}
+    >
+      {/* Header bar of the preview card */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: isCollapsed ? 0 : '1rem',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div
+            style={{
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: !remoteState.tvPower
+                ? '#EF4444'
+                : currentMode === 'alert'
+                  ? '#DC2626'
+                  : '#10B981',
+              boxShadow: !remoteState.tvPower
+                ? '0 0 6px rgba(239, 68, 68, 0.7)'
+                : currentMode === 'alert'
+                  ? '0 0 8px rgba(220, 38, 38, 0.8)'
+                  : '0 0 8px rgba(16, 185, 129, 0.7)',
+            }}
+          />
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Živý obraz z obrazovky ({connectedDisplays} {connectedDisplays === 1 ? 'TV' : 'TV obrazovky'})
+            </div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A' }}>
+              {currentMode === 'normal' && (remoteState.frozenClass ? `Rozvrh (Zafixována ${remoteState.frozenClass})` : 'Běžný rozvrh a suplování')}
+              {currentMode === 'slideshow' && `Prezentace fotografií (${remoteState.images.length} snímků)`}
+              {currentMode === 'browser' && 'Webové vysílání'}
+              {currentMode === 'cast' && 'Bezdrátové sdílení obrazovky'}
+              {currentMode === 'alert' && 'Mimořádné hlášení (Poplach)'}
+              {currentMode === 'standby' && 'Vypnutá obrazovka (Pohotovostní režim)'}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {currentMode !== 'normal' && (
+            <button
+              onClick={onRevertToNormal}
+              style={{
+                padding: '0.4rem 0.85rem',
+                background: '#1D4ED8',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              <RotateCcw size={14} />
+              <span>Vrátit na rozvrh</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setIframeKey((k) => k + 1)}
+            title="Obnovit náhled"
+            style={{
+              padding: '0.45rem',
+              background: '#F1F5F9',
+              border: '1px solid #CBD5E1',
+              borderRadius: '8px',
+              color: '#475569',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <RefreshCw size={15} />
+          </button>
+
+          <button
+            onClick={() => window.open('/', '_blank')}
+            title="Otevřít kiosek v novém okně"
+            style={{
+              padding: '0.45rem',
+              background: '#F1F5F9',
+              border: '1px solid #CBD5E1',
+              borderRadius: '8px',
+              color: '#475569',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <ExternalLink size={15} />
+          </button>
+
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? 'Zobrazit náhled' : 'Skrýt náhled'}
+            style={{
+              padding: '0.45rem',
+              background: '#F1F5F9',
+              border: '1px solid #CBD5E1',
+              borderRadius: '8px',
+              color: '#475569',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            {isCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Collapsible TV Screen Bezel */}
+      {!isCollapsed && (
+        <div
+          style={{
+            background: '#0B0F17',
+            padding: '8px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+            border: '2px solid #1E293B',
+          }}
+        >
+          <div
+            ref={containerRef}
+            style={{
+              width: '100%',
+              aspectRatio: '16 / 9',
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: '6px',
+              background: '#000000',
+            }}
+          >
+            {/* Standby View */}
+            {!remoteState.tvPower ? (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748B',
+                }}
+              >
+                <Power size={32} color="#475569" style={{ marginBottom: '0.4rem' }} />
+                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#94A3B8' }}>
+                  Obrazovka v režimu Standby
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.2rem' }}>
+                  TV panel je v úsporném černém režimu
+                </div>
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '0.75rem',
+                    right: '0.85rem',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#EF4444',
+                    boxShadow: '0 0 8px rgba(239, 68, 68, 0.8)',
+                  }}
+                  title="Standby LED"
+                />
+              </div>
+            ) : currentMode === 'alert' ? (
+              /* Emergency Alert View */
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  background: remoteState.alertLevel === 'critical' ? '#DC2626' : '#D97706',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '1.25rem',
+                  textAlign: 'center',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    display: 'grid',
+                    placeItems: 'center',
+                    marginBottom: '0.4rem',
+                  }}
+                >
+                  <AlertTriangle size={24} color="#FFFFFF" />
+                </div>
+                <div style={{ fontSize: '0.72rem', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.9 }}>
+                  Mimořádné hlášení
+                </div>
+                <div style={{ fontSize: 'clamp(0.95rem, 2vw, 1.35rem)', fontWeight: 900, marginTop: '0.25rem', lineHeight: 1.25 }}>
+                  {remoteState.alertMessage || 'POZOR: Probíhá bezpečnostní cvičení.'}
+                </div>
+              </div>
+            ) : currentMode === 'slideshow' ? (
+              /* Slideshow View */
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  background: '#000000',
+                }}
+              >
+                {currentSlide ? (
+                  <>
+                    <img
+                      src={currentSlide.url}
+                      alt={currentSlide.caption || 'Prezentace'}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                      }}
+                    />
+                    {currentSlide.caption && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: '0.6rem',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: 'rgba(15, 23, 42, 0.85)',
+                          color: '#FFFFFF',
+                          padding: '0.3rem 0.8rem',
+                          borderRadius: '16px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          maxWidth: '90%',
+                          textAlign: 'center',
+                          backdropFilter: 'blur(4px)',
+                        }}
+                      >
+                        {currentSlide.caption}
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '0.5rem',
+                        right: '0.6rem',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        color: '#FFFFFF',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '10px',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {activeSlideIdx + 1} / {remoteState.images.length}
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#94A3B8' }}>
+                    <ImageIcon size={32} style={{ margin: '0 auto 0.4rem', opacity: 0.6 }} />
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>Zatím žádné nahrané fotografie</div>
+                  </div>
+                )}
+              </div>
+            ) : currentMode === 'browser' ? (
+              /* Browser View */
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: '#FFFFFF',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '0.3rem 0.6rem',
+                    background: '#F1F5F9',
+                    borderBottom: '1px solid #E2E8F0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    fontSize: '0.72rem',
+                    color: '#475569',
+                  }}
+                >
+                  <Globe size={12} color="#2563EB" />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                    {remoteState.browserUrl || 'Není zadána žádná URL adresa'}
+                  </span>
+                </div>
+                {previewEmbedUrl ? (
+                  <iframe
+                    src={previewEmbedUrl}
+                    title="Browser Preview"
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    style={{
+                      flex: 1,
+                      width: '100%',
+                      border: 'none',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                ) : (
+                  <div style={{ flex: 1, display: 'grid', placeItems: 'center', color: '#94A3B8', fontSize: '0.85rem', fontWeight: 700 }}>
+                    Zadejte webovou URL adresu pro promítnutí
+                  </div>
+                )}
+              </div>
+            ) : currentMode === 'cast' ? (
+              /* WebRTC Screen Cast View */
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  position: 'relative',
+                  background: '#000000',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {isCasting ? (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#FFFFFF', padding: '1rem' }}>
+                    <Cast size={36} color="#38BDF8" style={{ margin: '0 auto 0.4rem' }} />
+                    <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>Bezdrátové vysílání obrazovky</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.2rem' }}>
+                      Probíhá přenos ze zařízení
+                    </div>
+                  </div>
+                )}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '0.5rem',
+                    right: '0.6rem',
+                    background: '#DC2626',
+                    color: '#FFFFFF',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '10px',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
+                  <Radio size={11} />
+                  <span>ŽIVÝ PŘENOS</span>
+                </div>
+              </div>
+            ) : (
+              /* Normal Timetable Mode - Scaled Real Kiosk Preview */
+              <iframe
+                key={iframeKey}
+                src="/?preview=1"
+                title="Kiosk Live Preview"
+                style={{
+                  width: '1280px',
+                  height: '720px',
+                  border: 'none',
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'top left',
+                  pointerEvents: 'none',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function AdminRemote() {
   const [pin, setPin] = useState(() => localStorage.getItem('eduboard_admin_pin') || '')
@@ -85,6 +561,18 @@ export default function AdminRemote() {
       setAuthError('Chyba připojení k serveru.')
     }
   }
+
+  // Ensure mouse cursor is visible in admin interface
+  useEffect(() => {
+    document.body.classList.add('admin-mode')
+    document.body.style.cursor = 'auto'
+    document.documentElement.style.cursor = 'auto'
+    return () => {
+      document.body.classList.remove('admin-mode')
+      document.body.style.cursor = ''
+      document.documentElement.style.cursor = ''
+    }
+  }, [])
 
   // Verify PIN on mount if stored
   useEffect(() => {
@@ -309,6 +797,7 @@ export default function AdminRemote() {
   if (!isAuthenticated) {
     return (
       <div
+        className="admin-scope"
         style={{
           minHeight: '100vh',
           display: 'grid',
@@ -316,6 +805,7 @@ export default function AdminRemote() {
           background: '#F1F5F9',
           padding: '1.5rem',
           fontFamily: 'system-ui, sans-serif',
+          cursor: 'auto',
         }}
       >
         <div
@@ -412,12 +902,14 @@ export default function AdminRemote() {
 
   return (
     <div
+      className="admin-scope"
       style={{
         minHeight: '100vh',
         background: '#F8FAFC',
         color: '#0F172A',
         fontFamily: 'system-ui, sans-serif',
         paddingBottom: '4rem',
+        cursor: 'auto',
       }}
     >
       {/* Top Header */}
@@ -502,59 +994,18 @@ export default function AdminRemote() {
 
       {/* Main Container */}
       <main style={{ maxWidth: '800px', margin: '1.5rem auto', padding: '0 1rem' }}>
-        {/* Active Status Bar */}
-        <div
-          style={{
-            background: '#FFFFFF',
-            border: '1.5px solid #CBD5E1',
-            borderRadius: '12px',
-            padding: '1rem 1.25rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.5rem',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+        {/* Active Screen Live Preview Card */}
+        <ScreenPreviewCard
+          remoteState={remoteState}
+          currentMode={currentMode}
+          isCasting={isCasting}
+          localStreamRef={localStreamRef}
+          onRevertToNormal={() => {
+            if (isCasting) stopScreenCast()
+            updateRemoteState({ mode: 'normal', frozenClass: null, autoRevertSeconds: null })
           }}
-        >
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Aktuální režim obrazovky
-            </div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0F172A', marginTop: '0.15rem' }}>
-              {currentMode === 'normal' && (remoteState.frozenClass ? `Rozvrh (Zafixována ${remoteState.frozenClass})` : 'Běžný rozvrh a suplování')}
-              {currentMode === 'slideshow' && 'Prezentace fotografií'}
-              {currentMode === 'browser' && 'Webové vysílání'}
-              {currentMode === 'cast' && 'Bezdrátové sdílení obrazovky'}
-              {currentMode === 'alert' && 'Mimořádné hlášení (Poplach)'}
-              {currentMode === 'standby' && 'Vypnutá obrazovka (Pohotovostní režim)'}
-            </div>
-          </div>
-
-          {currentMode !== 'normal' && (
-            <button
-              onClick={() => {
-                if (isCasting) stopScreenCast()
-                updateRemoteState({ mode: 'normal', frozenClass: null, autoRevertSeconds: null })
-              }}
-              style={{
-                padding: '0.55rem 1rem',
-                background: '#1D4ED8',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 800,
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-              }}
-            >
-              <RotateCcw size={16} />
-              <span>Vrátit na rozvrh</span>
-            </button>
-          )}
-        </div>
+          connectedDisplays={connectedDisplays}
+        />
 
         {/* Navigation Tabs */}
         <div

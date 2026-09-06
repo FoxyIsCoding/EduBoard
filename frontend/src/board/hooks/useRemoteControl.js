@@ -24,7 +24,9 @@ export function useRemoteControl() {
       if (isUnmounted) return
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const host = window.location.host || 'localhost:8000'
-      const wsUrl = `${protocol}//${host}/ws/kiosk?role=display`
+      const isPreview = typeof window !== 'undefined' && window.location.search.includes('preview=1')
+      const role = isPreview ? 'preview' : 'display'
+      const wsUrl = `${protocol}//${host}/ws/kiosk?role=${role}`
 
       try {
         const ws = new WebSocket(wsUrl)

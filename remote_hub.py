@@ -39,6 +39,7 @@ class RemoteHub:
         self.state: Dict[str, Any] = dict(DEFAULT_STATE)
         self.displays: Set[WebSocket] = set()
         self.controllers: Set[WebSocket] = set()
+        self.previews: Set[WebSocket] = set()
         self._load_state()
 
     def _load_state(self):
@@ -86,6 +87,16 @@ class RemoteHub:
         self.displays.discard(websocket)
         logger.info(f"Kiosk display disconnected. Remaining displays: {len(self.displays)}")
 
+    async def connect_preview(self, websocket: WebSocket):
+        await websocket.accept()
+        self.previews.add(websocket)
+        logger.info(f"Preview display connected via WebSocket. Active previews: {len(self.previews)}")
+        await websocket.send_json({"type": "state", "data": self.state})
+
+    def disconnect_preview(self, websocket: WebSocket):
+        self.previews.discard(websocket)
+        logger.info(f"Preview display disconnected. Remaining previews: {len(self.previews)}")
+
     async def connect_controller(self, websocket: WebSocket):
         await websocket.accept()
         self.controllers.add(websocket)
@@ -119,6 +130,14 @@ class RemoteHub:
             except Exception:
                 dead_controllers.add(ws)
         self.controllers -= dead_controllers
+
+        dead_previews = set()
+        for ws in self.previews:
+            try:
+                await ws.send_json(payload)
+            except Exception:
+                dead_previews.add(ws)
+        self.previews -= dead_previews
 
     async def update_state(self, updates: Dict[str, Any]) -> Dict[str, Any]:
         # Handle auto-revert timer calculation
