@@ -1,66 +1,86 @@
+import { Clock, MapPin, User, Users, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+
 function SubstitutionCard({ item, compact = false }) {
   const isCancelled = item.state === 'cancelled'
-  const stateColor = isCancelled ? 'var(--md-sys-color-error)' : 'var(--md-sys-color-tertiary)'
-  const stateOnColor = isCancelled ? 'var(--md-sys-color-on-error)' : 'var(--md-sys-color-on-tertiary)'
-  const containerColor = isCancelled
-    ? 'rgba(255, 180, 171, 0.12)'
-    : 'rgba(201, 198, 220, 0.12)'
 
   return (
-    <md-outlined-card
+    <article
+      className={`edusign-card ${isCancelled ? 'tone-cancelled' : 'tone-changed'}`}
       style={{
-        '--md-outlined-card-container-color': containerColor,
-        '--md-outlined-card-outline-color': isCancelled ? 'rgba(255, 180, 171, 0.35)' : 'rgba(201, 198, 220, 0.35)',
-        borderRadius: 'var(--board-shape-medium)',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        position: 'relative',
       }}
     >
+      {/* Top Accent Strip */}
       <div
         style={{
           height: compact ? '4px' : '6px',
           width: '100%',
-          background: stateColor,
+          background: isCancelled
+            ? 'var(--board-status-cancelled-border)'
+            : 'var(--board-status-changed-border)',
+          flexShrink: 0,
         }}
       />
-      <div style={{ padding: compact ? '0.75rem 1rem' : '1.5rem 1.8rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? '0.4rem' : '0.8rem' }}>
+
+      <div
+        style={{
+          padding: compact ? '0.75rem 1rem' : '1.25rem 1.6rem',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
+      >
+        {/* Top line: Class, Period and Status Badge */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? '0.35rem' : '0.75rem' }}>
           <div
             style={{
-              fontSize: compact ? '0.72rem' : '1.1rem',
-              fontWeight: 700,
-              color: 'var(--md-sys-color-primary)',
+              fontSize: compact ? '0.88rem' : '1.25rem',
+              fontWeight: 900,
+              color: 'var(--board-text-primary)',
               letterSpacing: '0.04em',
               textTransform: 'uppercase',
             }}
           >
-            {item.className} • {item.periodShort}. hod
+            <span style={{ color: 'var(--board-accent-primary)' }}>{item.className}</span>
+            <span style={{ marginInline: '0.4rem', opacity: 0.4 }}>•</span>
+            <span>{item.periodShort}. hod</span>
           </div>
+
           <span
+            className={`edusign-badge ${isCancelled ? 'badge-cancelled' : 'badge-changed'}`}
             style={{
-              fontSize: compact ? '0.62rem' : '0.9rem',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              padding: compact ? '0.15rem 0.5rem' : '0.25rem 0.8rem',
-              borderRadius: '999px',
-              background: stateColor,
-              color: stateOnColor,
-              letterSpacing: '0.05em',
+              fontSize: compact ? '0.7rem' : '0.88rem',
+              padding: compact ? '0.15rem 0.5rem' : '0.22rem 0.65rem',
             }}
           >
-            {isCancelled ? 'Zrušeno' : 'Změna'}
+            {isCancelled ? (
+              <>
+                <XCircle size={14} />
+                <span>Odpadá</span>
+              </>
+            ) : (
+              <>
+                <AlertTriangle size={14} />
+                <span>Změna</span>
+              </>
+            )}
           </span>
         </div>
 
+        {/* Middle: Subject Name */}
         <div
           style={{
-            fontSize: compact ? 'clamp(1.1rem, 1.3vw, 1.6rem)' : 'clamp(1.8rem, 2.8vw, 3.2rem)',
-            fontWeight: 800,
-            lineHeight: 1.1,
-            marginBottom: compact ? '0.4rem' : '1.2rem',
+            fontSize: compact ? 'clamp(1.2rem, 1.5vw, 1.8rem)' : 'clamp(1.8rem, 2.5vw, 3rem)',
+            fontWeight: 900,
+            lineHeight: 1.12,
+            letterSpacing: '-0.02em',
+            color: isCancelled ? 'var(--board-status-cancelled-text)' : 'var(--board-text-primary)',
+            textDecoration: isCancelled ? 'line-through' : 'none',
+            marginBottom: compact ? '0.4rem' : '1rem',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -69,41 +89,62 @@ function SubstitutionCard({ item, compact = false }) {
           {item.subjectLabel}
         </div>
 
+        {/* Bottom Metadata: Time, Room, Teacher, Group */}
         <div
           style={{
             marginTop: 'auto',
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: compact ? '0.4rem' : '1rem',
-            fontSize: compact ? 'clamp(0.75rem, 0.85vw, 1rem)' : 'clamp(1.1rem, 1.4vw, 1.6rem)',
-            color: 'var(--md-sys-color-on-surface-variant)',
+            gap: compact ? '0.4rem' : '0.75rem',
+            paddingTop: '0.5rem',
+            borderTop: '1px solid var(--board-border)',
+            fontSize: compact ? 'clamp(0.78rem, 0.9vw, 1rem)' : 'clamp(0.95rem, 1.2vw, 1.4rem)',
+            color: 'var(--board-text-secondary)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: compact ? '0.3rem' : '0.6rem', overflow: 'hidden' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '1.2em', opacity: 0.8 }}>schedule</span>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.periodTime}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
+            <Clock size={16} color="var(--board-accent-primary)" style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+              {item.periodTime}
+            </span>
           </div>
-          {item.roomLabel && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: compact ? '0.3rem' : '0.6rem', overflow: 'hidden' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '1.2em', opacity: 0.8 }}>location_on</span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.roomLabel}</span>
+
+          {item.roomLabel ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
+              <MapPin size={16} color="var(--board-accent-primary)" style={{ flexShrink: 0 }} />
+              <span
+                className="edusign-badge badge-room"
+                style={{
+                  fontSize: compact ? '0.72rem' : '0.88rem',
+                  padding: '0.1rem 0.45rem',
+                  fontWeight: 800,
+                }}
+              >
+                {item.roomLabel}
+              </span>
             </div>
-          )}
+          ) : <div />}
+
           {item.teacherLabel && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: compact ? '0.3rem' : '0.6rem', overflow: 'hidden', gridColumn: 'span 2' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '1.2em', opacity: 0.8 }}>person</span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.teacherLabel}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden', gridColumn: 'span 2' }}>
+              <User size={16} style={{ flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700, color: 'var(--board-text-primary)' }}>
+                {item.teacherLabel}
+              </span>
             </div>
           )}
+
           {item.groupLabel && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: compact ? '0.3rem' : '0.6rem', overflow: 'hidden', gridColumn: 'span 2' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '1.2em', opacity: 0.8 }}>group</span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.groupLabel}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden', gridColumn: 'span 2' }}>
+              <Users size={16} style={{ flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                {item.groupLabel}
+              </span>
             </div>
           )}
         </div>
       </div>
-    </md-outlined-card>
+    </article>
   )
 }
 
@@ -111,28 +152,41 @@ export default function SubstitutionsPage({ substitutions }) {
   if (!substitutions.length) {
     return (
       <div style={{ height: '100%', display: 'grid', placeItems: 'center' }}>
-        <md-filled-tonal-card
+        <div
+          className="edusign-card"
           style={{
-            padding: '2.5rem 3rem',
-            borderRadius: '24px',
+            padding: '2.5rem 3.5rem',
+            borderRadius: 'var(--board-radius-large)',
             textAlign: 'center',
-            background: 'var(--md-sys-color-surface-container-high)',
+            background: 'var(--board-surface-card)',
             maxWidth: '600px',
+            border: '1.5px solid var(--board-border-strong)',
           }}
         >
-          <div style={{ fontSize: '5rem', marginBottom: '1.5rem' }}>🎉</div>
-          <h3 style={{ margin: 0, fontSize: '2.6rem', fontWeight: 800, color: 'var(--md-sys-color-primary)' }}>Bez suplování</h3>
-          <p
+          <div style={{ marginBottom: '1.2rem', color: 'var(--board-accent-primary)' }}>
+            <CheckCircle2 size={56} style={{ margin: '0 auto' }} />
+          </div>
+          <h3
             style={{
-              margin: '1.2rem 0 0',
-              color: 'var(--md-sys-color-on-surface-variant)',
-              fontSize: '1.4rem',
-              lineHeight: 1.5,
+              margin: 0,
+              fontSize: 'clamp(2rem, 2.8vw, 3.2rem)',
+              fontWeight: 800,
+              color: 'var(--board-text-primary)',
             }}
           >
-            V aktuálním rozvrhu nejsou evidované žádné změny hodin. Užijte si klidný den!
+            Bez suplování
+          </h3>
+          <p
+            style={{
+              margin: '0.9rem 0 0',
+              color: 'var(--board-text-secondary)',
+              fontSize: 'clamp(1.1rem, 1.4vw, 1.6rem)',
+              lineHeight: 1.45,
+            }}
+          >
+            V aktuálním rozvrhu nejsou evidované žádné změny hodin. Výuka probíhá podle řádného rozvrhu.
           </p>
-        </md-filled-tonal-card>
+        </div>
       </div>
     )
   }

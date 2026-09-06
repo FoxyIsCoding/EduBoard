@@ -1,8 +1,3 @@
-:root {
-  --board-shape-large: 16px;
-  --board-shape-medium: 12px;
-}
-
 *,
 *::before,
 *::after {
@@ -15,36 +10,20 @@ body,
   width: 100%;
   height: 100%;
   margin: 0;
+  padding: 0;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   cursor: none;
-}
-
-body {
+  background: var(--board-bg);
+  color: var(--board-text-primary);
   font-family: var(--board-font-family);
-  background: var(--md-sys-color-surface);
-  color: var(--md-sys-color-on-surface);
-}
-
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
+/* Kiosk Layout Shell (overscan-safe) */
 .board-shell {
   width: 100%;
   height: 100%;
@@ -52,38 +31,111 @@ body {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: var(--board-kiosk-gap);
+  background: var(--board-bg);
 }
 
+/* Base Surface Card Container */
 .board-surface {
-  border-radius: var(--board-shape-large);
-  border: 1px solid var(--board-border-subtle);
-  background: var(--md-sys-color-surface-container);
+  border-radius: var(--board-radius-large);
+  border: 1.5px solid var(--board-border);
+  background: var(--board-surface);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
 }
 
+/* Card Component (replacing md-card) */
+.edusign-card {
+  position: relative;
+  border-radius: var(--board-radius-medium);
+  border: 1.5px solid var(--board-border);
+  background: var(--board-surface-card);
+  transition: border-color 0.2s ease, background 0.2s ease;
+  overflow: hidden;
+}
+
+.edusign-card.active-period {
+  border-color: var(--board-active-period-border) !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 16px var(--board-accent-glow);
+}
+
+/* Status variants for cards */
+.edusign-card.tone-changed {
+  border-color: var(--board-status-changed-border);
+  background: var(--board-status-changed-bg);
+}
+
+.edusign-card.tone-cancelled {
+  border-color: var(--board-status-cancelled-border);
+  background: var(--board-status-cancelled-bg);
+}
+
+.edusign-card.tone-event {
+  border-color: var(--board-status-event-border);
+  background: var(--board-status-event-bg);
+}
+
+/* High-visibility pill badge */
+.edusign-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--board-radius-pill);
+  font-size: clamp(0.72rem, 0.85vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.edusign-badge.badge-changed {
+  background: var(--board-status-changed-badge-bg);
+  color: var(--board-status-changed-badge-text);
+}
+
+.edusign-badge.badge-cancelled {
+  background: var(--board-status-cancelled-badge-bg);
+  color: var(--board-status-cancelled-badge-text);
+}
+
+.edusign-badge.badge-event {
+  background: var(--board-status-event-badge-bg);
+  color: var(--board-status-event-badge-text);
+}
+
+.edusign-badge.badge-room {
+  background: var(--board-room-bg);
+  border: 1px solid var(--board-room-border);
+  color: var(--board-room-text);
+}
+
+/* Progress rail */
 .expressive-progress-track {
   position: relative;
-  height: 12px;
+  height: 10px;
   width: 100%;
-  border-radius: 10px;
+  border-radius: var(--board-radius-pill);
   overflow: hidden;
-  background: var(--board-progress-track-bg);
+  background: var(--board-progress-track);
 }
 
 .expressive-progress-active {
   position: absolute;
   inset-block: 0;
   inset-inline-start: 0;
-  border-radius: 10px;
+  border-radius: var(--board-radius-pill);
   overflow: hidden;
   min-width: 8px;
-  background: var(--md-sys-color-primary);
+  background: var(--board-progress-bar);
   transition: width 220ms linear;
 }
 
 .expressive-progress-wave {
   width: 220%;
   height: 100%;
-  fill: var(--md-sys-color-primary);
+  fill: var(--board-progress-bar);
   animation: waveDrift var(--expressive-wave-duration, 1200ms) linear infinite;
 }
 
@@ -95,104 +147,58 @@ body {
   height: 4px;
   border-radius: 999px;
   transform: translate(-4px, -50%);
-  background: var(--md-sys-color-primary);
+  background: var(--board-progress-bar);
 }
 
 .expressive-progress-active.is-indeterminate {
   animation: indeterminateTravel calc(var(--expressive-wave-duration, 1200ms) * 1.8) ease-in-out infinite;
 }
 
-[dir='rtl'] .expressive-progress-wave {
-  animation-name: waveDriftRtl;
-}
-
-[dir='rtl'] .expressive-progress-active.is-indeterminate {
-  animation-name: indeterminateTravelRtl;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0.45;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 @keyframes waveDrift {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-54.545%);
-  }
-}
-
-@keyframes waveDriftRtl {
-  from {
-    transform: translateX(-54.545%);
-  }
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(-54.545%); }
 }
 
 @keyframes indeterminateTravel {
-  0% {
-    inset-inline-start: -40%;
-  }
-  50% {
-    inset-inline-start: 30%;
-  }
-  100% {
-    inset-inline-start: 100%;
-  }
+  0% { inset-inline-start: -40%; }
+  50% { inset-inline-start: 30%; }
+  100% { inset-inline-start: 100%; }
 }
 
-@keyframes indeterminateTravelRtl {
-  0% {
-    inset-inline-start: 100%;
-  }
-  50% {
-    inset-inline-start: 30%;
-  }
-  100% {
-    inset-inline-start: -40%;
-  }
-}
-
-/* --- Board overlay (screen off) --- */
+/* Standby Overlay */
 .board-overlay {
   position: fixed;
   inset: 0;
-  background: #000;
+  background: #000000;
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 1;
-  transition: opacity 800ms ease;
+  transition: opacity 600ms ease;
 }
+
 .board-overlay.hidden {
   opacity: 0;
   pointer-events: none;
 }
+
 .board-overlay-indicator {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
   animation: overlay-breath 4s ease-in-out infinite;
 }
+
 @keyframes overlay-breath {
-  0%, 100% { opacity: 0.02; transform: scale(1); }
-  50% { opacity: 0.06; transform: scale(1.05); }
+  0%, 100% { opacity: 0.03; transform: scale(1); }
+  50% { opacity: 0.08; transform: scale(1.06); }
 }
 
-/* Blinking ASCII activity indicator during lesson standby */
 .board-ascii-indicator {
   position: absolute;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: clamp(1rem, 1.4vw, 1.25rem);
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -203,13 +209,8 @@ body {
 }
 
 .board-ascii-indicator.top-right {
-  top: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
-  right: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
-}
-
-.board-ascii-indicator.bottom-right {
-  bottom: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
-  right: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
+  top: var(--board-kiosk-gutter);
+  right: var(--board-kiosk-gutter);
 }
 
 .board-ascii-blink {
@@ -218,10 +219,6 @@ body {
 }
 
 @keyframes ascii-blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.08;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.08; }
 }
