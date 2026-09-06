@@ -5,9 +5,10 @@ from pathlib import Path
 def get_commit_hash(short: bool = True) -> str:
     try:
         repo_dir = Path(__file__).resolve().parent.parent
+        cmd = ["git", "rev-parse", "--short", "HEAD"] if short else ["git", "rev-parse", "HEAD"]
         res = subprocess.run(
-            ["git", "rev-parse", "--short" if short else "HEAD"],
-            cwd=repo_dir,
+            cmd,
+            cwd=str(repo_dir),
             capture_output=True,
             text=True,
             timeout=2,

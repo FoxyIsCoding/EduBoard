@@ -68,7 +68,7 @@ If you are starting with a fresh Ubuntu Server 24.04 install and want the machin
 
 ```bash
 export TERM=xterm-256color
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/rawnullbyte/EduBoard/refs/heads/main/misc/install.sh)"
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/FoxyIsCoding/EduBoard/refs/heads/main/misc/install.sh)"
 ```
 
 The installer will:
