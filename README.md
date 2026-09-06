@@ -103,3 +103,19 @@ EduBoard includes an interactive updater and branch manager with a modern CLI in
 ./update.sh -c --restart    # Update and reload the EduBoard systemd kiosk service
 ./update.sh -h              # Display help and usage options
 ```
+
+## Local UI Testing / Demo Mode
+
+For local development and UI testing without an EduPage account or running backend:
+
+```bash
+./run.sh local
+# or
+cd frontend && npm run local
+```
+
+- **Frontend-only**: Runs Vite directly without requiring Python or `.env` credentials.
+- **Realistic Dummy Data**: Pre-loaded with comprehensive timetable data (classes 1.A–4.B), substitutions (cancelled lessons, changed rooms/teachers), and school events.
+- **Screen Schedule Disabled**: Display turning-off schedule and standby overlays are completely bypassed so the UI remains visible continuously.
+- **URL Parameter**: You can also force mock mode anytime in your browser by appending `?local=1` or `?mock=1` to the URL.
+

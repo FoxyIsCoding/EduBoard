@@ -1,4 +1,4 @@
-export default function TopBar({ pageTitle, clockLabel, dateParts }) {
+export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode = false }) {
   return (
     <header
       style={{
@@ -10,7 +10,7 @@ export default function TopBar({ pageTitle, clockLabel, dateParts }) {
         alignItems: 'center',
       }}
     >
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <div
           style={{
             color: 'var(--md-sys-color-on-surface-variant)',
@@ -25,6 +25,25 @@ export default function TopBar({ pageTitle, clockLabel, dateParts }) {
         >
           {pageTitle}
         </div>
+        {isLocalMode && (
+          <span
+            style={{
+              fontSize: 'clamp(0.68rem, 0.8vw, 0.85rem)',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '999px',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+              color: 'var(--md-sys-color-on-surface-variant)',
+              opacity: 0.8,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            Local UI
+          </span>
+        )}
       </div>
 
       <div

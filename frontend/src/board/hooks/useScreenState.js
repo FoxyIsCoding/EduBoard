@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { isLocalMode } from '../localMode'
 
 function shiftMinutes(timeStr, deltaMinutes) {
   const [h, m] = (timeStr || '00:00').split(':').map(Number)
@@ -18,7 +19,8 @@ export function useScreenState(timetable, loading, hasBoardData) {
   const loadingRef = useRef(loading)
   const hasDataRef = useRef(hasBoardData)
 
-  const isOverlayFeatureEnabled = import.meta.env.VITE_ENABLE_BREAK_ONLY_OVERLAY === 'true'
+  // In local mode, the display turning-off schedule is completely disabled
+  const isOverlayFeatureEnabled = !isLocalMode && import.meta.env.VITE_ENABLE_BREAK_ONLY_OVERLAY === 'true'
 
   useEffect(() => {
     timetableRef.current = timetable
@@ -108,7 +110,7 @@ export function useScreenState(timetable, loading, hasBoardData) {
   }, [isOverlayFeatureEnabled])
 
   return {
-    showOverlay: isOverlayFeatureEnabled ? showOverlay : false,
-    overlayReason,
+    showOverlay: !isLocalMode && isOverlayFeatureEnabled ? showOverlay : false,
+    overlayReason: isLocalMode ? null : overlayReason,
   }
 }

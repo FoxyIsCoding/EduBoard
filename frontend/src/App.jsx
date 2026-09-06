@@ -11,6 +11,7 @@ import { useBoardClock } from './board/hooks/useBoardClock'
 import { useBoardData } from './board/hooks/useBoardData'
 import { usePageRotation } from './board/hooks/usePageRotation'
 import { useScreenState } from './board/hooks/useScreenState'
+import { isLocalMode } from './board/localMode'
 import { logBorder, logScreenState, logScreenChange } from './board/logger'
 
 export default function App() {
@@ -63,6 +64,7 @@ export default function App() {
 
   // 24/7 Digital Signage Longevity: Soft reload at 03:00 AM to purge browser memory on Raspberry Pi
   useEffect(() => {
+    if (isLocalMode) return undefined
     const checkNightlyReload = () => {
       const now = new Date()
       if (now.getHours() === 3 && now.getMinutes() < 5) {
@@ -109,7 +111,7 @@ export default function App() {
       {!showOverlay && (
         <>
           <div className="board-surface">
-            <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} />
+            <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} />
           </div>
 
           <AccentRail progress={progress} />

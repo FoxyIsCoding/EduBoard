@@ -80,6 +80,26 @@ class TestEduBoardBackend(unittest.TestCase):
             self.assertEqual(board.cookies.get("nb_pwd_hash"), "HASH_ABC")
             self.assertEqual(board.cookies.get("PHPSESSID"), "SESS123")
 
+    def test_local_mode_serves_mock_data(self):
+        with patch("main.LOCAL_MODE", True):
+            board = EduBoard()
+            self.assertTrue(board.login())
+            data = board.fetchMainDBI()
+            self.assertIn("classes", data)
+            self.assertIn("subjects", data)
+
+            timetable = board.fetchTimetableData()
+            self.assertIn("classes", timetable)
+            self.assertGreater(len(timetable["classes"]), 0)
+
+            events = board.fetchInfoscreenEventsData()
+            self.assertIn("classes", events)
+            self.assertGreater(len(events["classes"]), 0)
+
+            resp_health = self.client.get("/api/health")
+            self.assertEqual(resp_health.status_code, 200)
+            self.assertEqual(resp_health.json()["mode"], "local_mock")
+
 
 class TestKioskInstallConfigs(unittest.TestCase):
     def test_screen_idle_cmdline_update(self):

@@ -1,6 +1,8 @@
 import { CLASSES_PER_PAGE, EVENTS_PER_PAGE, SUBSTITUTIONS_PER_PAGE } from './constants'
 import { cleanEventName, formatTimeRange, joinInline, trimJoined } from './formatters'
 import { chunk, unique } from './utils'
+import { isLocalMode } from './localMode'
+import { getMockBoardPayload } from './mockData'
 
 function readLookup(table, id) {
   if (!id) return ''
@@ -92,11 +94,20 @@ async function requestJson(path, timeoutMs = 12000) {
 }
 
 export async function fetchBoardPayload() {
+  if (isLocalMode) {
+    return getMockBoardPayload()
+  }
+
   const [lookup, timetable, events] = await allSettledSafe([
     requestJson('/api/data'),
     requestJson('/api/timetable'),
     requestJson('/api/events'),
   ])
+
+  // If backend is not running (e.g. standalone frontend dev), fallback to mock data
+  if (lookup.status === 'rejected' && timetable.status === 'rejected') {
+    return getMockBoardPayload()
+  }
 
   return {
     lookup: lookup.status === 'fulfilled' ? lookup.value : null,

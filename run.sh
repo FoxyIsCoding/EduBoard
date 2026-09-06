@@ -76,6 +76,29 @@ printf "${C_DIM}│${C_RESET}  ${C_WHITE}eduboard${C_RESET} ${C_DIM}❯ kiosk ru
 printf "${C_DIM}│${C_RESET}  ${C_DIM}branch:${C_RESET} %-10s  ${C_DIM}commit:${C_RESET} %-10s  ${C_DIM}target:${C_RESET} localhost:8000 ${C_DIM}│${C_RESET}\n" "$BRANCH_NAME" "$COMMIT_HASH"
 printf "${C_DIM}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
 
+# Local Testing Mode (Frontend-only, dummy data, screen schedule disabled)
+if [ "$1" = "local" ] || [ "$1" = "--local" ] || [ "$1" = "mock" ] || [ "$1" = "--mock" ] || [ "$LOCAL_MODE" = "1" ] || [ "$EDUBOARD_LOCAL_MODE" = "1" ]; then
+    printf "\n"
+    printf "${C_DIM}╭─────────────────────────────────────────────────────────────╮${C_RESET}\n"
+    printf "${C_DIM}│${C_RESET}  ${C_WHITE}eduboard${C_RESET} ${C_DIM}❯ local ui testing mode${C_RESET}                                ${C_DIM}│${C_RESET}\n"
+    printf "${C_DIM}│${C_RESET}  ${C_DIM}target:${C_RESET} http://localhost:8000  ${C_DIM}data:${C_RESET} mock  ${C_DIM}screen:${C_RESET} always-on  ${C_DIM}│${C_RESET}\n"
+    printf "${C_DIM}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
+
+    log_item "Local Mode" "step" "Preparing frontend environment..."
+    cd frontend
+    if [ ! -d "node_modules" ]; then
+        log_item "Local Mode" "step" "Installing npm dependencies..."
+        npm install --silent --no-fund --no-audit
+    fi
+    log_item "Local Mode" "ok" "Frontend environment ready"
+    log_item "Local Mode" "ok" "Display turning-off schedule & overlay: DISABLED"
+    log_item "Local Mode" "ok" "Realistic dummy data active (timetable, events, substitutions)"
+    log_item "Local Mode" "live" "Launching frontend on http://localhost:8000"
+    printf "\n"
+    export VITE_LOCAL_MODE="true"
+    exec npx vite --host 0.0.0.0 --port 8000 --mode local
+fi
+
 # 1. Environment Setup
 if [ -n "$VENV_PATH" ]; then
     if [ -f "$VENV_PATH/bin/activate" ]; then

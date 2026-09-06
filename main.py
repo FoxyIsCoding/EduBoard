@@ -4,6 +4,7 @@ import os
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
+import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -24,6 +25,203 @@ logger = logging.getLogger("EduBoard")
 
 # Load environment
 load_dotenv(Path(__file__).resolve().parent / ".env")
+
+LOCAL_MODE = (
+    os.getenv("LOCAL_MODE", "0").lower() in ("1", "true", "yes")
+    or os.getenv("EDUBOARD_LOCAL_MODE", "0").lower() in ("1", "true", "yes")
+    or "--local" in sys.argv
+    or "--mock" in sys.argv
+)
+
+LOCAL_MOCK_LOOKUP = {
+    "classes": {
+        "name": "Třídy",
+        "data": {
+            "c1": "1.A", "c2": "1.B", "c3": "2.A", "c4": "2.B",
+            "c5": "3.A", "c6": "3.B", "c7": "4.A", "c8": "4.B",
+        },
+    },
+    "subjects": {
+        "name": "Předměty",
+        "data": {
+            "s_mat": "Matematika", "s_cj": "Český jazyk", "s_aj": "Anglický jazyk",
+            "s_nj": "Německý jazyk", "s_fy": "Fyzika", "s_inf": "Informatika",
+            "s_dej": "Dějepis", "s_ch": "Chemie", "s_bio": "Biologie",
+            "s_tv": "Tělesná výchova", "s_zem": "Zeměpis",
+        },
+    },
+    "teachers": {
+        "name": "Učitelé",
+        "data": {
+            "t_nov": "Mgr. Novák M.", "t_svo": "Ing. Svoboda J.", "t_dvo": "Mgr. Dvořáková E.",
+            "t_cer": "RNDr. Černý P.", "t_ves": "Mgr. Veselá K.", "t_hor": "PaedDr. Horák T.",
+            "t_kra": "Mgr. Králová L.", "t_pro": "Ing. Procházka M.",
+        },
+    },
+    "classrooms": {
+        "name": "Učebny",
+        "data": {
+            "r_101": "U101", "r_102": "U102", "r_lab": "LAB Fyz",
+            "r_inf1": "INF 1", "r_inf2": "INF 2", "r_tel": "Tělocvična",
+            "r_aul": "Aula", "r_204": "U204", "r_bio": "LAB Bio",
+        },
+    },
+    "periods": {
+        "name": "Zvonění",
+        "data": {
+            "0": {"name": "0. hodina", "short": "0", "period": "0", "start": "07:10", "end": "07:55"},
+            "1": {"name": "1. hodina", "short": "1", "period": "1", "start": "08:00", "end": "08:45"},
+            "2": {"name": "2. hodina", "short": "2", "period": "2", "start": "08:55", "end": "09:40"},
+            "3": {"name": "3. hodina", "short": "3", "period": "3", "start": "10:00", "end": "10:45"},
+            "4": {"name": "4. hodina", "short": "4", "period": "4", "start": "10:55", "end": "11:40"},
+            "5": {"name": "5. hodina", "short": "5", "period": "5", "start": "11:50", "end": "12:35"},
+            "6": {"name": "6. hodina", "short": "6", "period": "6", "start": "12:45", "end": "13:30"},
+            "7": {"name": "7. hodina", "short": "7", "period": "7", "start": "13:40", "end": "14:25"},
+        },
+    },
+    "infoscreens": {
+        "name": "Informační tabule",
+        "data": [{"id": "1", "enabled": True, "name": "Kiosk", "header": "EduBoard Informační Tabule", "type": "timetable"}],
+    },
+}
+
+LOCAL_MOCK_TIMETABLE = {
+    "classes": [
+        {
+            "id": "c1",
+            "ttitems": [
+                {"type": "card", "uniperiod": 1, "starttime": "08:00", "endtime": "08:45", "subjectid": "s_mat", "teacherids": ["t_nov"], "classroomids": ["r_101"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 2, "starttime": "08:55", "endtime": "09:40", "subjectid": "s_cj", "teacherids": ["t_dvo"], "classroomids": ["r_101"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_aj", "teacherids": ["t_ves"], "classroomids": ["r_101"], "groupnames": ["skup. 1"], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_nj", "teacherids": ["t_kra"], "classroomids": ["r_102"], "groupnames": ["skup. 2"], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 4, "starttime": "10:55", "endtime": "11:40", "subjectid": "s_fy", "teacherids": ["t_svo"], "classroomids": ["r_lab"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 5, "starttime": "11:50", "endtime": "12:35", "subjectid": "s_inf", "teacherids": ["t_pro"], "classroomids": ["r_inf1"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 6, "starttime": "12:45", "endtime": "13:30", "subjectid": "s_tv", "teacherids": ["t_hor"], "classroomids": ["r_tel"], "groupnames": [], "changed": False, "removed": False},
+            ],
+        },
+        {
+            "id": "c2",
+            "ttitems": [
+                {"type": "card", "uniperiod": 1, "starttime": "08:00", "endtime": "08:45", "subjectid": "s_cj", "teacherids": ["t_dvo"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 2, "starttime": "08:55", "endtime": "09:40", "subjectid": "s_mat", "teacherids": ["t_nov"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_bio", "teacherids": ["t_cer"], "classroomids": ["r_bio"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 4, "starttime": "10:55", "endtime": "11:40", "subjectid": "s_fy", "teacherids": ["t_ves"], "classroomids": ["r_102"], "groupnames": [], "changed": True, "removed": False},
+                {"type": "card", "uniperiod": 5, "starttime": "11:50", "endtime": "12:35", "subjectid": "s_dej", "teacherids": ["t_kra"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+            ],
+        },
+        {
+            "id": "c3",
+            "ttitems": [
+                {"type": "card", "uniperiod": 1, "starttime": "08:00", "endtime": "08:45", "subjectid": "s_dej", "teacherids": ["t_kra"], "classroomids": ["r_204"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 2, "starttime": "08:55", "endtime": "09:40", "subjectid": "s_mat", "teacherids": ["t_svo"], "classroomids": ["r_204"], "groupnames": [], "changed": True, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_ch", "teacherids": ["t_cer"], "classroomids": ["r_bio"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 4, "starttime": "10:55", "endtime": "11:40", "subjectid": "s_cj", "teacherids": ["t_dvo"], "classroomids": ["r_204"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 5, "starttime": "11:50", "endtime": "12:35", "subjectid": "s_zem", "teacherids": ["t_pro"], "classroomids": ["r_204"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 6, "starttime": "12:45", "endtime": "13:30", "subjectid": "s_aj", "teacherids": ["t_ves"], "classroomids": ["r_204"], "groupnames": [], "changed": False, "removed": False},
+            ],
+        },
+        {
+            "id": "c4",
+            "ttitems": [
+                {"type": "card", "uniperiod": 1, "starttime": "08:00", "endtime": "08:45", "subjectid": "s_inf", "teacherids": ["t_pro"], "classroomids": ["r_inf1"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 2, "starttime": "08:55", "endtime": "09:40", "subjectid": "s_fy", "teacherids": ["t_svo"], "classroomids": ["r_lab"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_mat", "teacherids": ["t_nov"], "classroomids": ["r_101"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 4, "starttime": "10:55", "endtime": "11:40", "subjectid": "s_tv", "teacherids": ["t_hor"], "classroomids": ["r_tel"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 5, "starttime": "11:50", "endtime": "12:35", "subjectid": "s_dej", "teacherids": ["t_kra"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": True},
+            ],
+        },
+        {
+            "id": "c5",
+            "ttitems": [
+                {"type": "card", "uniperiod": 1, "starttime": "08:00", "endtime": "08:45", "subjectid": "s_cj", "teacherids": ["t_dvo"], "classroomids": ["r_204"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 2, "starttime": "08:55", "endtime": "09:40", "subjectid": "s_aj", "teacherids": ["t_ves"], "classroomids": ["r_204"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_ch", "teacherids": ["t_nov"], "classroomids": ["r_lab"], "groupnames": [], "changed": True, "removed": False},
+                {"type": "card", "uniperiod": 4, "starttime": "10:55", "endtime": "11:40", "subjectid": "s_mat", "teacherids": ["t_svo"], "classroomids": ["r_204"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 5, "starttime": "11:50", "endtime": "12:35", "subjectid": "s_bio", "teacherids": ["t_cer"], "classroomids": ["r_bio"], "groupnames": [], "changed": False, "removed": False},
+            ],
+        },
+        {
+            "id": "c6",
+            "ttitems": [
+                {"type": "card", "uniperiod": 1, "starttime": "08:00", "endtime": "08:45", "subjectid": "s_mat", "teacherids": ["t_svo"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 2, "starttime": "08:55", "endtime": "09:40", "subjectid": "s_cj", "teacherids": ["t_dvo"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_inf", "teacherids": ["t_pro"], "classroomids": ["r_inf2"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 4, "starttime": "10:55", "endtime": "11:40", "subjectid": "s_dej", "teacherids": ["t_kra"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 5, "starttime": "11:50", "endtime": "12:35", "subjectid": "s_zem", "teacherids": ["t_nov"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+            ],
+        },
+        {
+            "id": "c7",
+            "ttitems": [
+                {"type": "card", "uniperiod": 1, "starttime": "08:00", "endtime": "08:45", "subjectid": "s_mat", "teacherids": ["t_nov"], "classroomids": ["r_aul"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 2, "starttime": "08:55", "endtime": "09:40", "subjectid": "s_fy", "teacherids": ["t_svo"], "classroomids": ["r_aul"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_cj", "teacherids": ["t_dvo"], "classroomids": ["r_aul"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 4, "starttime": "10:55", "endtime": "11:40", "subjectid": "s_aj", "teacherids": ["t_ves"], "classroomids": ["r_aul"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 6, "starttime": "12:45", "endtime": "13:30", "subjectid": "s_tv", "teacherids": ["t_hor"], "classroomids": ["r_tel"], "groupnames": [], "changed": False, "removed": True},
+            ],
+        },
+        {
+            "id": "c8",
+            "ttitems": [
+                {"type": "card", "uniperiod": 1, "starttime": "08:00", "endtime": "08:45", "subjectid": "s_bio", "teacherids": ["t_cer"], "classroomids": ["r_bio"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 2, "starttime": "08:55", "endtime": "09:40", "subjectid": "s_ch", "teacherids": ["t_cer"], "classroomids": ["r_bio"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 3, "starttime": "10:00", "endtime": "10:45", "subjectid": "s_mat", "teacherids": ["t_nov"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 4, "starttime": "10:55", "endtime": "11:40", "subjectid": "s_cj", "teacherids": ["t_dvo"], "classroomids": ["r_102"], "groupnames": [], "changed": False, "removed": False},
+                {"type": "card", "uniperiod": 5, "starttime": "11:50", "endtime": "12:35", "subjectid": "s_inf", "teacherids": ["t_pro"], "classroomids": ["r_inf1"], "groupnames": [], "changed": False, "removed": False},
+            ],
+        },
+    ]
+}
+
+LOCAL_MOCK_EVENTS = {
+    "classes": [
+        {
+            "id": "global",
+            "ttitems": [
+                {
+                    "type": "event",
+                    "name": "Přednáška: Kybernetická bezpečnost a digitální hygiena",
+                    "starttime": "10:00",
+                    "endtime": "11:40",
+                    "classids": ["c5", "c6", "c7"],
+                    "classroomids": ["r_aul"],
+                    "teacherids": ["t_svo", "t_pro"],
+                    "uniperiod": 3,
+                },
+                {
+                    "type": "event",
+                    "name": "Okresní kolo florbalového turnaje SŠ",
+                    "starttime": "08:30",
+                    "endtime": "14:00",
+                    "classids": [],
+                    "classroomids": ["r_tel"],
+                    "teacherids": ["t_hor"],
+                    "uniperiod": "ad",
+                },
+                {
+                    "type": "event",
+                    "name": "Přírodovědná exkurze: Planetárium Praha",
+                    "starttime": "08:00",
+                    "endtime": "13:00",
+                    "classids": ["c1", "c2"],
+                    "classroomids": [],
+                    "teacherids": ["t_cer", "t_ves"],
+                    "uniperiod": "ad",
+                },
+                {
+                    "type": "event",
+                    "name": "Maturitní generálka – didaktický test ČJL",
+                    "starttime": "08:00",
+                    "endtime": "10:45",
+                    "classids": ["c7", "c8"],
+                    "classroomids": ["r_101", "r_102"],
+                    "teacherids": ["t_dvo", "t_kra"],
+                    "uniperiod": 1,
+                },
+            ],
+        }
+    ]
+}
 
 
 def get_current_school_year() -> int:
@@ -61,6 +259,10 @@ class EduBoard:
 
     def login(self) -> bool:
         """Authenticate with EduPage and obtain session cookies."""
+        if LOCAL_MODE:
+            logger.info("EduBoard running in LOCAL MODE (mock dummy data, EduPage authentication bypassed).")
+            return True
+
         if not self.SCHOOL_SUBDOMAIN or not self.PASSWORD:
             logger.warning("SCHOOL_SUBDOMAIN or PASSWORD not set in .env")
             return False
@@ -132,6 +334,9 @@ class EduBoard:
             return None
 
     def fetchMainDBI(self) -> dict:
+        if LOCAL_MODE:
+            return LOCAL_MOCK_LOOKUP
+
         cache_key = "maindbi"
         if self._is_cache_valid(cache_key, ttl_seconds=60):
             return self._get_cache(cache_key)
@@ -256,6 +461,9 @@ class EduBoard:
         return data
 
     def fetchInfoscreenEventsData(self) -> dict:
+        if LOCAL_MODE:
+            return LOCAL_MOCK_EVENTS
+
         cache_key = "events"
         if self._is_cache_valid(cache_key, ttl_seconds=30):
             return self._get_cache(cache_key)
@@ -285,6 +493,9 @@ class EduBoard:
         return parsed_data
 
     def fetchTimetableData(self) -> dict:
+        if LOCAL_MODE:
+            return LOCAL_MOCK_TIMETABLE
+
         cache_key = "timetable"
         if self._is_cache_valid(cache_key, ttl_seconds=30):
             return self._get_cache(cache_key)
@@ -358,8 +569,9 @@ def get_timetable():
 def get_health():
     return {
         "status": "healthy",
-        "authenticated": "nb_pwd_hash" in edub.cookies,
-        "school": edub.SCHOOL_SUBDOMAIN,
+        "mode": "local_mock" if LOCAL_MODE else "live",
+        "authenticated": True if LOCAL_MODE else ("nb_pwd_hash" in edub.cookies),
+        "school": "demo-local" if LOCAL_MODE else edub.SCHOOL_SUBDOMAIN,
         "screen_id": edub.SCREEN_ID,
         "academic_year": get_current_school_year(),
     }
@@ -382,4 +594,6 @@ else:
 
 
 if __name__ == "__main__":
+    if LOCAL_MODE:
+        logger.info("Starting EduBoard in LOCAL TESTING MODE on http://localhost:8000 (Mock data, screen standby disabled)")
     uvicorn.run(app, host="0.0.0.0", port=8000)
