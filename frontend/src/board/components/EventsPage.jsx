@@ -25,180 +25,163 @@ function getEventPageConfig(count) {
           ? 'repeat(2, minmax(0, 1fr))'
           : 'repeat(3, minmax(0, 1fr))',
     rows: count <= 2 ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))',
-    cardPx: showcase ? 2.6 : large ? 2.0 : 1.5,
-    cardPy: showcase ? 2.2 : large ? 1.7 : 1.3,
+    cardPx: showcase ? 2.4 : large ? 1.8 : 1.4,
+    cardPy: showcase ? 2.0 : large ? 1.5 : 1.2,
     titleFont: showcase
-      ? 'clamp(2.4rem, 3.8vw, 4.2rem)'
+      ? 'clamp(2.3rem, 3.6vw, 4rem)'
       : large
-        ? 'clamp(1.8rem, 2.3vw, 2.7rem)'
+        ? 'clamp(1.7rem, 2.2vw, 2.6rem)'
         : medium
-          ? 'clamp(1.5rem, 1.75vw, 2.1rem)'
-          : 'clamp(1.25rem, 1.4vw, 1.65rem)',
+          ? 'clamp(1.4rem, 1.65vw, 2rem)'
+          : 'clamp(1.2rem, 1.35vw, 1.55rem)',
     titleClamp: showcase ? 4 : 2,
-    bodyFont: showcase ? 'clamp(1.25rem, 1.7vw, 1.75rem)' : 'clamp(1rem, 1.25vw, 1.3rem)',
-    detailFont: showcase ? 'clamp(1.05rem, 1.35vw, 1.35rem)' : 'clamp(0.9rem, 1vw, 1.12rem)',
-    labelFont: showcase ? '0.9rem' : '0.76rem',
-    sectionGap: showcase ? 1.1 : 0.8,
+    bodyFont: showcase ? 'clamp(1.2rem, 1.6vw, 1.65rem)' : 'clamp(0.95rem, 1.18vw, 1.25rem)',
+    detailFont: showcase ? 'clamp(1rem, 1.25vw, 1.28rem)' : 'clamp(0.85rem, 0.95vw, 1.05rem)',
+    labelFont: showcase ? '0.85rem' : '0.74rem',
+    sectionGap: showcase ? 1.0 : 0.75,
   }
 }
 
 function EventCard({ event, config }) {
   return (
     <article
-      className="kiosk-module"
+      className="edupage-card"
       style={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        overflow: 'hidden',
+        padding: `${config.cardPy}rem ${config.cardPx}rem`,
+        justifyContent: 'space-between',
+        borderTop: '4px solid var(--kiosk-brand-blue)',
       }}
     >
-      {/* Top Accent Strip */}
-      <div
-        style={{
-          height: '6px',
-          width: '100%',
-          background: 'var(--kiosk-primary)',
-          flexShrink: 0,
-        }}
-      />
-
-      <div
-        style={{
-          padding: `${config.cardPy}rem ${config.cardPx}rem`,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          height: '100%',
-          gap: '0.85rem',
-        }}
-      >
-        {/* Header: Time Badge & Title */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-            <span
-              className="kiosk-pill pill-primary"
-              style={{
-                fontSize: 'clamp(0.82rem, 0.95vw, 1.05rem)',
-                padding: '0.22rem 0.7rem',
-              }}
-            >
-              <Clock size={16} />
-              <span>{event.timeLabel}</span>
-            </span>
-          </div>
-
-          <h2
+      {/* Header: Time Badge & Title */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.65rem' }}>
+          <span
+            className="edupage-badge badge-room"
             style={{
-              margin: 0,
-              fontSize: config.titleFont,
-              lineHeight: 1.12,
-              fontWeight: 900,
-              letterSpacing: '-0.025em',
-              color: 'var(--kiosk-text-primary)',
-              display: '-webkit-box',
-              overflow: 'hidden',
-              WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: config.titleClamp,
+              fontSize: 'clamp(0.8rem, 0.92vw, 1.02rem)',
+              padding: '0.2rem 0.6rem',
+              background: 'var(--kiosk-nav-bg)',
             }}
           >
-            {event.title}
-          </h2>
+            <Clock size={15} color="var(--kiosk-nav-accent)" />
+            <span>{event.timeLabel}</span>
+          </span>
         </div>
 
-        {/* Footer Details: Classes, Location, Teacher */}
-        <div
+        <h2
           style={{
-            display: 'grid',
-            gap: `${config.sectionGap}rem`,
-            paddingTop: '0.75rem',
-            borderTop: '1px solid var(--kiosk-border)',
+            margin: 0,
+            fontSize: config.titleFont,
+            lineHeight: 1.15,
+            fontWeight: 900,
+            letterSpacing: '-0.02em',
+            color: 'var(--kiosk-text-primary)',
+            display: '-webkit-box',
+            overflow: 'hidden',
+            WebkitBoxOrient: 'vertical',
+            WebkitLineClamp: config.titleClamp,
           }}
         >
-          {event.classesLabel && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+          {event.title}
+        </h2>
+      </div>
+
+      {/* Footer Details: Classes, Location, Teacher */}
+      <div
+        style={{
+          display: 'grid',
+          gap: `${config.sectionGap}rem`,
+          paddingTop: '0.65rem',
+          borderTop: '1px solid var(--kiosk-grid-border)',
+        }}
+      >
+        {event.classesLabel && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: 'var(--kiosk-radius-sm)',
+                background: 'var(--kiosk-active-cell-bg)',
+                border: '1px solid var(--kiosk-grid-border)',
+                display: 'grid',
+                placeItems: 'center',
+                color: 'var(--kiosk-brand-blue)',
+                flexShrink: 0,
+              }}
+            >
+              <Users size={17} />
+            </div>
+            <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: 'var(--kiosk-radius-sm)',
-                  background: 'var(--kiosk-primary-subtle)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: 'var(--kiosk-primary)',
-                  flexShrink: 0,
+                  fontSize: config.labelFont,
+                  color: 'var(--kiosk-text-secondary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  fontWeight: 800,
                 }}
               >
-                <Users size={18} />
+                Třídy
               </div>
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: config.labelFont,
-                    color: 'var(--kiosk-text-secondary)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    fontWeight: 800,
-                  }}
-                >
-                  Třídy
-                </div>
-                <div
-                  style={{
-                    fontSize: config.bodyFont,
-                    fontWeight: 800,
-                    color: 'var(--kiosk-text-primary)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {normalizeInlineText(event.classesLabel)}
-                </div>
+              <div
+                style={{
+                  fontSize: config.bodyFont,
+                  fontWeight: 800,
+                  color: 'var(--kiosk-text-primary)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {normalizeInlineText(event.classesLabel)}
               </div>
+            </div>
+          </div>
+        )}
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.8rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          {event.roomLabel && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span
+                className="edupage-badge badge-room"
+                style={{
+                  fontSize: config.detailFont,
+                  fontWeight: 800,
+                  padding: '0.18rem 0.5rem',
+                }}
+              >
+                <MapPin size={14} />
+                <span>{normalizeInlineText(event.roomLabel)}</span>
+              </span>
             </div>
           )}
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.85rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            {event.roomLabel && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <span
-                  className="kiosk-pill pill-room"
-                  style={{
-                    fontSize: config.detailFont,
-                    fontWeight: 800,
-                    padding: '0.2rem 0.55rem',
-                  }}
-                >
-                  <MapPin size={15} />
-                  <span>{normalizeInlineText(event.roomLabel)}</span>
-                </span>
-              </div>
-            )}
-
-            {event.teacherLabel && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--kiosk-text-secondary)' }}>
-                <User size={17} />
-                <span
-                  style={{
-                    fontSize: config.detailFont,
-                    fontWeight: 800,
-                    color: 'var(--kiosk-text-primary)',
-                  }}
-                >
-                  {normalizeInlineText(event.teacherLabel)}
-                </span>
-              </div>
-            )}
-          </div>
+          {event.teacherLabel && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--kiosk-text-secondary)' }}>
+              <User size={16} />
+              <span
+                style={{
+                  fontSize: config.detailFont,
+                  fontWeight: 800,
+                  color: 'var(--kiosk-text-primary)',
+                }}
+              >
+                {normalizeInlineText(event.teacherLabel)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </article>
@@ -212,53 +195,50 @@ export default function EventsPage({ events }) {
     return (
       <div style={{ height: '100%', display: 'grid', placeItems: 'center' }}>
         <div
-          className="kiosk-module"
+          className="edupage-card"
           style={{
-            padding: '3rem 4.5rem',
+            padding: '3rem 4rem',
             textAlign: 'center',
-            maxWidth: '680px',
-            background: 'var(--kiosk-card)',
-            borderRadius: 'var(--kiosk-radius-xl)',
-            border: '1.5px solid var(--kiosk-border)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+            maxWidth: '650px',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
           }}
         >
           <div
             style={{
-              width: '72px',
-              height: '72px',
+              width: '68px',
+              height: '68px',
               borderRadius: '50%',
-              background: 'var(--kiosk-primary-subtle)',
-              border: '1.5px solid var(--kiosk-primary-border)',
+              background: 'var(--kiosk-active-cell-bg)',
+              border: '1.5px solid var(--kiosk-grid-border)',
               display: 'grid',
               placeItems: 'center',
-              color: 'var(--kiosk-primary)',
-              margin: '0 auto 1.5rem',
+              color: 'var(--kiosk-brand-blue)',
+              margin: '0 auto 1.3rem',
             }}
           >
-            <Calendar size={38} />
+            <Calendar size={36} />
           </div>
           <h3
             style={{
               margin: 0,
-              fontSize: 'clamp(2.2rem, 3.2vw, 3.6rem)',
+              fontSize: 'clamp(2rem, 3vw, 3.4rem)',
               fontWeight: 900,
               color: 'var(--kiosk-text-primary)',
               letterSpacing: '-0.02em',
             }}
           >
-            Bez akcí
+            Bez mimořádných akcí
           </h3>
           <p
             style={{
-              margin: '1.1rem 0 0',
+              margin: '1rem 0 0',
               color: 'var(--kiosk-text-secondary)',
-              fontSize: 'clamp(1.1rem, 1.45vw, 1.65rem)',
-              lineHeight: 1.5,
+              fontSize: 'clamp(1.05rem, 1.4vw, 1.55rem)',
+              lineHeight: 1.45,
               fontWeight: 500,
             }}
           >
-            Na dnešní den nejsou vyhlášeny žádné mimořádné školní události.
+            Na dnešní den nejsou hlášeny žádné mimořádné školní události ani exkurze.
           </p>
         </div>
       </div>
@@ -273,7 +253,7 @@ export default function EventsPage({ events }) {
         display: 'grid',
         gridTemplateColumns: config.columns,
         gridTemplateRows: config.rows,
-        gap: 'var(--kiosk-gap)',
+        gap: 'clamp(6px, 0.7vw, 10px)',
       }}
     >
       {events.map((event) => (

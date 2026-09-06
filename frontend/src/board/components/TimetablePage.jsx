@@ -1,5 +1,4 @@
 import { Fragment } from 'react'
-import { GraduationCap } from 'lucide-react'
 import { CLASSES_PER_PAGE } from '../constants'
 import LessonCard from './LessonCard'
 
@@ -27,35 +26,28 @@ export default function TimetablePage({ rows, periods }) {
   while (paddedRows.length < CLASSES_PER_PAGE) paddedRows.push(null)
 
   return (
-    <section
+    <div
+      className="edupage-grid"
       style={{
-        width: '100%',
-        height: '100%',
-        display: 'grid',
-        gridTemplateColumns: `minmax(130px, 10.5vw) repeat(${periods.length}, minmax(0, 1fr))`,
-        gridTemplateRows: `minmax(75px, 8.5vh) repeat(${CLASSES_PER_PAGE}, minmax(clamp(70px, 11vh, 180px), 1fr))`,
-        gap: 'var(--kiosk-gap)',
+        gridTemplateColumns: `minmax(120px, 9.5vw) repeat(${periods.length}, minmax(0, 1fr))`,
+        gridTemplateRows: `minmax(65px, 8vh) repeat(${CLASSES_PER_PAGE}, minmax(clamp(65px, 10.5vh, 180px), 1fr))`,
       }}
     >
       {/* Top-left Corner Header */}
       <div
-        className="kiosk-module"
+        className="edupage-card"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.45rem',
+          display: 'grid',
+          placeItems: 'center',
           background: 'var(--kiosk-header-bg)',
-          border: '1.5px solid var(--kiosk-header-bg)',
         }}
       >
-        <GraduationCap size={20} color="#FFFFFF" />
         <span
           style={{
-            color: '#FFFFFF',
+            color: 'var(--kiosk-text-primary)',
             fontWeight: 900,
-            fontSize: 'clamp(0.85rem, 1.05vw, 1.2rem)',
-            letterSpacing: '0.12em',
+            fontSize: 'clamp(0.95rem, 1.2vw, 1.35rem)',
+            letterSpacing: '0.08em',
             textTransform: 'uppercase',
           }}
         >
@@ -69,34 +61,28 @@ export default function TimetablePage({ rows, periods }) {
         return (
           <div
             key={period.period}
-            className={`kiosk-module ${isActive ? 'is-active-period' : ''}`}
+            className={`edupage-card ${isActive ? 'is-active-period-header' : ''}`}
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '0.35rem 0.2rem',
-              background: isActive
-                ? 'var(--kiosk-primary)'
-                : 'var(--kiosk-card)',
-              borderColor: isActive
-                ? 'var(--kiosk-primary)'
-                : 'var(--kiosk-border)',
+              padding: '0.25rem 0.2rem',
+              background: isActive ? undefined : 'var(--kiosk-header-bg)',
             }}
           >
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
+                gap: '0.35rem',
               }}
             >
               <span
                 style={{
-                  fontSize: 'clamp(1.7rem, 2.3vw, 2.7rem)',
+                  fontSize: 'clamp(1.5rem, 2.1vw, 2.4rem)',
                   lineHeight: 1,
                   fontWeight: 900,
-                  color: isActive ? '#FFFFFF' : 'var(--kiosk-text-primary)',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
@@ -104,16 +90,8 @@ export default function TimetablePage({ rows, periods }) {
               </span>
               {isActive && (
                 <span
-                  style={{
-                    fontSize: '0.62rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    padding: '0.1rem 0.35rem',
-                    borderRadius: 'var(--kiosk-radius-pill)',
-                    background: 'rgba(255, 255, 255, 0.25)',
-                    color: '#FFFFFF',
-                  }}
+                  className="edupage-badge badge-active"
+                  style={{ fontSize: '0.62rem', padding: '0.08rem 0.35rem' }}
                 >
                   Probíhá
                 </span>
@@ -122,17 +100,17 @@ export default function TimetablePage({ rows, periods }) {
 
             <div
               style={{
-                marginTop: '0.2rem',
+                marginTop: '0.15rem',
                 textAlign: 'center',
                 color: isActive ? 'rgba(255, 255, 255, 0.9)' : 'var(--kiosk-text-secondary)',
-                fontSize: 'clamp(0.72rem, 0.85vw, 1rem)',
+                fontSize: 'clamp(0.7rem, 0.82vw, 0.96rem)',
                 fontWeight: 700,
                 lineHeight: 1.15,
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
               <span>{period.start}</span>
-              <span style={{ marginInline: '0.2rem', opacity: 0.6 }}>–</span>
+              <span style={{ marginInline: '0.15rem', opacity: 0.6 }}>–</span>
               <span>{period.end}</span>
             </div>
           </div>
@@ -159,17 +137,12 @@ export default function TimetablePage({ rows, periods }) {
           <Fragment key={row?.id ?? `empty-row-${rowIndex}`}>
             {/* Class Label Column */}
             <div
-              className="kiosk-module"
+              className="edupage-card"
               style={{
                 display: 'grid',
                 placeItems: 'center',
-                background: row
-                  ? 'var(--kiosk-header-bg)'
-                  : 'var(--kiosk-card-subtle)',
-                padding: '0.4rem',
-                borderColor: row
-                  ? 'var(--kiosk-header-bg)'
-                  : 'var(--kiosk-border-subtle)',
+                background: row ? 'var(--kiosk-card-bg)' : 'var(--kiosk-card-empty)',
+                padding: '0.35rem',
               }}
             >
               <span
@@ -177,7 +150,7 @@ export default function TimetablePage({ rows, periods }) {
                   fontSize: 'clamp(1.8rem, 2.5vw, 3.4rem)',
                   fontWeight: 900,
                   letterSpacing: '-0.02em',
-                  color: row ? '#FFFFFF' : 'var(--kiosk-text-muted)',
+                  color: row ? 'var(--kiosk-text-primary)' : 'var(--kiosk-text-muted)',
                   textAlign: 'center',
                   fontVariantNumeric: 'tabular-nums',
                 }}
@@ -198,8 +171,6 @@ export default function TimetablePage({ rows, periods }) {
                     gridColumn: span > 1 ? `span ${span}` : undefined,
                     minWidth: 0,
                     height: '100%',
-                    borderRadius: 'var(--kiosk-radius-lg)',
-                    overflow: 'hidden',
                   }}
                 >
                   <LessonCard cell={cell} isActive={isActiveCol} />
@@ -209,6 +180,6 @@ export default function TimetablePage({ rows, periods }) {
           </Fragment>
         )
       })}
-    </section>
+    </div>
   )
 }

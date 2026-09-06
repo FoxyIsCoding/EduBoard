@@ -8,10 +8,10 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
         {entry.kicker && (
           <div
             style={{
-              color: isChanged ? 'var(--kiosk-amber-text)' : 'var(--kiosk-primary)',
+              color: isChanged ? 'var(--kiosk-status-changed-text)' : 'var(--kiosk-brand-blue)',
               fontWeight: 800,
-              fontSize: compact ? '0.62rem' : '0.74rem',
-              letterSpacing: '0.06em',
+              fontSize: compact ? '0.62rem' : '0.72rem',
+              letterSpacing: '0.04em',
               textTransform: 'uppercase',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -24,14 +24,14 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
 
         <div
           style={{
-            marginTop: compact ? '0.05rem' : '0.15rem',
+            marginTop: compact ? '0.04rem' : '0.12rem',
             fontWeight: 900,
-            fontSize: compact ? 'clamp(0.88rem, 1vw, 1.18rem)' : 'clamp(1.05rem, 1.25vw, 1.6rem)',
+            fontSize: compact ? 'clamp(0.85rem, 1vw, 1.15rem)' : 'clamp(1.05rem, 1.25vw, 1.55rem)',
             lineHeight: 1.15,
             color: isCancelled
-              ? 'var(--kiosk-rose-text)'
+              ? 'var(--kiosk-status-cancelled-text)'
               : isChanged
-                ? 'var(--kiosk-amber-text)'
+                ? 'var(--kiosk-status-changed-text)'
                 : 'var(--kiosk-text-primary)',
             textDecoration: isCancelled ? 'line-through' : 'none',
             overflow: 'hidden',
@@ -45,18 +45,18 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
 
       <div
         style={{
-          marginTop: '0.25rem',
+          marginTop: '0.2rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '0.35rem',
+          gap: '0.3rem',
           overflow: 'hidden',
         }}
       >
         <span
           style={{
             color: 'var(--kiosk-text-secondary)',
-            fontSize: compact ? 'clamp(0.68rem, 0.76vw, 0.92rem)' : 'clamp(0.78rem, 0.88vw, 1.05rem)',
+            fontSize: compact ? 'clamp(0.68rem, 0.76vw, 0.9rem)' : 'clamp(0.78rem, 0.88vw, 1.05rem)',
             fontWeight: 700,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -69,10 +69,10 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
 
         {rooms.length > 0 && (
           <span
-            className="kiosk-pill pill-room"
+            className="edupage-badge badge-room"
             style={{
-              fontSize: compact ? '0.62rem' : '0.74rem',
-              padding: '0.12rem 0.42rem',
+              fontSize: compact ? '0.64rem' : '0.76rem',
+              padding: '0.12rem 0.4rem',
               fontWeight: 900,
               flexShrink: 0,
             }}
@@ -89,11 +89,11 @@ export default function LessonCard({ cell, isActive = false }) {
   if (!cell || cell.layout === 'blank') {
     return (
       <div
+        className="edupage-card"
         style={{
           height: '100%',
-          borderRadius: 'var(--kiosk-radius-lg)',
-          background: 'var(--kiosk-card-subtle)',
-          border: '1.5px dashed var(--kiosk-border-subtle)',
+          background: 'var(--kiosk-card-empty)',
+          borderStyle: 'dashed',
         }}
       />
     )
@@ -106,92 +106,66 @@ export default function LessonCard({ cell, isActive = false }) {
 
   let modifierClass = ''
   if (isCancelled) modifierClass = 'is-cancelled'
-  else if (isChanged) modifierClass = 'is-substitution'
+  else if (isChanged) modifierClass = 'is-changed'
   else if (isEvent) modifierClass = 'is-event'
-  else if (isActive) modifierClass = 'is-active-period'
+  else if (isActive) modifierClass = 'is-active-period-cell'
 
   return (
     <article
-      className={`kiosk-module ${modifierClass}`}
+      className={`edupage-card ${modifierClass}`}
       style={{
         height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        padding: isSplit ? '0.35rem 0.5rem' : '0.55rem 0.75rem',
+        justifyContent: 'space-between',
       }}
     >
-      {/* Top Status Accent Bar */}
+      {/* Top Status Header if cancelled or changed */}
       {(isChanged || isCancelled || isEvent) && (
-        <div
-          style={{
-            height: '4px',
-            width: '100%',
-            background: isCancelled
-              ? 'var(--kiosk-rose)'
-              : isChanged
-                ? 'var(--kiosk-amber)'
-                : 'var(--kiosk-primary)',
-            flexShrink: 0,
-          }}
-        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.15rem' }}>
+          <span
+            className={`edupage-badge ${
+              isCancelled
+                ? 'badge-cancelled'
+                : isChanged
+                  ? 'badge-changed'
+                  : 'badge-event'
+            }`}
+            style={{ fontSize: '0.62rem', padding: '0.1rem 0.38rem' }}
+          >
+            {isCancelled ? 'Odpadá' : isChanged ? 'Změna' : 'Akce'}
+          </span>
+        </div>
       )}
 
-      <div
-        style={{
-          padding: isSplit ? '0.4rem 0.6rem' : '0.6rem 0.8rem',
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Status Tag Header if modified */}
-        {(isChanged || isCancelled || isEvent) && (
-          <div style={{ marginBottom: '0.2rem' }}>
-            <span
-              className={`kiosk-pill ${
-                isCancelled
-                  ? 'pill-rose'
-                  : isChanged
-                    ? 'pill-amber'
-                    : 'pill-primary'
-              }`}
-              style={{ fontSize: '0.62rem', padding: '0.1rem 0.42rem' }}
-            >
-              {isCancelled ? 'Odpadá' : isChanged ? 'Změna' : 'Akce'}
-            </span>
-          </div>
-        )}
-
-        {isSplit ? (
-          <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '0.4rem', height: '100%' }}>
-            {cell.entries.map((entry, idx) => (
-              <div
-                key={idx}
-                style={{
-                  borderTop: idx > 0 ? '1px dashed var(--kiosk-border)' : 'none',
-                  paddingTop: idx > 0 ? '0.3rem' : '0',
-                }}
-              >
-                <LessonEntry
-                  entry={entry}
-                  compact
-                  isCancelled={isCancelled}
-                  isChanged={isChanged}
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          cell.entries.map((entry, idx) => (
-            <LessonEntry
+      {isSplit ? (
+        <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '0.35rem', height: '100%' }}>
+          {cell.entries.map((entry, idx) => (
+            <div
               key={idx}
-              entry={entry}
-              isCancelled={isCancelled}
-              isChanged={isChanged}
-            />
-          ))
-        )}
-      </div>
+              style={{
+                borderTop: idx > 0 ? '1px dashed var(--kiosk-grid-border)' : 'none',
+                paddingTop: idx > 0 ? '0.25rem' : '0',
+              }}
+            >
+              <LessonEntry
+                entry={entry}
+                compact
+                isCancelled={isCancelled}
+                isChanged={isChanged}
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        cell.entries.map((entry, idx) => (
+          <LessonEntry
+            key={idx}
+            entry={entry}
+            isCancelled={isCancelled}
+            isChanged={isChanged}
+          />
+        ))
+      )}
     </article>
   )
 }

@@ -76,24 +76,24 @@ export default function App() {
   }, [])
 
   return (
-    <div className="kiosk-shell">
+    <div className="edupage-shell">
       <div className={`board-overlay${showOverlay ? '' : ' hidden'}`}>
         {showOverlay && overlayReason === 'in_class' && (
           <>
             <div className="board-ascii-indicator top-right" aria-label="System active">
               [ <span className="board-ascii-blink">*</span> ]
             </div>
-            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)' }}>
+            <div style={{ textAlign: 'center' }}>
               <div className="board-overlay-indicator" style={{ margin: '0 auto 1.4rem' }} />
-              <div style={{ fontSize: 'clamp(1.4rem, 2vw, 2.2rem)', letterSpacing: '0.04em', fontWeight: 800, color: '#FFFFFF' }}>
+              <div style={{ fontSize: 'clamp(1.5rem, 2.2vw, 2.4rem)', letterSpacing: '0.04em', fontWeight: 900, color: '#FFFFFF' }}>
                 Výuka probíhá
               </div>
-              <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.4rem)', marginTop: '0.5rem', color: '#94A3B8' }}>
+              <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.45rem)', marginTop: '0.5rem', color: '#94A3B8' }}>
                 Obrazovka se aktivuje o přestávce
               </div>
               <div
                 style={{
-                  fontSize: 'clamp(2.5rem, 3.8vw, 4.5rem)',
+                  fontSize: 'clamp(2.6rem, 4vw, 4.8rem)',
                   fontWeight: 900,
                   marginTop: '1.5rem',
                   color: '#FFFFFF',
@@ -110,32 +110,21 @@ export default function App() {
 
       {!showOverlay && (
         <>
-          <div className="kiosk-surface">
-            <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} />
-          </div>
-
+          <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} />
           <AccentRail progress={progress} />
 
-          <ErrorBoundary>
-            <section
-              className="kiosk-surface"
-              style={{
-                minHeight: 0,
-                minWidth: 0,
-                overflow: 'hidden',
-                padding: 'var(--kiosk-gap)',
-              }}
-            >
+          <main className="edupage-content">
+            <ErrorBoundary>
               <div
                 key={activePageKey}
-                className="kiosk-page-view"
+                className="edupage-page-view"
               >
                 {loading && !hasBoardData ? (
-                  <EmptyPage title="Načítám Přehled" copy="Připravuji rozvrh a školní akce." />
+                  <EmptyPage title="Načítám Rozvrh" copy="Připravuji data ze systému EduPage..." />
                 ) : !hasBoardData ? (
                   <EmptyPage
-                    title="Přehled Není Dostupný"
-                    copy="Nepodařilo se načíst data pro obrazovku."
+                    title="Rozvrh Není Dostupný"
+                    copy="Nepodařilo se načíst data ze systému EduPage."
                   />
                 ) : activePage?.type === 'timetable' ? (
                   <TimetablePage rows={activePage.rows ?? []} periods={periods} />
@@ -147,8 +136,8 @@ export default function App() {
                   <EmptyPage title="Bez Dat" copy="Pro tuto stránku není co zobrazit." />
                 )}
               </div>
-            </section>
-          </ErrorBoundary>
+            </ErrorBoundary>
+          </main>
         </>
       )}
     </div>
