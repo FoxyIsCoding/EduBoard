@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { getPageTitle } from './board/boardData'
 import AccentRail from './board/components/AccentRail'
 import EmptyPage from './board/components/EmptyPage'
@@ -7,21 +7,60 @@ import EventsPage from './board/components/EventsPage'
 import SubstitutionsPage from './board/components/SubstitutionsPage'
 import TimetablePage from './board/components/TimetablePage'
 import TopBar from './board/components/TopBar'
+import AlertBannerView from './board/components/remote/AlertBannerView'
+import BrowserView from './board/components/remote/BrowserView'
+import ScreenCastView from './board/components/remote/ScreenCastView'
+import SlideshowView from './board/components/remote/SlideshowView'
+import AdminRemote from './board/admin/AdminRemote'
 import { useBoardClock } from './board/hooks/useBoardClock'
 import { useBoardData } from './board/hooks/useBoardData'
 import { usePageRotation } from './board/hooks/usePageRotation'
+import { useRemoteControl } from './board/hooks/useRemoteControl'
 import { useScreenState } from './board/hooks/useScreenState'
 import { isLocalMode } from './board/localMode'
 import { logBorder, logScreenState, logScreenChange } from './board/logger'
 
 export default function App() {
-  const { loading, hasBoardData, pages, periods, timetable } = useBoardData()
+  const [route, setRoute] = useState(() =>
+    typeof window !== 'undefined' ? window.location.pathname + window.location.hash : '',
+  )
+
+  useEffect(() => {
+    const handleNav = () => setRoute(window.location.pathname + window.location.hash)
+    window.addEventListener('popstate', handleNav)
+    window.addEventListener('hashchange', handleNav)
+    return () => {
+      window.removeEventListener('popstate', handleNav)
+      window.removeEventListener('hashchange', handleNav)
+    }
+  }, [])
+
+  const { remoteState, castStream } = useRemoteControl()
+  const { loading, hasBoardData, pages, periods, timetable, timetableRows } = useBoardData()
   const { showOverlay, overlayReason } = useScreenState(timetable, loading, hasBoardData)
-  const { activePage, progress, pageIndex, pageCount } = usePageRotation(pages, showOverlay)
+
+  const frozenClass = remoteState?.frozenClass
+  const displayPages = useMemo(() => {
+    if (frozenClass && timetableRows?.length) {
+      const match = timetableRows.filter(
+        (r) =>
+          r.name?.toLowerCase() === frozenClass?.toLowerCase() ||
+          r.id?.toLowerCase() === frozenClass?.toLowerCase(),
+      )
+      if (match.length > 0) {
+        return [{ id: `frozen-${frozenClass}`, type: 'timetable', rows: match, isFrozen: true }]
+      }
+    }
+    return pages
+  }, [frozenClass, timetableRows, pages])
+
+  const effectiveShowOverlay = frozenClass ? false : showOverlay
+  const { activePage, progress, pageIndex, pageCount } = usePageRotation(displayPages, effectiveShowOverlay)
   const { clockLabel, dateParts } = useBoardClock()
-  const pageTitle = getPageTitle(activePage)
+  const rawPageTitle = getPageTitle(activePage)
+  const pageTitle = activePage?.isFrozen ? `Denní Rozvrh — ${frozenClass}` : rawPageTitle
   const activePageKey = activePage?.id ?? 'empty'
-  const prevOverlayRef = useRef(showOverlay)
+  const prevOverlayRef = useRef(effectiveShowOverlay)
   const isMountedRef = useRef(false)
 
   useEffect(() => {
@@ -39,9 +78,9 @@ export default function App() {
   }, [loading, hasBoardData, pages.length, periods.length, timetable])
 
   useEffect(() => {
-    if (prevOverlayRef.current !== showOverlay) {
-      prevOverlayRef.current = showOverlay
-      if (showOverlay) {
+    if (prevOverlayRef.current !== effectiveShowOverlay) {
+      prevOverlayRef.current = effectiveShowOverlay
+      if (effectiveShowOverlay) {
         logBorder(
           '🔲🔲🔲 App — overlay ON (pageRotation paused, content hidden)',
           'warning',
@@ -53,7 +92,7 @@ export default function App() {
         )
       }
     }
-  }, [showOverlay])
+  }, [effectiveShowOverlay])
 
   useEffect(() => {
     logScreenChange(
@@ -75,10 +114,73 @@ export default function App() {
     return () => clearInterval(timer)
   }, [])
 
+  const isAdmin = route.startsWith('/admin') || route.includes('#admin')
+
+  // If navigating to /admin or #admin, show Admin Remote Control panel
+  if (isAdmin) {
+    return (
+      <ErrorBoundary>
+        <AdminRemote />
+      </ErrorBoundary>
+    )
+  }
+
+  // TV Hardware / Software Standby (pitch-black screen)
+  if (!remoteState?.tvPower) {
+    return (
+      <div
+        style={{
+          width: '100vw',
+          height: '100vh',
+          background: '#000000',
+          cursor: 'none',
+        }}
+        aria-hidden="true"
+      />
+    )
+  }
+
+  // High Priority Emergency Alert Broadcast
+  if (remoteState?.mode === 'alert') {
+    return (
+      <div className="edupage-shell">
+        <AlertBannerView message={remoteState.alertMessage} level={remoteState.alertLevel} />
+      </div>
+    )
+  }
+
+  // Photo Slideshow Mode
+  if (remoteState?.mode === 'slideshow') {
+    return (
+      <div className="edupage-shell">
+        <SlideshowView images={remoteState.images} intervalMs={remoteState.slideIntervalMs} />
+      </div>
+    )
+  }
+
+  // Remote Web Browser / Stream Mode
+  if (remoteState?.mode === 'browser') {
+    return (
+      <div className="edupage-shell">
+        <BrowserView url={remoteState.browserUrl} />
+      </div>
+    )
+  }
+
+  // Wireless Screen Share / WebRTC Cast Mode
+  if (remoteState?.mode === 'cast') {
+    return (
+      <div className="edupage-shell">
+        <ScreenCastView stream={castStream} />
+      </div>
+    )
+  }
+
+  // Normal School Kiosk Mode (Timetable, Substitutions, Events)
   return (
     <div className="edupage-shell">
-      <div className={`board-overlay${showOverlay ? '' : ' hidden'}`}>
-        {showOverlay && overlayReason === 'in_class' && (
+      <div className={`board-overlay${effectiveShowOverlay ? '' : ' hidden'}`}>
+        {effectiveShowOverlay && overlayReason === 'in_class' && (
           <>
             <div className="board-ascii-indicator top-right" aria-label="System active">
               [ <span className="board-ascii-blink">*</span> ]
@@ -108,7 +210,7 @@ export default function App() {
         )}
       </div>
 
-      {!showOverlay && (
+      {!effectiveShowOverlay && (
         <>
           <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} />
           <AccentRail progress={progress} />

@@ -137,5 +137,8 @@ export function useBoardData() {
     pages,
     periods,
     timetable: payload?.timetable,
+    timetableRows,
+    events,
+    substitutions,
   }
 }
