@@ -1,106 +1,125 @@
 /**
- * EduSign 2.0 - Airport-grade High-Contrast Digital Signage Theme
- * Optimized for distance legibility, high glare corridors, and older dim TV panels.
+ * EduSign - Swiss Editorial Digital Signage Design System
+ * Clean, high-contrast, professional design optimized for daytime school hallway TVs.
+ * Defaults to crisp Light Mode with high legibility for students (aged 8-20) and teachers.
  */
 
-const DARK_TOKENS = {
-  // Deep space canvas & structural surfaces
-  '--kiosk-bg': '#070A12',
-  '--kiosk-surface': '#0C111E',
-  '--kiosk-card': '#111728',
-  '--kiosk-card-hover': '#162035',
-  '--kiosk-card-raised': '#1A243C',
-  
-  // Structural borders with high visibility (prevents muddy display on older panels)
-  '--kiosk-border-subtle': 'rgba(255, 255, 255, 0.08)',
-  '--kiosk-border': 'rgba(255, 255, 255, 0.16)',
-  '--kiosk-border-strong': 'rgba(255, 255, 255, 0.28)',
-  '--kiosk-border-accent': 'rgba(56, 189, 248, 0.5)',
-
-  // Text Hierarchy (WCAG AAA compliant against #070A12)
-  '--kiosk-text-white': '#FFFFFF',
-  '--kiosk-text-primary': '#F1F5F9',
-  '--kiosk-text-secondary': '#94A3B8',
-  '--kiosk-text-muted': '#64748B',
-
-  // Electric Signage Accents
-  '--kiosk-cyan': '#38BDF8',
-  '--kiosk-cyan-glow': 'rgba(56, 189, 248, 0.25)',
-  '--kiosk-cyan-dark': '#0369A1',
-  '--kiosk-cyan-subtle': 'rgba(56, 189, 248, 0.12)',
-
-  '--kiosk-emerald': '#10B981',
-  '--kiosk-emerald-glow': 'rgba(16, 185, 129, 0.25)',
-  '--kiosk-emerald-subtle': 'rgba(16, 185, 129, 0.14)',
-
-  '--kiosk-amber': '#F59E0B',
-  '--kiosk-amber-glow': 'rgba(245, 158, 11, 0.28)',
-  '--kiosk-amber-subtle': 'rgba(245, 158, 11, 0.15)',
-  '--kiosk-amber-text': '#FDE68A',
-
-  '--kiosk-rose': '#F43F5E',
-  '--kiosk-rose-glow': 'rgba(244, 63, 94, 0.28)',
-  '--kiosk-rose-subtle': 'rgba(244, 63, 94, 0.15)',
-  '--kiosk-rose-text': '#FECDD3',
-
-  '--kiosk-purple': '#A855F7',
-  '--kiosk-purple-subtle': 'rgba(168, 85, 247, 0.14)',
-
-  // Active period column glow
-  '--kiosk-active-col-border': '#38BDF8',
-  '--kiosk-active-col-bg': 'rgba(56, 189, 248, 0.04)',
-}
-
 const LIGHT_TOKENS = {
+  // Crisp daylight canvas & structural surfaces
   '--kiosk-bg': '#F1F5F9',
   '--kiosk-surface': '#FFFFFF',
-  '--kiosk-card': '#F8FAFC',
-  '--kiosk-card-hover': '#F1F5F9',
-  '--kiosk-card-raised': '#E2E8F0',
+  '--kiosk-card': '#FFFFFF',
+  '--kiosk-card-subtle': '#F8FAFC',
+  '--kiosk-card-hover': '#F8FAFC',
+  '--kiosk-card-raised': '#FFFFFF',
+  '--kiosk-header-bg': '#0F172A',
 
-  '--kiosk-border-subtle': 'rgba(15, 23, 42, 0.08)',
-  '--kiosk-border': 'rgba(15, 23, 42, 0.16)',
-  '--kiosk-border-strong': 'rgba(15, 23, 42, 0.32)',
-  '--kiosk-border-accent': 'rgba(2, 132, 199, 0.6)',
+  // Structural borders with high visibility on older TV panels
+  '--kiosk-border-subtle': '#E2E8F0',
+  '--kiosk-border': '#CBD5E1',
+  '--kiosk-border-strong': '#94A3B8',
+  '--kiosk-border-accent': '#2563EB',
 
-  '--kiosk-text-white': '#0F172A',
+  // High-contrast ink typography (WCAG AAA compliant)
   '--kiosk-text-primary': '#0F172A',
   '--kiosk-text-secondary': '#475569',
   '--kiosk-text-muted': '#64748B',
+  '--kiosk-text-inverse': '#FFFFFF',
 
-  '--kiosk-cyan': '#0284C7',
-  '--kiosk-cyan-glow': 'rgba(2, 132, 199, 0.2)',
-  '--kiosk-cyan-dark': '#0369A1',
-  '--kiosk-cyan-subtle': '#E0F2FE',
+  // Institutional Color Accents
+  '--kiosk-primary': '#2563EB',
+  '--kiosk-primary-subtle': '#EFF6FF',
+  '--kiosk-primary-border': '#BFDBFE',
+  '--kiosk-primary-text': '#1D4ED8',
 
-  '--kiosk-emerald': '#059669',
-  '--kiosk-emerald-glow': 'rgba(5, 150, 105, 0.2)',
-  '--kiosk-emerald-subtle': '#D1FAE5',
+  '--kiosk-emerald': '#16A34A',
+  '--kiosk-emerald-subtle': '#DCFCE7',
+  '--kiosk-emerald-border': '#86EFAC',
+  '--kiosk-emerald-text': '#15803D',
 
   '--kiosk-amber': '#D97706',
-  '--kiosk-amber-glow': 'rgba(217, 119, 6, 0.2)',
-  '--kiosk-amber-subtle': '#FEF3C7',
-  '--kiosk-amber-text': '#78350F',
+  '--kiosk-amber-subtle': '#FFFBEB',
+  '--kiosk-amber-border': '#FCD34D',
+  '--kiosk-amber-text': '#B45309',
 
-  '--kiosk-rose': '#E11D48',
-  '--kiosk-rose-glow': 'rgba(225, 29, 72, 0.2)',
-  '--kiosk-rose-subtle': '#FFE4E6',
-  '--kiosk-rose-text': '#881337',
+  '--kiosk-rose': '#DC2626',
+  '--kiosk-rose-subtle': '#FEF2F2',
+  '--kiosk-rose-border': '#FCA5A5',
+  '--kiosk-rose-text': '#B91C1C',
 
-  '--kiosk-purple': '#7E22CE',
-  '--kiosk-purple-subtle': '#F3E8FF',
+  '--kiosk-purple': '#7C3AED',
+  '--kiosk-purple-subtle': '#F5F3FF',
+  '--kiosk-purple-border': '#DDD6FE',
+  '--kiosk-purple-text': '#6D28D9',
 
-  '--kiosk-active-col-border': '#0284C7',
-  '--kiosk-active-col-bg': 'rgba(2, 132, 199, 0.06)',
+  // Active period highlight
+  '--kiosk-active-bg': '#EFF6FF',
+  '--kiosk-active-border': '#2563EB',
+
+  // Room pill
+  '--kiosk-room-bg': '#0F172A',
+  '--kiosk-room-text': '#FFFFFF',
+}
+
+const DARK_TOKENS = {
+  // Deep neutral slate canvas (restrained and professional, zero neon glow)
+  '--kiosk-bg': '#0B0F19',
+  '--kiosk-surface': '#111827',
+  '--kiosk-card': '#182234',
+  '--kiosk-card-subtle': '#131B2B',
+  '--kiosk-card-hover': '#1F2C42',
+  '--kiosk-card-raised': '#24334C',
+  '--kiosk-header-bg': '#1E293B',
+
+  '--kiosk-border-subtle': 'rgba(255, 255, 255, 0.08)',
+  '--kiosk-border': 'rgba(255, 255, 255, 0.16)',
+  '--kiosk-border-strong': 'rgba(255, 255, 255, 0.28)',
+  '--kiosk-border-accent': '#38BDF8',
+
+  '--kiosk-text-primary': '#F8FAFC',
+  '--kiosk-text-secondary': '#94A3B8',
+  '--kiosk-text-muted': '#64748B',
+  '--kiosk-text-inverse': '#0F172A',
+
+  '--kiosk-primary': '#38BDF8',
+  '--kiosk-primary-subtle': 'rgba(56, 189, 248, 0.12)',
+  '--kiosk-primary-border': 'rgba(56, 189, 248, 0.3)',
+  '--kiosk-primary-text': '#38BDF8',
+
+  '--kiosk-emerald': '#10B981',
+  '--kiosk-emerald-subtle': 'rgba(16, 185, 129, 0.14)',
+  '--kiosk-emerald-border': 'rgba(16, 185, 129, 0.3)',
+  '--kiosk-emerald-text': '#34D399',
+
+  '--kiosk-amber': '#F59E0B',
+  '--kiosk-amber-subtle': 'rgba(245, 158, 11, 0.14)',
+  '--kiosk-amber-border': 'rgba(245, 158, 11, 0.35)',
+  '--kiosk-amber-text': '#FBBF24',
+
+  '--kiosk-rose': '#EF4444',
+  '--kiosk-rose-subtle': 'rgba(239, 68, 68, 0.14)',
+  '--kiosk-rose-border': 'rgba(239, 68, 68, 0.35)',
+  '--kiosk-rose-text': '#F87171',
+
+  '--kiosk-purple': '#A855F7',
+  '--kiosk-purple-subtle': 'rgba(168, 85, 247, 0.14)',
+  '--kiosk-purple-border': 'rgba(168, 85, 247, 0.3)',
+  '--kiosk-purple-text': '#C084FC',
+
+  '--kiosk-active-bg': 'rgba(56, 189, 248, 0.1)',
+  '--kiosk-active-border': '#38BDF8',
+
+  '--kiosk-room-bg': '#334155',
+  '--kiosk-room-text': '#F8FAFC',
 }
 
 const SHARED_TOKENS = {
   '--kiosk-font': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-  '--kiosk-gutter': 'clamp(1rem, 1.6vw, 2.2rem)',
-  '--kiosk-gap': 'clamp(0.45rem, 0.75vw, 1rem)',
-  '--kiosk-radius-xl': '18px',
-  '--kiosk-radius-lg': '14px',
-  '--kiosk-radius-md': '10px',
+  '--kiosk-gutter': 'clamp(0.85rem, 1.4vw, 1.8rem)',
+  '--kiosk-gap': 'clamp(0.4rem, 0.65vw, 0.85rem)',
+  '--kiosk-radius-xl': '14px',
+  '--kiosk-radius-lg': '10px',
+  '--kiosk-radius-md': '8px',
   '--kiosk-radius-sm': '6px',
   '--kiosk-radius-pill': '999px',
 }
@@ -113,7 +132,22 @@ function applyTokens(tokens) {
 }
 
 export function applyKioskTheme() {
-  const useLight = import.meta.env.VITE_USE_LIGHT_THEME === 'true'
-  const tokens = useLight ? LIGHT_TOKENS : DARK_TOKENS
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const urlTheme = urlParams?.get('theme')
+  const envTheme = import.meta.env.VITE_USE_LIGHT_THEME
+
+  // Default to clean, accessible Light Mode unless explicitly set to dark
+  let isLight = true
+  if (urlTheme === 'dark') {
+    isLight = false
+  } else if (urlTheme === 'light') {
+    isLight = true
+  } else if (envTheme === 'false') {
+    isLight = false
+  } else if (envTheme === 'true') {
+    isLight = true
+  }
+
+  const tokens = isLight ? LIGHT_TOKENS : DARK_TOKENS
   applyTokens({ ...tokens, ...SHARED_TOKENS })
 }

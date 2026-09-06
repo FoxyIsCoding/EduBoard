@@ -8,10 +8,10 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
         {entry.kicker && (
           <div
             style={{
-              color: isChanged ? 'var(--kiosk-amber)' : 'var(--kiosk-cyan)',
+              color: isChanged ? 'var(--kiosk-amber-text)' : 'var(--kiosk-primary)',
               fontWeight: 800,
               fontSize: compact ? '0.62rem' : '0.74rem',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.06em',
               textTransform: 'uppercase',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -24,7 +24,7 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
 
         <div
           style={{
-            marginTop: compact ? '0.08rem' : '0.2rem',
+            marginTop: compact ? '0.05rem' : '0.15rem',
             fontWeight: 900,
             fontSize: compact ? 'clamp(0.88rem, 1vw, 1.18rem)' : 'clamp(1.05rem, 1.25vw, 1.6rem)',
             lineHeight: 1.15,
@@ -32,7 +32,7 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
               ? 'var(--kiosk-rose-text)'
               : isChanged
                 ? 'var(--kiosk-amber-text)'
-                : 'var(--kiosk-text-white)',
+                : 'var(--kiosk-text-primary)',
             textDecoration: isCancelled ? 'line-through' : 'none',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -45,11 +45,11 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
 
       <div
         style={{
-          marginTop: '0.3rem',
+          marginTop: '0.25rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '0.4rem',
+          gap: '0.35rem',
           overflow: 'hidden',
         }}
       >
@@ -71,9 +71,9 @@ function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = 
           <span
             className="kiosk-pill pill-room"
             style={{
-              fontSize: compact ? '0.62rem' : '0.76rem',
-              padding: '0.12rem 0.45rem',
-              fontWeight: 800,
+              fontSize: compact ? '0.62rem' : '0.74rem',
+              padding: '0.12rem 0.42rem',
+              fontWeight: 900,
               flexShrink: 0,
             }}
           >
@@ -92,7 +92,7 @@ export default function LessonCard({ cell, isActive = false }) {
         style={{
           height: '100%',
           borderRadius: 'var(--kiosk-radius-lg)',
-          background: 'rgba(255, 255, 255, 0.015)',
+          background: 'var(--kiosk-card-subtle)',
           border: '1.5px dashed var(--kiosk-border-subtle)',
         }}
       />
@@ -119,7 +119,7 @@ export default function LessonCard({ cell, isActive = false }) {
         flexDirection: 'column',
       }}
     >
-      {/* Top Status Border Strip */}
+      {/* Top Status Accent Bar */}
       {(isChanged || isCancelled || isEvent) && (
         <div
           style={{
@@ -129,7 +129,7 @@ export default function LessonCard({ cell, isActive = false }) {
               ? 'var(--kiosk-rose)'
               : isChanged
                 ? 'var(--kiosk-amber)'
-                : 'var(--kiosk-cyan)',
+                : 'var(--kiosk-primary)',
             flexShrink: 0,
           }}
         />
@@ -137,7 +137,7 @@ export default function LessonCard({ cell, isActive = false }) {
 
       <div
         style={{
-          padding: isSplit ? '0.45rem 0.65rem' : '0.65rem 0.85rem',
+          padding: isSplit ? '0.4rem 0.6rem' : '0.6rem 0.8rem',
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -146,16 +146,16 @@ export default function LessonCard({ cell, isActive = false }) {
       >
         {/* Status Tag Header if modified */}
         {(isChanged || isCancelled || isEvent) && (
-          <div style={{ marginBottom: '0.25rem' }}>
+          <div style={{ marginBottom: '0.2rem' }}>
             <span
               className={`kiosk-pill ${
                 isCancelled
                   ? 'pill-rose'
                   : isChanged
                     ? 'pill-amber'
-                    : 'pill-cyan'
+                    : 'pill-primary'
               }`}
-              style={{ fontSize: '0.62rem', padding: '0.1rem 0.45rem' }}
+              style={{ fontSize: '0.62rem', padding: '0.1rem 0.42rem' }}
             >
               {isCancelled ? 'Odpadá' : isChanged ? 'Změna' : 'Akce'}
             </span>
@@ -163,13 +163,13 @@ export default function LessonCard({ cell, isActive = false }) {
         )}
 
         {isSplit ? (
-          <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '0.45rem', height: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '0.4rem', height: '100%' }}>
             {cell.entries.map((entry, idx) => (
               <div
                 key={idx}
                 style={{
                   borderTop: idx > 0 ? '1px dashed var(--kiosk-border)' : 'none',
-                  paddingTop: idx > 0 ? '0.35rem' : '0',
+                  paddingTop: idx > 0 ? '0.3rem' : '0',
                 }}
               >
                 <LessonEntry

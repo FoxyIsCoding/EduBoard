@@ -51,7 +51,7 @@ export default class ErrorBoundary extends Component {
                 border: '1.5px solid var(--kiosk-border-strong)',
               }}
             >
-              <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, color: 'var(--kiosk-text-white)' }}>
+              <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, color: 'var(--kiosk-text-primary)' }}>
                 Došlo k chybě
               </h2>
               <p style={{ marginTop: '0.8rem', color: 'var(--kiosk-text-secondary)', fontSize: '1.1rem' }}>

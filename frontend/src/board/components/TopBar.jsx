@@ -1,4 +1,4 @@
-import { LayoutDashboard, Radio } from 'lucide-react'
+import { LayoutDashboard } from 'lucide-react'
 
 export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode = false }) {
   // Determine if current week is even (sudý) or odd (lichý) for Czech school calendar
@@ -11,31 +11,31 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
   return (
     <header
       style={{
-        minHeight: 'clamp(5.2rem, 8.5vh, 7.8rem)',
-        padding: 'clamp(0.6rem, 1vw, 1.2rem) clamp(1rem, 1.8vw, 2.4rem)',
+        minHeight: 'clamp(5rem, 8vh, 7.2rem)',
+        padding: 'clamp(0.55rem, 0.9vw, 1rem) clamp(1rem, 1.8vw, 2.2rem)',
         display: 'grid',
         gridTemplateColumns: 'minmax(280px, 1.2fr) auto minmax(280px, 1.2fr)',
         gap: '1.2rem',
         alignItems: 'center',
       }}
     >
-      {/* Left Column: Brand & Active Screen Pill */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      {/* Left Column: Brand, Status, & Active Page Title */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              color: 'var(--kiosk-cyan)',
+              gap: '0.45rem',
+              color: 'var(--kiosk-primary)',
               fontWeight: 900,
-              fontSize: 'clamp(1rem, 1.3vw, 1.5rem)',
-              letterSpacing: '0.12em',
+              fontSize: 'clamp(1rem, 1.25vw, 1.4rem)',
+              letterSpacing: '0.08em',
               textTransform: 'uppercase',
             }}
           >
-            <LayoutDashboard size={22} style={{ filter: 'drop-shadow(0 0 8px var(--kiosk-cyan-glow))' }} />
-            <span>EduBoard</span>
+            <LayoutDashboard size={22} color="var(--kiosk-primary)" />
+            <span style={{ color: 'var(--kiosk-text-primary)' }}>EduBoard</span>
           </div>
 
           <div
@@ -43,25 +43,25 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              padding: '0.2rem 0.65rem',
+              padding: '0.18rem 0.55rem',
               borderRadius: 'var(--kiosk-radius-pill)',
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: 'var(--kiosk-emerald)',
-              fontSize: 'clamp(0.7rem, 0.8vw, 0.88rem)',
+              background: 'var(--kiosk-emerald-subtle)',
+              border: '1px solid var(--kiosk-emerald-border)',
+              color: 'var(--kiosk-emerald-text)',
+              fontSize: 'clamp(0.7rem, 0.78vw, 0.85rem)',
               fontWeight: 800,
-              letterSpacing: '0.06em',
+              letterSpacing: '0.04em',
               textTransform: 'uppercase',
             }}
           >
-            <span className="kiosk-pulse-dot" />
+            <span className="kiosk-live-dot" />
             <span>Informační systém</span>
           </div>
 
           {isLocalMode && (
             <span
               className="kiosk-pill pill-room"
-              style={{ fontSize: '0.7rem', opacity: 0.9 }}
+              style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem' }}
             >
               Demo Mode
             </span>
@@ -70,11 +70,11 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
 
         <div
           style={{
-            fontSize: 'clamp(1.6rem, 2.2vw, 2.8rem)',
+            fontSize: 'clamp(1.55rem, 2.1vw, 2.6rem)',
             fontWeight: 900,
             letterSpacing: '-0.025em',
             lineHeight: 1.1,
-            color: 'var(--kiosk-text-white)',
+            color: 'var(--kiosk-text-primary)',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis',
@@ -84,7 +84,7 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
         </div>
       </div>
 
-      {/* Center Column: Huge Digital Clock */}
+      {/* Center Column: Giant Digital Clock */}
       <div
         style={{
           display: 'flex',
@@ -95,13 +95,12 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
       >
         <div
           style={{
-            fontSize: 'clamp(3.6rem, 5.8vw, 6.8rem)',
+            fontSize: 'clamp(3.5rem, 5.5vw, 6.4rem)',
             fontWeight: 900,
             lineHeight: 0.95,
             letterSpacing: '-0.03em',
-            color: 'var(--kiosk-cyan)',
+            color: 'var(--kiosk-text-primary)',
             fontVariantNumeric: 'tabular-nums',
-            textShadow: '0 0 28px var(--kiosk-cyan-glow)',
           }}
         >
           {clockLabel}
@@ -115,25 +114,25 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
           flexDirection: 'column',
           alignItems: 'flex-end',
           justifyContent: 'center',
-          gap: '0.35rem',
+          gap: '0.25rem',
         }}
       >
         <div
           style={{
-            fontSize: 'clamp(1.5rem, 2.1vw, 2.5rem)',
+            fontSize: 'clamp(1.4rem, 1.95vw, 2.3rem)',
             fontWeight: 900,
             lineHeight: 1.1,
-            color: 'var(--kiosk-text-white)',
+            color: 'var(--kiosk-text-primary)',
             letterSpacing: '-0.01em',
           }}
         >
           {dateParts.weekday}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
           <span
             style={{
-              fontSize: 'clamp(0.95rem, 1.25vw, 1.5rem)',
+              fontSize: 'clamp(0.92rem, 1.15vw, 1.35rem)',
               color: 'var(--kiosk-text-secondary)',
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
@@ -144,12 +143,12 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
 
           <span
             style={{
-              padding: '0.15rem 0.55rem',
+              padding: '0.15rem 0.5rem',
               borderRadius: 'var(--kiosk-radius-pill)',
-              background: 'rgba(255, 255, 255, 0.08)',
+              background: 'var(--kiosk-card-subtle)',
               border: '1px solid var(--kiosk-border)',
               color: 'var(--kiosk-text-secondary)',
-              fontSize: 'clamp(0.7rem, 0.8vw, 0.88rem)',
+              fontSize: 'clamp(0.68rem, 0.78vw, 0.85rem)',
               fontWeight: 700,
               letterSpacing: '0.04em',
             }}

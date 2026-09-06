@@ -83,12 +83,12 @@ export default function App() {
             <div className="board-ascii-indicator top-right" aria-label="System active">
               [ <span className="board-ascii-blink">*</span> ]
             </div>
-            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.55)' }}>
+            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)' }}>
               <div className="board-overlay-indicator" style={{ margin: '0 auto 1.4rem' }} />
-              <div style={{ fontSize: 'clamp(1.4rem, 2vw, 2.2rem)', letterSpacing: '0.04em', fontWeight: 800, color: 'var(--kiosk-text-white)' }}>
+              <div style={{ fontSize: 'clamp(1.4rem, 2vw, 2.2rem)', letterSpacing: '0.04em', fontWeight: 800, color: '#FFFFFF' }}>
                 Výuka probíhá
               </div>
-              <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.4rem)', marginTop: '0.5rem', color: 'var(--kiosk-text-secondary)' }}>
+              <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.4rem)', marginTop: '0.5rem', color: '#94A3B8' }}>
                 Obrazovka se aktivuje o přestávce
               </div>
               <div
@@ -96,10 +96,9 @@ export default function App() {
                   fontSize: 'clamp(2.5rem, 3.8vw, 4.5rem)',
                   fontWeight: 900,
                   marginTop: '1.5rem',
-                  color: 'var(--kiosk-cyan)',
+                  color: '#FFFFFF',
                   letterSpacing: '0.02em',
                   fontVariantNumeric: 'tabular-nums',
-                  textShadow: '0 0 24px var(--kiosk-cyan-glow)',
                 }}
               >
                 {clockLabel}

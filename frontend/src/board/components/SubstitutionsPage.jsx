@@ -35,17 +35,17 @@ function SubstitutionCard({ item, compact = false }) {
         }}
       >
         {/* Top line: Class, Period and Status Badge */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? '0.4rem' : '0.85rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? '0.35rem' : '0.75rem' }}>
           <div
             style={{
               fontSize: compact ? '0.95rem' : '1.35rem',
               fontWeight: 900,
-              color: 'var(--kiosk-text-white)',
+              color: 'var(--kiosk-text-primary)',
               letterSpacing: '0.04em',
               textTransform: 'uppercase',
             }}
           >
-            <span style={{ color: 'var(--kiosk-cyan)' }}>{item.className}</span>
+            <span style={{ color: 'var(--kiosk-primary)' }}>{item.className}</span>
             <span style={{ marginInline: '0.45rem', opacity: 0.35 }}>•</span>
             <span>{item.periodShort}. hodina</span>
           </div>
@@ -53,8 +53,8 @@ function SubstitutionCard({ item, compact = false }) {
           <span
             className={`kiosk-pill ${isCancelled ? 'pill-rose' : 'pill-amber'}`}
             style={{
-              fontSize: compact ? '0.72rem' : '0.88rem',
-              padding: compact ? '0.18rem 0.55rem' : '0.25rem 0.75rem',
+              fontSize: compact ? '0.74rem' : '0.88rem',
+              padding: compact ? '0.18rem 0.55rem' : '0.24rem 0.72rem',
             }}
           >
             {isCancelled ? (
@@ -78,9 +78,9 @@ function SubstitutionCard({ item, compact = false }) {
             fontWeight: 900,
             lineHeight: 1.12,
             letterSpacing: '-0.025em',
-            color: isCancelled ? 'var(--kiosk-rose-text)' : 'var(--kiosk-text-white)',
+            color: isCancelled ? 'var(--kiosk-rose-text)' : 'var(--kiosk-text-primary)',
             textDecoration: isCancelled ? 'line-through' : 'none',
-            marginBottom: compact ? '0.5rem' : '1rem',
+            marginBottom: compact ? '0.45rem' : '0.95rem',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -95,7 +95,7 @@ function SubstitutionCard({ item, compact = false }) {
             marginTop: 'auto',
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: compact ? '0.5rem' : '0.85rem',
+            gap: compact ? '0.45rem' : '0.8rem',
             paddingTop: '0.65rem',
             borderTop: '1px solid var(--kiosk-border)',
             fontSize: compact ? 'clamp(0.82rem, 0.95vw, 1.05rem)' : 'clamp(1rem, 1.25vw, 1.45rem)',
@@ -103,7 +103,7 @@ function SubstitutionCard({ item, compact = false }) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-            <Clock size={18} color="var(--kiosk-cyan)" style={{ flexShrink: 0 }} />
+            <Clock size={18} color="var(--kiosk-primary)" style={{ flexShrink: 0 }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
               {item.periodTime}
             </span>
@@ -116,7 +116,7 @@ function SubstitutionCard({ item, compact = false }) {
                 style={{
                   fontSize: compact ? '0.74rem' : '0.9rem',
                   padding: '0.15rem 0.55rem',
-                  fontWeight: 800,
+                  fontWeight: 900,
                 }}
               >
                 <MapPin size={14} style={{ flexShrink: 0 }} />
@@ -128,7 +128,7 @@ function SubstitutionCard({ item, compact = false }) {
           {item.teacherLabel && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', gridColumn: 'span 2' }}>
               <User size={18} style={{ flexShrink: 0, color: 'var(--kiosk-text-secondary)' }} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 800, color: 'var(--kiosk-text-white)' }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 800, color: 'var(--kiosk-text-primary)' }}>
                 {item.teacherLabel}
               </span>
             </div>
@@ -160,7 +160,8 @@ export default function SubstitutionsPage({ substitutions }) {
             textAlign: 'center',
             background: 'var(--kiosk-card)',
             maxWidth: '680px',
-            border: '1.5px solid var(--kiosk-border-strong)',
+            border: '1.5px solid var(--kiosk-border)',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
           }}
         >
           <div
@@ -168,23 +169,22 @@ export default function SubstitutionsPage({ substitutions }) {
               width: '72px',
               height: '72px',
               borderRadius: '50%',
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1.5px solid rgba(16, 185, 129, 0.4)',
+              background: 'var(--kiosk-emerald-subtle)',
+              border: '1.5px solid var(--kiosk-emerald-border)',
               display: 'grid',
               placeItems: 'center',
               color: 'var(--kiosk-emerald)',
               margin: '0 auto 1.5rem',
-              boxShadow: '0 0 24px var(--kiosk-emerald-glow)',
             }}
           >
-            <CheckCircle2 size={42} />
+            <CheckCircle2 size={40} />
           </div>
           <h3
             style={{
               margin: 0,
-              fontSize: 'clamp(2.2rem, 3.2vw, 3.8rem)',
+              fontSize: 'clamp(2.2rem, 3.2vw, 3.6rem)',
               fontWeight: 900,
-              color: 'var(--kiosk-text-white)',
+              color: 'var(--kiosk-text-primary)',
               letterSpacing: '-0.02em',
             }}
           >
@@ -192,9 +192,9 @@ export default function SubstitutionsPage({ substitutions }) {
           </h3>
           <p
             style={{
-              margin: '1.2rem 0 0',
+              margin: '1.1rem 0 0',
               color: 'var(--kiosk-text-secondary)',
-              fontSize: 'clamp(1.15rem, 1.5vw, 1.8rem)',
+              fontSize: 'clamp(1.1rem, 1.45vw, 1.65rem)',
               lineHeight: 1.5,
               fontWeight: 500,
             }}

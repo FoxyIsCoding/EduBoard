@@ -27,7 +27,7 @@ export default function EmptyPage({ title, copy }) {
             fontSize: 'clamp(2.2rem, 3.4vw, 3.8rem)',
             fontWeight: 900,
             lineHeight: 1.1,
-            color: 'var(--kiosk-text-white)',
+            color: 'var(--kiosk-text-primary)',
             letterSpacing: '-0.02em',
           }}
         >
