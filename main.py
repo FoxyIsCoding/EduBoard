@@ -741,8 +741,17 @@ def serve_admin():
         return FileResponse(admin_index)
     return frontend_fallback()
 
+class SafeStaticFiles(StaticFiles):
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            if scope["type"] == "websocket":
+                await send({"type": "websocket.close", "code": 1000})
+            return
+        await super().__call__(scope, receive, send)
+
+
 if dist_dir.exists():
-    app.mount("/", StaticFiles(directory=dist_dir, html=True), name="frontend")
+    app.mount("/", SafeStaticFiles(directory=dist_dir, html=True), name="frontend")
 else:
     @app.get("/")
     def serve_frontend_root():
