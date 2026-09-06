@@ -199,43 +199,43 @@ def main(stdscr):
     engine.log("◇ eduboard ❯ setup wizard initialized")
     engine.log("")
 
-    # --- Configuration ---
-    hostname = engine.ask("System Hostname", "tv1", max_length=16) or "tv1"
-    username = engine.ask("Kiosk Username", "kiosk", max_length=32) or "kiosk"
-    subdomain = engine.ask("School Subdomain", "school", max_length=32) or "school"
-    screen_id = engine.ask("Screen Identifier", "1", max_length=6) or "1"
-    events_screen_id = engine.ask("Events Screen Identifier", "5", max_length=6) or "5"
-    password = engine.ask("Kiosk Password", "123456", max_length=32) or "123456"
+    # --- Configuration Wizard ---
+    hostname = engine.ask("System Hostname", "tv1", hint="Device network hostname (e.g. tv-hall, eduboard-1)", max_length=16) or "tv1"
+    username = engine.ask("Kiosk User Account", "kiosk", hint="Dedicated non-root Linux user for kiosk auto-login", max_length=32) or "kiosk"
+    subdomain = engine.ask("School Subdomain", "school", hint="EduPage subdomain (e.g. gymnasium for gymnasium.edupage.org)", max_length=32) or "school"
+    screen_id = engine.ask("Timetable Screen ID", "1", hint="EduPage timetable display screen ID number", max_length=6) or "1"
+    events_screen_id = engine.ask("Events Screen ID", "5", hint="EduPage events presentation screen ID number", max_length=6) or "5"
+    password = engine.ask("Kiosk User Password", "123456", hint="Password for the local kiosk user account", max_length=32) or "123456"
     use_light_theme = (
-        engine.ask("Use Light Theme? (y/N)", "N", max_length=1).lower() == "y"
+        engine.ask("Interface Theme (dark / light)", "dark", hint="UI theme palette: dark or light", max_length=5).lower() in ("light", "l")
     )
     enable_break_overlay = (
-        engine.ask("Enable Standby/Break-only Overlay? (Y/n)", "Y", max_length=1).lower() != "n"
+        engine.ask("Break-Only Standby Overlay (Y/n)", "Y", hint="Display black screen only during school breaks to preserve TV backlight", max_length=1).lower() != "n"
     )
     debug_mode = (
-        engine.ask("Enable Debug Mode? (y/N)", "N", max_length=1).lower() == "y"
+        engine.ask("Verbose Debug Mode (y/N)", "N", hint="Show verbose diagnostics and system logs on boot", max_length=1).lower() == "y"
     )
     website_url = (
-        engine.ask("Website URL", "http://localhost:8000", max_length=128) or "http://localhost:8000"
+        engine.ask("Kiosk Target URL", "http://localhost:8000", hint="Web server endpoint loaded by Firefox kiosk", max_length=128) or "http://localhost:8000"
     )
 
     # Tailscale option
     tailscale_token = (
-        engine.ask("Tailscale Auth Token (optional)", "", max_length=64) or ""
+        engine.ask("Tailscale Auth Key (optional)", "", hint="Pre-authenticated key to join your Tailscale mesh VPN, or leave blank to skip", max_length=64) or ""
     )
 
     engine.log("◇ Configuration Summary")
-    engine.log(f"  ● Hostname: {hostname}")
-    engine.log(f"  ● Kiosk User: {username}")
-    engine.log(f"  ● EduPage School: {subdomain}")
-    engine.log(f"  ● Screen ID: {screen_id} (Events: {events_screen_id})")
-    engine.log(f"  ● Standby Overlay: {'Enabled' if enable_break_overlay else 'Disabled'}")
-    engine.log(f"  ● Theme: {'Light' if use_light_theme else 'Dark'}")
-    engine.log(f"  ● Target URL: {website_url}")
+    engine.log(f"  ● Hostname:        {hostname}")
+    engine.log(f"  ● Kiosk User:      {username}")
+    engine.log(f"  ● EduPage School:  {subdomain}")
+    engine.log(f"  ● Screens:         Timetable #{screen_id}, Events #{events_screen_id}")
+    engine.log(f"  ● Standby Overlay: {'Enabled (break-only)' if enable_break_overlay else 'Disabled'}")
+    engine.log(f"  ● Theme:           {'Light' if use_light_theme else 'Dark'}")
+    engine.log(f"  ● Target URL:      {website_url}")
     if tailscale_token.strip():
-        engine.log(f"  ● Tailscale: Enabled")
+        engine.log(f"  ● Tailscale VPN:   Configured")
     else:
-        engine.log(f"  ● Tailscale: Disabled")
+        engine.log(f"  ● Tailscale VPN:   Skipped")
     engine.log("")
 
     home_dir = f"/home/{username}"
@@ -380,6 +380,9 @@ DEBUG={str(debug_mode).lower()}
         cwd=f"{repo_dir}/frontend",
         user=username,
         log_callback=engine.log,
+    )
+    run_command(
+        f"sudo chmod +x {repo_dir}/run.sh {repo_dir}/update.sh 2>/dev/null || true"
     )
     engine.log("✔ Frontend pre-built successfully")
 

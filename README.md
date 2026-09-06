@@ -81,3 +81,21 @@ The installer will:
 - create and enable a systemd service for EduBoard
 - optionally install and authenticate Tailscale
 - configure a basic UFW firewall
+
+## Updating & Branch Management
+
+EduBoard includes an interactive updater and branch manager with a modern CLI interface:
+
+```bash
+./update.sh
+```
+
+### Options & Shortcuts
+
+```bash
+./update.sh -c              # Fast update current branch non-interactively
+./update.sh -b <branch>     # Switch to branch and update (e.g. ./update.sh -b dev)
+./update.sh --build-only    # Recompile Vite frontend assets & update pip
+./update.sh -c --restart    # Update and reload the EduBoard systemd kiosk service
+./update.sh -h              # Display help and usage options
+```

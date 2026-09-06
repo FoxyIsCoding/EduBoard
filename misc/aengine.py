@@ -38,16 +38,33 @@ class AnimationEngine:
         curses.curs_set(0)
         self.stdscr.nodelay(True)
         curses.start_color()
-        curses.use_default_colors()
         try:
-            curses.init_pair(1, curses.COLOR_CYAN, -1)     # ℹ, ❯, ◇ (Cyan)
-            curses.init_pair(2, curses.COLOR_GREEN, -1)    # ✔ (Green)
-            curses.init_pair(3, curses.COLOR_YELLOW, -1)   # ⚠ (Yellow)
-            curses.init_pair(4, curses.COLOR_RED, -1)      # ✖ (Red)
-            curses.init_pair(5, curses.COLOR_MAGENTA, -1)  # Tags
-            curses.init_pair(6, curses.COLOR_CYAN, -1)     # Banner title
-            curses.init_pair(10, curses.COLOR_WHITE, -1)   # Text
-            curses.init_pair(11, 8, -1)                    # Dim border / timestamps
+            curses.use_default_colors()
+        except curses.error:
+            pass
+
+        is_256 = curses.COLORS >= 256
+        c_cyan = 39 if is_256 else curses.COLOR_CYAN
+        c_mint = 48 if is_256 else curses.COLOR_GREEN
+        c_amber = 214 if is_256 else curses.COLOR_YELLOW
+        c_rose = 197 if is_256 else curses.COLOR_RED
+        c_violet = 141 if is_256 else curses.COLOR_MAGENTA
+        c_sky = 75 if is_256 else curses.COLOR_CYAN
+        c_text = 255 if is_256 else curses.COLOR_WHITE
+        c_border = 239 if is_256 else 8
+        c_dim = 244 if is_256 else 8
+
+        try:
+            curses.init_pair(1, c_cyan, -1)     # ℹ, ❯, ◇ (Electric Cyan)
+            curses.init_pair(2, c_mint, -1)     # ✔ (Mint / Emerald)
+            curses.init_pair(3, c_amber, -1)    # ⚠ (Amber Gold)
+            curses.init_pair(4, c_rose, -1)     # ✖ (Rose / Coral)
+            curses.init_pair(5, c_violet, -1)   # ◆, Badges (Violet / Lavender)
+            curses.init_pair(6, c_cyan, -1)     # Banner top gradient
+            curses.init_pair(7, c_sky, -1)      # Banner mid gradient
+            curses.init_pair(10, c_text, -1)    # Crisp clean text
+            curses.init_pair(11, c_border, -1)  # Muted borders
+            curses.init_pair(12, c_dim, -1)     # Dim timestamps & hints
         except curses.error:
             pass
 
@@ -66,37 +83,43 @@ class AnimationEngine:
             rem = line[idx:].lstrip()
             avail = limit_x - cur_x
             if avail > 0:
-                self.stdscr.addstr(y, cur_x, ts[:avail], curses.color_pair(11))
+                self.stdscr.addstr(y, cur_x, ts[:avail], curses.color_pair(12))
                 cur_x += min(len(ts), avail)
             if cur_x < limit_x:
-                self.stdscr.addstr(y, cur_x, " ")
-                cur_x += 1
+                self.stdscr.addstr(y, cur_x, "  ")
+                cur_x += 2
             line = rem
 
         if not line or cur_x >= limit_x:
             return
 
-        # Check for NPX/CLI icon
+        # Check for status/CLI icon
         icon_char = line[0]
         color = curses.color_pair(10)
+        is_icon = False
         if icon_char in ("✔", "✓"):
             color = curses.color_pair(2) | curses.A_BOLD
+            is_icon = True
         elif icon_char in ("✖", "✗"):
             color = curses.color_pair(4) | curses.A_BOLD
+            is_icon = True
         elif icon_char in ("⚠", "!"):
             color = curses.color_pair(3) | curses.A_BOLD
+            is_icon = True
         elif icon_char in ("ℹ", "❯", "◇", "→"):
             color = curses.color_pair(1) | curses.A_BOLD
-        elif icon_char in ("●", "•"):
-            color = curses.color_pair(1)
+            is_icon = True
+        elif icon_char in ("◆", "●", "•"):
+            color = curses.color_pair(5) | curses.A_BOLD
+            is_icon = True
 
         # Print icon with spacing
-        if len(line) >= 2 and line[1] == " ":
+        if is_icon:
             avail = limit_x - cur_x
             if avail > 0:
-                self.stdscr.addstr(y, cur_x, line[:2], color)
+                self.stdscr.addstr(y, cur_x, icon_char + " ", color)
                 cur_x += min(2, avail)
-            line = line[2:]
+            line = line[1:].lstrip()
 
         # Print remaining text
         avail = limit_x - cur_x
@@ -151,7 +174,7 @@ class AnimationEngine:
             self.ensure_healthy()
             time.sleep(min(0.05, end_time - time.time()))
 
-    def ask(self, question, placeholder="", max_length=2048):
+    def ask(self, question, placeholder="", hint="", max_length=2048):
         self.ensure_healthy()
         self.input_active = True
         self.input_result = None
@@ -159,12 +182,12 @@ class AnimationEngine:
         user_input = list(placeholder)
         cursor_pos = len(user_input)
 
-        min_width = max(len(question) + 20, 75)
-        win_w = min(min_width, self.w - 10)
-        win_h = 10  # more compact
+        min_width = max(len(question) + 20, len(hint) + 20, 72)
+        win_w = min(min_width, max(self.w - 8, 40))
+        win_h = 11 if hint else 10
 
-        start_y = (self.h - win_h) // 2 - 1
-        start_x = (self.w - win_w) // 2
+        start_y = max(1, (self.h - win_h) // 2 - 1)
+        start_x = max(2, (self.w - win_w) // 2)
 
         self.input_win_info = {
             'y': start_y,
@@ -172,6 +195,7 @@ class AnimationEngine:
             'w': win_w,
             'h': win_h,
             'question': question,
+            'hint': hint,
             'input': user_input,
             'cursor': cursor_pos,
             'max_length': max_length,
@@ -210,34 +234,42 @@ class AnimationEngine:
             # Top frame with NPX/CLI header
             hdr_tag = " eduboard "
             hdr_sub = "❯ setup wizard "
-            self.stdscr.addstr(y, x, "┌─", border_attr)
-            self.stdscr.addstr(hdr_tag, curses.color_pair(1) | curses.A_BOLD)
+            self.stdscr.addstr(y, x, "╭─", border_attr)
+            self.stdscr.addstr(hdr_tag, curses.color_pair(5) | curses.A_BOLD)
             self.stdscr.addstr(hdr_sub, curses.color_pair(10) | curses.A_DIM)
             bar_len = max(0, w - len(hdr_tag) - len(hdr_sub) - 4)
-            self.stdscr.addstr("─" * bar_len + "┐", border_attr)
-
-            for i in range(1, h - 1):
-                self.stdscr.addstr(y + i, x, "│", border_attr)
-                self.stdscr.addstr(y + i, x + w - 1, "│", border_attr)
+            self.stdscr.addstr("─" * bar_len + "╮", border_attr)
 
             # Clear interior
             for i in range(1, h - 1):
+                self.stdscr.addstr(y + i, x, "│", border_attr)
                 self.stdscr.addstr(y + i, x + 1, " " * (w - 2))
+                self.stdscr.addstr(y + i, x + w - 1, "│", border_attr)
 
-            # Question in Clack/NPX style with diamond icon
+            # Question with diamond icon
             q_lines = [info['question'][i:i + w - 10] for i in range(0, len(info['question']), w - 10)]
-            for i, line in enumerate(q_lines[:3]):
+            for i, line in enumerate(q_lines[:2]):
                 qy = y + 2 + i
                 if qy < y + h - 5:
                     if i == 0:
-                        self.stdscr.addstr(qy, x + 3, "◇", curses.color_pair(1) | curses.A_BOLD)
+                        self.stdscr.addstr(qy, x + 3, "◆", curses.color_pair(1) | curses.A_BOLD)
                         self.stdscr.addstr(qy, x + 5, line, text_attr)
                     else:
                         self.stdscr.addstr(qy, x + 5, line, text_attr)
 
+            # Optional hint
+            hint = info.get('hint', '')
+            hint_offset = 0
+            if hint:
+                hint_offset = 1
+                hy = y + 2 + len(q_lines[:2])
+                if hy < y + h - 4:
+                    hint_str = hint[:w - 10]
+                    self.stdscr.addstr(hy, x + 5, hint_str, curses.color_pair(12))
+
             # Input area with arrow icon
-            input_start_y = y + len(q_lines) + 3
-            visible_lines_count = h - len(q_lines) - 6
+            input_start_y = y + len(q_lines[:2]) + hint_offset + 3
+            visible_lines_count = max(1, h - len(q_lines[:2]) - hint_offset - 6)
 
             full_text = ''.join(info['input'])
             lines = [full_text[i:i + input_width] for i in range(0, len(full_text), input_width)]
@@ -271,14 +303,14 @@ class AnimationEngine:
                     self.stdscr.addch(cursor_y, cursor_x, blink, curses.A_REVERSE | curses.A_STANDOUT)
 
             # Footer with counter and hint
-            ftr_hint = " Enter to submit "
+            ftr_hint = " ↵ Enter to submit "
             count_text = f" {len(info['input'])}/{info['max_length']} "
             mid_bar = max(0, w - len(ftr_hint) - len(count_text) - 4)
-            self.stdscr.addstr(y + h - 1, x, "└─", border_attr)
-            self.stdscr.addstr(ftr_hint, curses.color_pair(11))
+            self.stdscr.addstr(y + h - 1, x, "╰─", border_attr)
+            self.stdscr.addstr(ftr_hint, curses.color_pair(12))
             self.stdscr.addstr("─" * mid_bar, border_attr)
-            self.stdscr.addstr(count_text, curses.color_pair(11))
-            self.stdscr.addstr("─┘", border_attr)
+            self.stdscr.addstr(count_text, curses.color_pair(12))
+            self.stdscr.addstr("─╯", border_attr)
 
         except curses.error:
             pass
@@ -346,46 +378,47 @@ class AnimationEngine:
         elif cursor_line >= info.get('scroll_offset', 0) + visible_lines - 1:
             info['scroll_offset'] = cursor_line - visible_lines + 2
 
-        # Dynamic height (much tighter now)
-        needed_h = 8 + (len(input_list) // width) + 3
-        new_h = min(max(needed_h, 10), self.h - 8)
+        # Dynamic height
+        base_h = 11 if info.get('hint') else 10
+        needed_h = base_h + (len(input_list) // width)
+        new_h = min(max(needed_h, base_h), max(base_h, self.h - 6))
         if new_h != info.get('h'):
             info['h'] = new_h
-            info['y'] = (self.h - new_h) // 2 - 1
+            info['y'] = max(1, (self.h - new_h) // 2 - 1)
 
     def _draw_logs(self):
         if self.art_visible:
-            max_logs = 12
+            max_logs = 4
             all_wrapped = []
             for msg in self.logs:
-                all_wrapped.extend(textwrap.wrap(msg, max(30, self.w // 3)))
+                all_wrapped.extend(textwrap.wrap(msg, max(30, self.w - 8)))
             display = all_wrapped[-max_logs:]
             start_y = self.h - len(display) - 2
             for i, line in enumerate(display):
                 if 0 <= start_y + i < self.h:
-                    self._print_styled_line(start_y + i, 2, line, self.w - 4)
+                    self._print_styled_line(start_y + i, 4, line, self.w - 8)
             return
 
         start_y, start_x, win_h, win_w = self._get_win_coords()
         try:
             border_attr = curses.color_pair(11)
             hdr_badge = " eduboard "
-            hdr_step = "❯ live log "
-            self.stdscr.addstr(start_y, start_x, "┌─", border_attr)
-            self.stdscr.addstr(hdr_badge, curses.color_pair(1) | curses.A_BOLD)
+            hdr_step = "❯ activity "
+            hdr_live = "● live"
+            self.stdscr.addstr(start_y, start_x, "╭─", border_attr)
+            self.stdscr.addstr(hdr_badge, curses.color_pair(5) | curses.A_BOLD)
             self.stdscr.addstr(hdr_step, curses.color_pair(10) | curses.A_DIM)
-            bar_len = max(0, win_w - len(hdr_badge) - len(hdr_step) - 4)
-            self.stdscr.addstr("─" * bar_len + "┐", border_attr)
+            bar_len = max(0, win_w - len(hdr_badge) - len(hdr_step) - len(hdr_live) - 6)
+            self.stdscr.addstr("─" * bar_len, border_attr)
+            self.stdscr.addstr(" " + hdr_live + " ", curses.color_pair(2) | curses.A_BOLD)
+            self.stdscr.addstr("─╮", border_attr)
 
             for i in range(1, win_h - 1):
                 self.stdscr.addstr(start_y + i, start_x, "│", border_attr)
                 self.stdscr.addstr(start_y + i, start_x + win_w - 1, "│", border_attr)
 
-            ftr_badge = " live "
-            ftr_bar = max(0, win_w - len(ftr_badge) - 4)
-            self.stdscr.addstr(start_y + win_h - 1, start_x, "└" + "─" * ftr_bar, border_attr)
-            self.stdscr.addstr(ftr_badge, curses.color_pair(2) | curses.A_DIM)
-            self.stdscr.addstr("─┘", border_attr)
+            ftr_bar = max(0, win_w - 2)
+            self.stdscr.addstr(start_y + win_h - 1, start_x, "╰" + "─" * ftr_bar + "╯", border_attr)
         except Exception:
             pass
 
@@ -409,8 +442,8 @@ class AnimationEngine:
                     self._handle_input()
 
                 if self.input_active and self.input_win_info:
-                    min_width = max(len(self.input_win_info['question']) + 20, 75)
-                    self.input_win_info['w'] = min(min_width, self.w - 10)
+                    min_width = max(len(self.input_win_info['question']) + 20, 72)
+                    self.input_win_info['w'] = min(min_width, max(self.w - 8, 40))
                     self.input_win_info['input_width'] = self.input_win_info['w'] - 10
 
                 # Particles
@@ -472,8 +505,32 @@ class AnimationEngine:
                         ty = int(self.art_y) + i
                         if 0 <= ty < self.h:
                             sx = max(0, (self.w - len(line)) // 2)
+                            # Sleek multi-color gradient
+                            if i in (0, 1, 2):
+                                color = curses.color_pair(6) | curses.A_BOLD
+                            elif i in (3, 4):
+                                color = curses.color_pair(7) | curses.A_BOLD
+                            elif i in (5, 6):
+                                color = curses.color_pair(5) | curses.A_BOLD
+                            elif "┄" in line or "─" in line or "━" in line:
+                                color = curses.color_pair(11)
+                            else:
+                                color = curses.color_pair(12)
+
                             try:
-                                self.stdscr.addstr(ty, sx, line, curses.color_pair(6) | curses.A_BOLD)
+                                if "Commit :" in line:
+                                    parts = line.split("Commit :", 1)
+                                    self.stdscr.addstr(ty, sx, parts[0], curses.color_pair(12))
+                                    self.stdscr.addstr("Commit :", curses.color_pair(12))
+                                    rem = parts[1]
+                                    if "," in rem:
+                                        c_part, rest = rem.split(",", 1)
+                                        self.stdscr.addstr(c_part, curses.color_pair(1) | curses.A_BOLD)
+                                        self.stdscr.addstr("," + rest, curses.color_pair(12))
+                                    else:
+                                        self.stdscr.addstr(rem, curses.color_pair(1) | curses.A_BOLD)
+                                else:
+                                    self.stdscr.addstr(ty, sx, line, color)
                             except:
                                 pass
 
