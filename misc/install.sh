@@ -79,10 +79,11 @@ printf "${C_DIM}│${C_RESET}  ${C_DIM}source:${C_RESET} FoxyIsCoding/EduBoard  
 printf "${C_DIM}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
 
 log_item "System" "step" "Refreshing package repositories..."
+export DEBIAN_FRONTEND=noninteractive
 $SUDO rm -rf /var/lib/apt/lists/*
 $SUDO apt clean
-$SUDO apt update -qq && $SUDO apt upgrade -y -qq
-$SUDO apt install -y -qq python3-full python3-pip python3-venv git build-essential
+$SUDO apt update -qq && $SUDO apt upgrade -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
+$SUDO apt install -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" python3-full python3-pip python3-venv git build-essential
 log_item "System" "ok" "Base dependencies installed"
 
 TEMP_DIR="/tmp/eduboard_setup"
