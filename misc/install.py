@@ -16,6 +16,11 @@ import pwd
 
 INSTALL_ERROR_LOG = os.path.expanduser("~/eduboard-install.log")
 
+# System locale chosen during the wizard; commands inherit this so bash
+# doesn't warn "LC_ALL: cannot change locale (en_US.UTF-8)" when the locale
+# isn't generated. 'C.UTF-8' is always available on modern Debian/Ubuntu.
+SYSTEM_LOCALE = os.environ.get("LC_ALL") or os.environ.get("LANG") or "C.UTF-8"
+
 
 def write_install_error(context, exc):
     try:
@@ -34,8 +39,8 @@ def run_command(command, user=None, cwd=None, log_callback=None):
     env_vars = {
         "DEBIAN_FRONTEND": "noninteractive",
         "TERM": "xterm-256color",
-        "LANG": "en_US.UTF-8",
-        "LC_ALL": "en_US.UTF-8",
+        "LANG": SYSTEM_LOCALE,
+        "LC_ALL": SYSTEM_LOCALE,
         "WAYLAND_DISPLAY": "wayland-0",
     }
     custom_env = os.environ.copy()
@@ -310,10 +315,12 @@ def main(stdscr):
 
     # Locale configuration
     try:
+        global SYSTEM_LOCALE
+        SYSTEM_LOCALE = system_locale
         engine.log(f"❯ Configuring system locale ({system_locale})...")
-        run_command(f"sudo locale-gen {system_locale}", log_callback=engine.log)
-        run_command(f"sudo update-locale LANG={system_locale} LC_ALL={system_locale}", log_callback=engine.log)
-        write_file("/etc/default/locale", f"LANG={system_locale}\nLC_ALL={system_locale}\n")
+        run_command(f"sudo locale-gen {system_locale} en_US.UTF-8", log_callback=engine.log)
+        run_command(f"sudo update-locale LANG={system_locale}", log_callback=engine.log)
+        write_file("/etc/default/locale", f"LANG={system_locale}\n")
         engine.log(f"✔ System locale configured ({system_locale})")
     except Exception as e:
         engine.log(f"⚠ Could not configure locale: {e}")
@@ -420,7 +427,11 @@ Pin-Priority: 1001
         )
         engine.log("✔ Repository cloned")
     else:
-        engine.log("ℹ Repository directory already exists, skipping clone")
+        engine.log("ℹ Repository directory already exists, pulling latest...")
+        run_command(
+            f"sudo -u {username} git -C {repo_dir} pull",
+            log_callback=engine.log,
+        )
 
     env_content = f"""SCHOOL_SUBDOMAIN={subdomain}
 SCREEN_ID={screen_id}
