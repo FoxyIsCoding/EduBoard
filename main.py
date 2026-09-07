@@ -33,6 +33,14 @@ LOCAL_MODE = (
     or "--mock" in sys.argv
 )
 
+# Classes hidden from the timetable display and the freeze list (e.g. pseudo-classes).
+# Extend via EDUBOARD_BLOCKED_CLASSES (comma-separated class IDs/names).
+BLOCKED_CLASS_IDS = {"ppo"} | {
+    c.strip().lower()
+    for c in os.getenv("EDUBOARD_BLOCKED_CLASSES", "").split(",")
+    if c.strip()
+}
+
 LOCAL_MOCK_LOOKUP = {
     "classes": {
         "name": "Třídy",
@@ -514,6 +522,8 @@ class EduBoard:
 
         data = {"classes": []}
         for row in res.get("r", {}).get("rows", []):
+            if str(row.get("id", "") or "").strip().lower() in BLOCKED_CLASS_IDS:
+                continue
             class_data = {"id": row.get("id"), "ttitems": []}
             for item in row.get("ttitems", []):
                 class_data["ttitems"].append({k: v for k, v in item.items()})
