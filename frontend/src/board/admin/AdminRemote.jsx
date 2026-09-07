@@ -20,6 +20,35 @@ import {
   Radio,
 } from 'lucide-react'
 
+const SLIDE_TRANSITIONS = [
+  { id: 'fade', label: 'Měkké prolínání' },
+  { id: 'crossfade', label: 'Prolínání' },
+  { id: 'slide-left', label: 'Posun vlevo' },
+  { id: 'slide-right', label: 'Posun vpravo' },
+  { id: 'slide-up', label: 'Posun nahoru' },
+  { id: 'slide-down', label: 'Posun dolů' },
+  { id: 'zoom-in', label: 'Přiblížení' },
+  { id: 'zoom-out', label: 'Oddálení' },
+  { id: 'zoom-blur', label: 'Zoom + rozmazání' },
+  { id: 'blur-in', label: 'Z rozmazání' },
+  { id: 'flip-x', label: 'Překlopení X' },
+  { id: 'flip-y', label: 'Překlopení Y' },
+  { id: 'rotate-in', label: 'Rotace' },
+  { id: 'wipe-left', label: 'Stírání vlevo' },
+  { id: 'wipe-right', label: 'Stírání vpravo' },
+  { id: 'wipe-up', label: 'Stírání nahoru' },
+  { id: 'wipe-down', label: 'Stírání dolů' },
+  { id: 'iris-in', label: 'Kruhové odhalení' },
+  { id: 'ken-burns', label: 'Ken Burns' },
+  { id: 'bounce-in', label: 'Skočení' },
+]
+
+const SLIDE_FITS = [
+  { id: 'contain', label: 'Celý obrázek' },
+  { id: 'cover', label: 'Vyplnit + oříznout' },
+  { id: 'fill', label: 'Natáhnout' },
+]
+
 function ScreenPreviewCard({
   remoteState,
   currentMode,
@@ -504,6 +533,10 @@ export default function AdminRemote() {
     frozenClass: null,
     images: [],
     slideIntervalMs: 8000,
+    slideTransition: 'fade',
+    slideFit: 'contain',
+    slideZoom: 100,
+    showCaptions: true,
     browserUrl: '',
     alertMessage: '',
     alertLevel: 'critical',
@@ -684,28 +717,41 @@ export default function AdminRemote() {
 
   // --- Image Upload Handlers ---
   function handleImageUpload(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const b64 = reader.result
-      const caption = prompt('Popisek snímku (volitelné):', file.name.replace(/\.[^/.]+$/, '')) || ''
-      try {
-        await fetch('/api/remote/slides', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Admin-PIN': pin,
-          },
-          body: JSON.stringify({ data: b64, caption }),
-        })
-        fetchState(pin)
-      } catch {
-        alert('Nahrání snímku selhalo.')
+    const uploads = files.map((file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onload = async () => {
+          const b64 = reader.result
+          const caption = file.name.replace(/\.[^/.]+$/, '')
+          try {
+            await fetch('/api/remote/slides', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-PIN': pin,
+              },
+              body: JSON.stringify({ data: b64, caption }),
+            })
+            resolve(true)
+          } catch {
+            resolve(false)
+          }
+        }
+        reader.readAsDataURL(file)
+      })
+    })
+
+    Promise.all(uploads).then(async (results) => {
+      const failed = results.filter((ok) => !ok).length
+      if (failed > 0) {
+        alert(`Nahrání selhalo u ${failed} ze ${files.length} snímků.`)
       }
-    }
-    reader.readAsDataURL(file)
+      fetchState(pin)
+      e.target.value = ''
+    })
   }
 
   async function handleDeleteSlide(id) {
@@ -1168,8 +1214,8 @@ export default function AdminRemote() {
               }}
             >
               <Upload size={22} />
-              <span>Klikněte pro nahrání nové fotografie z telefonu/počítače</span>
-              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+              <span>Klikněte pro nahrání fotografií — lze vybrat více najednou</span>
+              <input type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: 'none' }} />
             </label>
 
             {/* Interval Selector */}
@@ -1193,6 +1239,89 @@ export default function AdminRemote() {
                   {ms / 1000} s
                 </button>
               ))}
+            </div>
+
+            {/* Transition Type */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#475569', marginBottom: '0.5rem' }}>
+                Přechod mezi snímky:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.4rem' }}>
+                {SLIDE_TRANSITIONS.map((t) => {
+                  const active = remoteState.slideTransition === t.id
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => updateRemoteState({ slideTransition: t.id })}
+                      style={{
+                        padding: '0.4rem 0.55rem',
+                        borderRadius: '3px',
+                        border: active ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
+                        background: active ? '#EFF6FF' : '#FFFFFF',
+                        color: active ? '#1D4ED8' : '#0F172A',
+                        fontWeight: active ? 800 : 600,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Scaling / Cropping */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#475569' }}>Velikost / ořez:</span>
+              {SLIDE_FITS.map((f) => {
+                const active = remoteState.slideFit === f.id
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => updateRemoteState({ slideFit: f.id })}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '3px',
+                      border: active ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
+                      background: active ? '#EFF6FF' : '#FFFFFF',
+                      color: active ? '#1D4ED8' : '#0F172A',
+                      fontWeight: active ? 800 : 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                )
+              })}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.75rem' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#475569' }}>Zoom:</span>
+                <input
+                  type="range"
+                  min="100"
+                  max="200"
+                  step="10"
+                  value={remoteState.slideZoom ?? 100}
+                  onChange={(ev) => updateRemoteState({ slideZoom: Number(ev.target.value) })}
+                  style={{ width: '120px', accentColor: '#1D4ED8' }}
+                />
+                <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0F172A', fontVariantNumeric: 'tabular-nums', width: '3.2ch' }}>
+                  {remoteState.slideZoom ?? 100}%
+                </span>
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginLeft: '0.75rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', color: '#475569' }}>
+                <input
+                  type="checkbox"
+                  checked={remoteState.showCaptions !== false}
+                  onChange={(ev) => updateRemoteState({ showCaptions: ev.target.checked })}
+                  style={{ accentColor: '#1D4ED8', width: '1rem', height: '1rem' }}
+                />
+                Zobrazit popisky / číslo snímku (čisté fullscreen)
+              </label>
             </div>
 
             {/* Thumbnails Grid */}

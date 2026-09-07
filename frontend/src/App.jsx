@@ -167,7 +167,14 @@ export default function App() {
   if (remoteState?.mode === 'slideshow') {
     return (
       <div className="edupage-shell">
-        <SlideshowView images={remoteState.images} intervalMs={remoteState.slideIntervalMs} />
+        <SlideshowView
+          images={remoteState.images}
+          intervalMs={remoteState.slideIntervalMs}
+          transition={remoteState.slideTransition}
+          fit={remoteState.slideFit}
+          zoom={remoteState.slideZoom}
+          showCaptions={remoteState.showCaptions}
+        />
       </div>
     )
   }

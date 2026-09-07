@@ -24,6 +24,10 @@ DEFAULT_STATE: Dict[str, Any] = {
     "frozenClass": None,
     "images": [],
     "slideIntervalMs": 8000,
+    "slideTransition": "fade",
+    "slideFit": "contain",  # contain | cover | fill
+    "slideZoom": 100,  # percentage zoom (100-200)
+    "showCaptions": True,
     "browserUrl": "",
     "alertMessage": "",
     "alertLevel": "critical",

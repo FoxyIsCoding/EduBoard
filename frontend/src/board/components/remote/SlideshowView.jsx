@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Image as ImageIcon } from 'lucide-react'
 
-export default function SlideshowView({ images = [], intervalMs = 8000 }) {
+export default function SlideshowView({
+  images = [],
+  intervalMs = 8000,
+  transition = 'fade',
+  fit = 'contain',
+  zoom = 100,
+  showCaptions = true,
+}) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
@@ -20,7 +27,7 @@ export default function SlideshowView({ images = [], intervalMs = 8000 }) {
           height: '100%',
           display: 'grid',
           placeItems: 'center',
-          background: 'var(--kiosk-bg)',
+          background: '#000000',
         }}
       >
         <div
@@ -29,14 +36,14 @@ export default function SlideshowView({ images = [], intervalMs = 8000 }) {
             padding: '3rem 4rem',
             textAlign: 'center',
             maxWidth: '600px',
-            background: 'var(--kiosk-card-bg)',
+            background: '#0F172A',
           }}
         >
-          <ImageIcon size={48} color="var(--kiosk-brand-blue)" style={{ margin: '0 auto 1.2rem' }} />
-          <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, color: 'var(--kiosk-text-primary)' }}>
+          <ImageIcon size={48} color="#38BDF8" style={{ margin: '0 auto 1.2rem' }} />
+          <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, color: '#F8FAFC' }}>
             Režim Prezentace Fotografií
           </h2>
-          <p style={{ marginTop: '0.8rem', color: 'var(--kiosk-text-secondary)', fontSize: '1.1rem' }}>
+          <p style={{ marginTop: '0.8rem', color: '#94A3B8', fontSize: '1.1rem' }}>
             V administraci (<code>/admin</code>) nahrajte fotografie pro spuštění školní prezentace.
           </p>
         </div>
@@ -45,6 +52,9 @@ export default function SlideshowView({ images = [], intervalMs = 8000 }) {
   }
 
   const currentSlide = images[currentIndex] || images[0]
+  const zoomScale = Math.min(Math.max(Number(zoom) || 100, 100), 300) / 100
+  const showChrome = showCaptions !== false
+  const activeTransition = transition || 'fade'
 
   return (
     <div
@@ -59,19 +69,29 @@ export default function SlideshowView({ images = [], intervalMs = 8000 }) {
         overflow: 'hidden',
       }}
     >
-      <img
-        key={currentSlide.id || currentIndex}
-        src={currentSlide.url}
-        alt={currentSlide.caption || 'Prezentace'}
+      {/* Zoom wrapper: scales/crops the slide; the transition animation runs on the img */}
+      <div
         style={{
-          maxWidth: '100%',
-          maxHeight: '100%',
-          objectFit: 'contain',
-          animation: 'pageFadeIn 300ms ease-out',
+          width: '100%',
+          height: '100%',
+          transform: `scale(${zoomScale})`,
         }}
-      />
+      >
+        <img
+          key={currentSlide.id || currentIndex}
+          className={`slide-anim slide-anim-${activeTransition}`}
+          src={currentSlide.url}
+          alt={currentSlide.caption || 'Prezentace'}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: fit || 'contain',
+            display: 'block',
+          }}
+        />
+      </div>
 
-      {currentSlide.caption && (
+      {showChrome && currentSlide.caption && (
         <div
           style={{
             position: 'absolute',
@@ -95,8 +115,7 @@ export default function SlideshowView({ images = [], intervalMs = 8000 }) {
         </div>
       )}
 
-      {/* Progress Dots */}
-      {images.length > 1 && (
+      {showChrome && images.length > 1 && (
         <div
           style={{
             position: 'absolute',
