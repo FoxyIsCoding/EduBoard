@@ -232,12 +232,13 @@ body.admin-mode textarea,
   color: var(--kiosk-brand-blue);
 }
 
-/* Standby Overlay in White Mode */
+/* Standby Overlay — always pure black regardless of light/dark theme,
+   since it mimics the TV power-off state to preserve the backlight */
 .board-overlay {
   position: fixed;
   inset: 0;
-  background: var(--kiosk-bg);
-  color: var(--kiosk-text-primary);
+  background: #000000;
+  color: #FFFFFF;
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -255,7 +256,7 @@ body.admin-mode textarea,
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   animation: overlay-breath 3s ease-in-out infinite;
 }
 
@@ -270,7 +271,7 @@ body.admin-mode textarea,
   font-size: clamp(0.9rem, 1.2vw, 1.15rem);
   font-weight: 600;
   letter-spacing: 0.15em;
-  color: var(--kiosk-text-muted);
+  color: rgba(255, 255, 255, 0.85);
   user-select: none;
   pointer-events: none;
   z-index: 10000;
