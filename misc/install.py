@@ -584,6 +584,9 @@ ExecStart={kmscon_bin} --vt tty1 --seats seat0 --configdir /etc/kmscon --term xt
     run_command("sudo ufw default deny incoming", log_callback=engine.log)
     run_command("sudo ufw default allow outgoing", log_callback=engine.log)
     run_command("sudo ufw allow 22/tcp comment 'SSH'", log_callback=engine.log)
+    run_command(
+        "sudo ufw allow 8000/tcp comment 'EduBoard web UI'", log_callback=engine.log
+    )
 
     if tailscale_installed:
         run_command(
