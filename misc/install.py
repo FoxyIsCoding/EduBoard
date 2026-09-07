@@ -128,6 +128,17 @@ def set_hostname(hostname, log_callback=None):
         return False
 
 
+def repo_is_git(path, user):
+    """Check whether path is a valid git work tree, as the given user.
+    The installer may run as a non-root user, so os.path.exists() can't see
+    a user-owned (700) directory — the check must run in the user's context."""
+    try:
+        run_command(f"sudo -u {user} git -C {path} rev-parse --is-inside-work-tree")
+        return True
+    except Exception:
+        return False
+
+
 def install_tailscale(auth_token, log_callback=None):
     """Install and authenticate Tailscale if an auth token is supplied"""
     if not auth_token or auth_token.strip() == "":
@@ -232,7 +243,8 @@ def main(stdscr):
     # --- Configuration Wizard ---
     hostname = engine.ask("System Hostname", "tv1", hint="Device network hostname (e.g. tv-hall, eduboard-1)", max_length=16) or "tv1"
     username = engine.ask("Kiosk User Account", "kiosk", hint="Dedicated non-root Linux user for kiosk auto-login", max_length=32) or "kiosk"
-    password = engine.ask("Kiosk User Password", "123456", hint="Password for the local kiosk user account", max_length=32) or "123456"
+    kiosk_password = engine.ask("Kiosk User Password", "123456", hint="Password for the local kiosk Linux login account", max_length=32) or "123456"
+    board_password = engine.ask("EduBoard / EduPage Infoscreen Password", "", hint="Infoscreen password used by the board to log into EduPage", max_length=64) or ""
 
     # Regional & Localization
     keyboard_layout = engine.ask("Keyboard Layout", "cz", hint="Console & Sway keyboard layout code (e.g. cz, sk, us, de, uk)", max_length=12) or "cz"
@@ -301,9 +313,17 @@ def main(stdscr):
             log_callback=engine.log,
         )
         run_command(
+            f"echo '{username}:{kiosk_password}' | sudo chpasswd",
+        )
+        run_command(
             f"echo '{username} ALL=(ALL) NOPASSWD: /usr/bin/chvt' | sudo tee /etc/sudoers.d/kiosk-chvt"
         )
         engine.log(f"✔ Created user account '{username}'")
+    else:
+        run_command(
+            f"echo '{username}:{kiosk_password}' | sudo chpasswd",
+        )
+        engine.log(f"ℹ User '{username}' password updated")
 
     # Timezone configuration
     try:
@@ -419,24 +439,27 @@ Pin-Priority: 1001
     # --- 4/6 Application Setup ---
     engine.log("")
     engine.log("◇ 4/6 EduBoard Application Setup")
-    if not os.path.exists(repo_dir):
+    if repo_is_git(repo_dir, username):
+        engine.log("ℹ Repository already present, pulling latest...")
+        run_command(
+            f"sudo -u {username} git -C {repo_dir} pull",
+            log_callback=engine.log,
+        )
+    else:
+        # Remove any stale/incomplete directory (root-owned or broken) so the
+        # clone never trips over "already exists and is not an empty directory"
+        run_command(f"sudo rm -rf {repo_dir}")
         engine.log("❯ Cloning repository (FoxyIsCoding/EduBoard)...")
         run_command(
             f"sudo -u {username} git clone https://github.com/FoxyIsCoding/EduBoard.git {repo_dir}",
             log_callback=engine.log,
         )
         engine.log("✔ Repository cloned")
-    else:
-        engine.log("ℹ Repository directory already exists, pulling latest...")
-        run_command(
-            f"sudo -u {username} git -C {repo_dir} pull",
-            log_callback=engine.log,
-        )
 
     env_content = f"""SCHOOL_SUBDOMAIN={subdomain}
 SCREEN_ID={screen_id}
 EVENTS_SCREEN_ID={events_screen_id}
-PASSWORD={password}
+PASSWORD={board_password}
 WEBSITE_URL={website_url}
 VITE_USE_LIGHT_THEME={str(use_light_theme).lower()}
 VITE_ENABLE_BREAK_ONLY_OVERLAY={str(enable_break_overlay).lower()}
