@@ -37,6 +37,7 @@ class AnimationEngine:
     def _setup_curses(self):
         curses.curs_set(0)
         self.stdscr.nodelay(True)
+        self.stdscr.keypad(True)
         curses.start_color()
         try:
             curses.use_default_colors()

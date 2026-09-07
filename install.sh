@@ -78,12 +78,20 @@ printf "${C_DIM}│${C_RESET}  ${C_WHITE}eduboard${C_RESET} ${C_DIM}❯ installe
 printf "${C_DIM}│${C_RESET}  ${C_DIM}source:${C_RESET} FoxyIsCoding/EduBoard  ${C_DIM}target:${C_RESET} ubuntu / rpi          ${C_DIM}│${C_RESET}\n"
 printf "${C_DIM}╰─────────────────────────────────────────────────────────────╯${C_RESET}\n\n"
 
-log_item "System" "step" "Refreshing package repositories..."
-$SUDO rm -rf /var/lib/apt/lists/*
-$SUDO apt clean
-$SUDO env DEBIAN_FRONTEND=noninteractive apt update -qq && $SUDO env DEBIAN_FRONTEND=noninteractive apt upgrade -y -qq
-$SUDO env DEBIAN_FRONTEND=noninteractive apt install -y -qq python3-full python3-pip python3-venv git build-essential
-log_item "System" "ok" "Base dependencies installed"
+printf "  ${C_DIM}◇${C_RESET} Install system requirements (apt packages)? \033[0;32m[Y/n]\033[0m "
+read -r -n 1 -e INSTALL_DEPS < /dev/tty
+printf "\n\n"
+INSTALL_DEPS="${INSTALL_DEPS:-Y}"
+if [[ "$INSTALL_DEPS" =~ ^[Nn]$ ]]; then
+    log_item "System" "skip" "Skipping system requirement install"
+else
+    log_item "System" "step" "Refreshing package repositories..."
+    $SUDO rm -rf /var/lib/apt/lists/*
+    $SUDO apt clean
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt update -qq && $SUDO env DEBIAN_FRONTEND=noninteractive apt upgrade -y -qq
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt install -y -qq python3-full python3-pip python3-venv git build-essential
+    log_item "System" "ok" "Base dependencies installed"
+fi
 
 TEMP_DIR="/tmp/eduboard_setup"
 log_item "Installer" "step" "Fetching setup bundle to $TEMP_DIR..."
@@ -112,9 +120,6 @@ log_item "Environment" "ok" "Installer environment ready"
 log_item "Wizard" "live" "Launching EduBoard interactive setup..."
 printf "\n"
 
-# Attach /dev/tty so curses has direct keyboard input when piped from curl
-if [ -e /dev/tty ]; then
-    $SUDO TERM=xterm-256color "$TEMP_DIR/venv/bin/python3" misc/install.py </dev/tty
-else
-    $SUDO TERM=xterm-256color "$TEMP_DIR/venv/bin/python3" misc/install.py
-fi
+# Run on the current tty (no sudo, no </dev/tty) so curses gets full keyboard
+# input and renders without flicker. The wizard escalates to root internally.
+exec "$TEMP_DIR/venv/bin/python3" misc/install.py < /dev/tty
