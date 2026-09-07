@@ -38,22 +38,41 @@ def run_command(command, user=None, cwd=None, log_callback=None):
         "LC_ALL": "en_US.UTF-8",
         "WAYLAND_DISPLAY": "wayland-0",
     }
-    env_exports = " ".join(f"{k}={v}" for k, v in env_vars.items())
+    custom_env = os.environ.copy()
+    custom_env.update(env_vars)
     directory = cwd if cwd else "."
+
+    is_sudo = command.startswith("sudo") or " sudo " in command
     if user:
         escaped_command = command.replace("'", "'\\''")
-        export_block = " ".join(f"export {k}={v}" for k, v in env_vars.items())
-        full_command = f"sudo -u {user} bash -c '{export_block}; cd \"{directory}\" && {escaped_command}'"
+        full_command = f"sudo -E -u {user} bash -c 'cd \"{directory}\" && {escaped_command}'"
+    elif is_sudo:
+        # Find the actual sudo token (there may be a piped command before it)
+        # and insert -E only if the sudo invocation doesn't already use it.
+        new_parts = []
+        parts = command.split(" ")
+        i = 0
+        while i < len(parts):
+            part = parts[i]
+            if part == "sudo":
+                j = i + 1
+                if j < len(parts) and parts[j] == "-E":
+                    new_parts.append(part)
+                else:
+                    new_parts.append("sudo -E")
+            else:
+                new_parts.append(part)
+            i += 1
+        full_command = " ".join(new_parts)
     else:
-        if "sudo " in command:
-            full_command = command.replace("sudo ", f"sudo env {env_exports} ", 1)
-        else:
-            full_command = f"env {env_exports} {command}"
+        exports = " ".join(f"{k}={v}" for k, v in env_vars.items())
+        full_command = f"{exports} {command}"
 
     process = subprocess.run(
         full_command,
         shell=True,
         executable="/bin/bash",
+        env=custom_env,
         capture_output=True,
         text=True,
     )
@@ -300,15 +319,23 @@ def main(stdscr):
         engine.log(f"⚠ Could not configure locale: {e}")
 
     # Console & System Keyboard Layout
-    try:
-        engine.log(f"❯ Configuring keyboard layout ({keyboard_layout})...")
-        run_command(f"sudo localectl set-x11-keymap {keyboard_layout}", log_callback=engine.log)
-        keyboard_conf = f"""XKBMODEL="pc105"
+    keyboard_conf = f"""XKBMODEL="pc105"
 XKBLAYOUT="{keyboard_layout}"
 XKBVARIANT=""
 XKBOPTIONS=""
 BACKSPACE="guess"
 """
+    try:
+        engine.log(f"❯ Configuring keyboard layout ({keyboard_layout})...")
+        # localectl set-x11-keymap is X11-only and unavailable on Debian;
+        # ignore failure and rely on /etc/default/keyboard (console-setup)
+        try:
+            run_command(
+                f"sudo localectl set-x11-keymap {keyboard_layout}",
+                log_callback=engine.log,
+            )
+        except Exception:
+            engine.log("ℹ localectl set-x11-keymap unavailable, using console-setup config")
         write_file("/etc/default/keyboard", keyboard_conf)
         engine.log(f"✔ System keyboard layout configured ({keyboard_layout})")
     except Exception as e:
