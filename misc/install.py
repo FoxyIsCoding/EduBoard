@@ -31,28 +31,29 @@ def write_install_error(context, exc):
 
 
 def run_command(command, user=None, cwd=None, log_callback=None):
-    custom_env = os.environ.copy()
-    custom_env.update(
-        {
-            "DEBIAN_FRONTEND": "noninteractive",
-            "TERM": "xterm-256color",
-            "LANG": "en_US.UTF-8",
-            "LC_ALL": "en_US.UTF-8",
-            "WAYLAND_DISPLAY": "wayland-0",
-        }
-    )
+    env_vars = {
+        "DEBIAN_FRONTEND": "noninteractive",
+        "TERM": "xterm-256color",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "en_US.UTF-8",
+        "WAYLAND_DISPLAY": "wayland-0",
+    }
+    env_exports = " ".join(f"{k}={v}" for k, v in env_vars.items())
     directory = cwd if cwd else "."
     if user:
         escaped_command = command.replace("'", "'\\''")
-        full_command = f"sudo -u {user} bash -c 'cd \"{directory}\" && {escaped_command}'"
+        export_block = " ".join(f"export {k}={v}" for k, v in env_vars.items())
+        full_command = f"sudo -u {user} bash -c '{export_block}; cd \"{directory}\" && {escaped_command}'"
     else:
-        full_command = command
+        if "sudo " in command:
+            full_command = command.replace("sudo ", f"sudo env {env_exports} ", 1)
+        else:
+            full_command = f"env {env_exports} {command}"
 
     process = subprocess.run(
         full_command,
         shell=True,
         executable="/bin/bash",
-        env=custom_env,
         capture_output=True,
         text=True,
     )
