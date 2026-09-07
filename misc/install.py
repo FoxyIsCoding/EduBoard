@@ -327,15 +327,6 @@ BACKSPACE="guess"
 """
     try:
         engine.log(f"❯ Configuring keyboard layout ({keyboard_layout})...")
-        # localectl set-x11-keymap is X11-only and unavailable on Debian;
-        # ignore failure and rely on /etc/default/keyboard (console-setup)
-        try:
-            run_command(
-                f"sudo localectl set-x11-keymap {keyboard_layout}",
-                log_callback=engine.log,
-            )
-        except Exception:
-            engine.log("ℹ localectl set-x11-keymap unavailable, using console-setup config")
         write_file("/etc/default/keyboard", keyboard_conf)
         engine.log(f"✔ System keyboard layout configured ({keyboard_layout})")
     except Exception as e:
@@ -454,8 +445,14 @@ DEBUG={str(debug_mode).lower()}
     engine.log("✔ Python virtual environment ready")
 
     engine.log("❯ Pre-building frontend production bundle...")
+    # Ensure the frontend dir and a user-owned npm cache so npm doesn't trip
+    # over root-owned cache/config files left by an earlier root install.
+    run_command(f"sudo chown -R {username}:{username} {repo_dir}/frontend")
+    npm_cache = f"{home_dir}/.npm-cache"
+    run_command(f"sudo -u {username} mkdir -p {npm_cache}")
+    run_command(f"sudo chown -R {username}:{username} {npm_cache}")
     run_command(
-        "npm install",
+        "npm install --cache " + npm_cache,
         cwd=f"{repo_dir}/frontend",
         user=username,
         log_callback=engine.log,
