@@ -49,6 +49,8 @@ const SLIDE_FITS = [
   { id: 'fill', label: 'Natáhnout' },
 ]
 
+const BLOCKED_CLASS_IDS = new Set(['ppo'])
+
 function ScreenPreviewCard({
   remoteState,
   currentMode,
@@ -637,18 +639,40 @@ export default function AdminRemote() {
     }
   }, [pin, fetchState])
 
-  // Load available school classes for freeze dropdown
+  // Load available school classes for freeze dropdown — derived from the classes the
+  // kiosk actually rotates through (edupage timetable), named via the edupage lookup,
+  // so the list is accurate instead of a hardcoded set.
   useEffect(() => {
-    fetch('/api/data')
-      .then((r) => r.json())
-      .then((data) => {
-        const raw = Object.values(data?.classes?.data ?? {})
-        const cls = raw
-          .map((c) => (typeof c === 'object' && c !== null ? c.name || c.short || c.id : c))
-          .filter(Boolean)
+    let cancelled = false
+    Promise.all([
+      fetch('/api/timetable').then((r) => r.json()),
+      fetch('/api/data').then((r) => r.json()),
+    ])
+      .then(([timetable, data]) => {
+        if (cancelled) return
+        const lookup = Object.fromEntries(
+          Object.entries(data?.classes?.data ?? {}).map(([id, c]) => [
+            id,
+            typeof c === 'object' && c !== null ? c.name || c.short || id : String(c),
+          ]),
+        )
+        const seen = new Set()
+        const cls = []
+        for (const row of timetable?.classes ?? []) {
+          const id = String(row?.id ?? '')
+          if (!id || BLOCKED_CLASS_IDS.has(id.trim().toLowerCase())) continue
+          const name = lookup[id] || id
+          if (!name || seen.has(name)) continue
+          seen.add(name)
+          cls.push(name)
+        }
+        cls.sort((a, b) => a.localeCompare(b, 'cs'))
         if (cls.length) setClassesList(cls)
       })
       .catch(() => {})
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   // WebSocket connection for live status and WebRTC signaling
