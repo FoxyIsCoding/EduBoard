@@ -11,11 +11,12 @@ from typing import Any, Dict, Optional
 import httpx
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, HTTPException, Body
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from remote_hub import remote_hub, SLIDES_DIR
+import advanced
 
 # Setup logging
 logging.basicConfig(
@@ -696,6 +697,29 @@ async def post_remote_slide(
     return {"ok": True, "slide": item}
 
 
+@app.post("/api/remote/refresh")
+async def post_remote_refresh(
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    edub._cache.clear()
+    logger.info("Admin requested EduPage cache refresh — cache cleared.")
+    return {"ok": True, "cacheCleared": True, "displaysReloaded": False}
+
+
+@app.post("/api/remote/reload")
+async def post_remote_reload(
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    edub._cache.clear()
+    await remote_hub.broadcast_reload()
+    logger.info("Admin requested full display reload — all kiosk displays reloading.")
+    return {"ok": True, "cacheCleared": True, "displaysReloaded": True}
+
+
 @app.delete("/api/remote/slides/{slide_id}")
 async def delete_remote_slide(
     slide_id: str,
@@ -738,6 +762,92 @@ async def post_cec_power(
     return {"ok": True, "power": power_on}
 
 
+# --- Advanced / Dev Panel (sudo password-gated remote administration) ---
+
+
+@app.get("/api/time")
+def api_time():
+    now = datetime.now().astimezone()
+    return {
+        "iso": now.isoformat(),
+        "epoch_ms": int(now.timestamp() * 1000),
+        "epoch_s": int(now.timestamp()),
+        "utc_offset_seconds": int(now.utcoffset().total_seconds()),
+    }
+
+
+def require_sudo_password(x_sudo_token: Optional[str] = Header(None)) -> str:
+    return advanced.require_token(x_sudo_token)
+
+
+@app.post("/api/advanced/auth")
+def advanced_auth(payload: dict = Body(...)):
+    password = payload.get("password") or ""
+    token = advanced.create_session(password)
+    return {"ok": True, "token": token, "expires_in": advanced.SESSION_TTL_SECONDS}
+
+
+@app.post("/api/advanced/logout")
+def advanced_logout(x_sudo_token: Optional[str] = Header(None)):
+    if x_sudo_token:
+        advanced.drop_session(x_sudo_token)
+    return {"ok": True}
+
+
+@app.get("/api/advanced/session")
+def advanced_session(token: str = Depends(require_sudo_password)):
+    expires = advanced.session_expires(token)
+    return {"ok": True, "expires_in": max(0, int(expires - time.time()))}
+
+
+@app.get("/api/advanced/status")
+def advanced_status(token: str = Depends(require_sudo_password)):
+    return advanced.system_status()
+
+
+@app.get("/api/advanced/branches")
+def advanced_branches(token: str = Depends(require_sudo_password)):
+    return advanced.list_branches()
+
+
+@app.get("/api/advanced/logs")
+def advanced_logs(lines: int = 200, password: str = Depends(require_sudo_password)):
+    return advanced.read_logs(lines=lines, password=password)
+
+
+@app.get("/api/advanced/env")
+def advanced_env(token: str = Depends(require_sudo_password)):
+    return advanced.read_env("")
+
+
+@app.post("/api/advanced/env")
+def advanced_env_save(payload: dict = Body(...), token: str = Depends(require_sudo_password)):
+    return advanced.write_env(payload.get("content", ""))
+
+
+@app.post("/api/advanced/update")
+def advanced_update(token: str = Depends(require_sudo_password)):
+    return advanced.run_update()
+
+
+@app.post("/api/advanced/switch-branch")
+def advanced_switch_branch(payload: dict = Body(...), token: str = Depends(require_sudo_password)):
+    branch = (payload.get("branch") or "").strip()
+    if not branch:
+        raise HTTPException(status_code=400, detail="Chybí název větve.")
+    return advanced.switch_branch(branch)
+
+
+@app.post("/api/advanced/service")
+def advanced_service(payload: dict = Body(...), password: str = Depends(require_sudo_password)):
+    return advanced.service_control(payload.get("action", ""), password)
+
+
+@app.post("/api/advanced/sync-clock")
+def advanced_sync_clock(password: str = Depends(require_sudo_password)):
+    return advanced.sync_clock(password)
+
+
 # Frontend static files and SPA route mounting
 dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
 
@@ -752,6 +862,8 @@ def frontend_fallback():
 
 @app.get("/admin")
 @app.get("/admin/{path:path}")
+@app.get("/advanced")
+@app.get("/advanced/{path:path}")
 def serve_admin():
     admin_index = dist_dir / "index.html"
     if admin_index.exists():

@@ -155,6 +155,24 @@ class RemoteHub:
         await self.broadcast_state()
         return self.state
 
+    async def broadcast_reload(self):
+        """Ask connected kiosk displays (+ previews) to reload the page immediately."""
+        payload = {"type": "reload"}
+        dead = set()
+        for ws in self.displays:
+            try:
+                await ws.send_json(payload)
+            except Exception:
+                dead.add(ws)
+        self.displays -= dead
+        dead = set()
+        for ws in self.previews:
+            try:
+                await ws.send_json(payload)
+            except Exception:
+                dead.add(ws)
+        self.previews -= dead
+
     async def relay_webrtc_signal(self, sender_ws: WebSocket, message: dict):
         """Relay WebRTC offer/answer/candidate between controller and kiosk display."""
         target_group = self.displays if sender_ws in self.controllers else self.controllers

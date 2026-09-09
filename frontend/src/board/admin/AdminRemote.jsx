@@ -18,7 +18,11 @@ import {
   ChevronDown,
   ChevronUp,
   Radio,
+  Server,
+  Activity,
 } from 'lucide-react'
+import { cleanEventName } from '../formatters'
+import { getNow } from '../timeSync'
 
 const SLIDE_TRANSITIONS = [
   { id: 'fade', label: 'Měkké prolínání' },
@@ -50,6 +54,56 @@ const SLIDE_FITS = [
 ]
 
 const BLOCKED_CLASS_IDS = new Set(['ppo'])
+
+function lookupName(lookup, table, id) {
+  const value = lookup?.[table]?.data?.[id]
+  if (typeof value === 'object' && value !== null) return value.short || value.name || id
+  return String(value ?? id)
+}
+
+function buildTimeline(lookup, timetable, events) {
+  const entries = []
+  const seen = new Set()
+  const className = (id) => lookupName(lookup, 'classes', id)
+  const subjectName = (id) => lookupName(lookup, 'subjects', id)
+
+  for (const row of timetable?.classes ?? []) {
+    if (BLOCKED_CLASS_IDS.has(String(row.id).trim().toLowerCase())) continue
+    for (const item of row.ttitems ?? []) {
+      if (item.type === 'event' || !item.starttime || !item.endtime) continue
+      const key = `${item.uniperiod}:${item.starttime}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      const labels = [item.uniperiod ? `${item.uniperiod}` : '', subjectName(item.subjectid)].filter(Boolean)
+      entries.push({
+        start: item.starttime,
+        end: item.endtime,
+        period: item.uniperiod,
+        label: labels.join('. '),
+        detail: (item.classids ?? []).map(className).filter(Boolean).join(', '),
+        kind: item.removed ? 'removed' : item.changed ? 'changed' : 'lesson',
+      })
+    }
+  }
+
+  for (const ev of events?.classes?.flatMap((c) => c.ttitems ?? []) ?? []) {
+    if (!ev.starttime || !ev.endtime || ev.uniperiod === 'ad') continue
+    entries.push({
+      start: ev.starttime,
+      end: ev.endtime,
+      period: ev.uniperiod,
+      label: cleanEventName(ev.name) || 'Akce',
+      detail: [
+        (ev.classids ?? []).map(className).filter(Boolean).join(', '),
+        (ev.classroomids ?? []).map(className).filter(Boolean).join(', '),
+      ].filter(Boolean).join(' — '),
+      kind: 'event',
+    })
+  }
+
+  entries.sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end))
+  return entries
+}
 
 function ScreenPreviewCard({
   remoteState,
@@ -548,6 +602,9 @@ export default function AdminRemote() {
   })
   const [connectedDisplays, setConnectedDisplays] = useState(0)
   const [classesList, setClassesList] = useState([])
+  const [health, setHealth] = useState(null)
+  const [timeline, setTimeline] = useState([])
+  const [nowTick, setNowTick] = useState(() => getNow())
 
   // Input states
   const [urlInput, setUrlInput] = useState('')
@@ -639,41 +696,75 @@ export default function AdminRemote() {
     }
   }, [pin, fetchState])
 
-  // Load available school classes for freeze dropdown — derived from the classes the
-  // kiosk actually rotates through (edupage timetable), named via the edupage lookup,
-  // so the list is accurate instead of a hardcoded set.
-  useEffect(() => {
-    let cancelled = false
-    Promise.all([
-      fetch('/api/timetable').then((r) => r.json()),
-      fetch('/api/data').then((r) => r.json()),
-    ])
-      .then(([timetable, data]) => {
-        if (cancelled) return
-        const lookup = Object.fromEntries(
-          Object.entries(data?.classes?.data ?? {}).map(([id, c]) => [
-            id,
-            typeof c === 'object' && c !== null ? c.name || c.short || id : String(c),
-          ]),
-        )
-        const seen = new Set()
-        const cls = []
-        for (const row of timetable?.classes ?? []) {
-          const id = String(row?.id ?? '')
-          if (!id || BLOCKED_CLASS_IDS.has(id.trim().toLowerCase())) continue
-          const name = lookup[id] || id
-          if (!name || seen.has(name)) continue
-          seen.add(name)
-          cls.push(name)
-        }
-        cls.sort((a, b) => a.localeCompare(b, 'cs'))
-        if (cls.length) setClassesList(cls)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
+  // Load available school classes for freeze dropdown + today's schedule timeline +
+  // backend health snapshot. Re-used by the "refresh now" / "reload displays" buttons.
+  const loadScheduleAndHealth = useCallback(async () => {
+    try {
+      const [timetable, data, events] = await Promise.all([
+        fetch('/api/timetable').then((r) => r.json()),
+        fetch('/api/data').then((r) => r.json()),
+        fetch('/api/events').then((r) => r.json()),
+      ])
+      const lookup = Object.fromEntries(
+        Object.entries(data?.classes?.data ?? {}).map(([id, c]) => [
+          id,
+          typeof c === 'object' && c !== null ? c.name || c.short || id : String(c),
+        ]),
+      )
+      const seen = new Set()
+      const cls = []
+      for (const row of timetable?.classes ?? []) {
+        const id = String(row?.id ?? '')
+        if (!id || BLOCKED_CLASS_IDS.has(id.trim().toLowerCase())) continue
+        const name = lookup[id] || id
+        if (!name || seen.has(name)) continue
+        seen.add(name)
+        cls.push(name)
+      }
+      cls.sort((a, b) => a.localeCompare(b, 'cs'))
+      if (cls.length) setClassesList(cls)
+      setTimeline(buildTimeline(data, timetable, events))
+    } catch {
+      // ignore — the panel still works without live schedule data
+    }
+
+    try {
+      const h = await fetch('/api/health').then((r) => r.json())
+      setHealth(h)
+    } catch {
+      // ignore
     }
   }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadScheduleAndHealth()
+  }, [loadScheduleAndHealth])
+
+  // 30s tick for the "now" marker in the schedule timeline (NTP-corrected)
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick(getNow()), 30000)
+    return () => clearInterval(timer)
+  }, [])
+
+  async function adminPost(path) {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'X-Admin-PIN': pin },
+    })
+    if (!res.ok) throw new Error(`${path} vrátilo ${res.status}`)
+    return res.json()
+  }
+
+  async function handleRefreshNow() {
+    await adminPost('/api/remote/refresh')
+    await loadScheduleAndHealth()
+  }
+
+  async function handleReloadDisplays() {
+    await adminPost('/api/remote/reload')
+    await loadScheduleAndHealth()
+  }
 
   // WebSocket connection for live status and WebRTC signaling
   useEffect(() => {
@@ -1124,15 +1215,200 @@ export default function AdminRemote() {
 
         {/* Tab 1: Rozvrh (Timetable Controls) */}
         {activeTab === 'timetable' && (
-          <div
-            style={{
-              background: '#FFFFFF',
-              border: '1.5px solid #CBD5E1',
-              borderRadius: '6px',
-              padding: '1.5rem',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-            }}
-          >
+          <>
+            {/* Health / status + data refresh actions */}
+            <div
+              style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #CBD5E1',
+                borderRadius: '6px',
+                padding: '1.25rem 1.5rem',
+                marginBottom: '1.5rem',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.9rem', flexWrap: 'wrap' }}>
+                <Server size={18} color="#1D4ED8" />
+                <div style={{ fontWeight: 900, fontSize: '1.05rem' }}>Stav serveru</div>
+                {health && (
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem' }}>
+                    <span
+                      style={{
+                        padding: '0.15rem 0.6rem',
+                        borderRadius: '9999px',
+                        background: health.mode === 'local_mock' ? '#FEF3C7' : '#DCFCE7',
+                        color: health.mode === 'local_mock' ? '#92400E' : '#15803D',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {health.mode === 'local_mock' ? 'MOCK data' : 'OSTRÝ provoz'}
+                    </span>
+                    <span
+                      style={{
+                        padding: '0.15rem 0.6rem',
+                        borderRadius: '9999px',
+                        background: health.authenticated ? '#DCFCE7' : '#FEF2F2',
+                        color: health.authenticated ? '#15803D' : '#991B1B',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {health.authenticated ? 'EduPage ✓' : 'EduPage ✗'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {health && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.4rem 1rem', fontSize: '0.88rem', marginBottom: '1rem' }}>
+                  <div style={{ color: '#64748B' }}>
+                    Škola <b style={{ color: '#0F172A' }}>{health.school}</b>
+                  </div>
+                  <div style={{ color: '#64748B' }}>
+                    Obrazovka <b style={{ color: '#0F172A' }}>#{health.screen_id}</b>
+                  </div>
+                  <div style={{ color: '#64748B' }}>
+                    Školní rok <b style={{ color: '#0F172A' }}>{health.academic_year}</b>
+                  </div>
+                  <div style={{ color: '#64748B' }}>
+                    Status <b style={{ color: '#0F172A' }}>{health.status}</b>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleRefreshNow}
+                  style={{
+                    padding: '0.55rem 1rem',
+                    background: '#1D4ED8',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <RefreshCw size={15} />
+                  Obnovit data z EduPage
+                </button>
+                <button
+                  onClick={handleReloadDisplays}
+                  style={{
+                    padding: '0.55rem 1rem',
+                    background: '#F1F5F9',
+                    color: '#0F172A',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '4px',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <Activity size={15} />
+                  Znovu načíst obrazovky
+                </button>
+              </div>
+            </div>
+
+            {/* Today's schedule timeline with "now" marker */}
+            <div
+              style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #CBD5E1',
+                borderRadius: '6px',
+                padding: '1.5rem',
+                marginBottom: '1.5rem',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              <h2 style={{ margin: '0 0 1rem', fontSize: '1.15rem', fontWeight: 900 }}>Dnešní rozvrh</h2>
+              {timeline.length === 0 ? (
+                <div style={{ color: '#64748B', fontSize: '0.9rem' }}>
+                  Dnes nejsou naplánovány žádné hodiny ani akce (nebo se data zatím nenačetla).
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: '0.4rem' }}>
+                  {(() => {
+                    const nowStr = `${String(nowTick.getHours()).padStart(2, '0')}:${String(nowTick.getMinutes()).padStart(2, '0')}`
+                    return timeline.map((entry, index) => {
+                      const isNow = entry.start <= nowStr && nowStr < entry.end
+                      const kindStyle = {
+                        lesson: { bg: '#EFF6FF', color: '#1D4ED8' },
+                        changed: { bg: '#FEF3C7', color: '#92400E' },
+                        removed: { bg: '#FEE2E2', color: '#991B1B' },
+                        event: { bg: '#F3E8FF', color: '#7E22CE' },
+                      }[entry.kind]
+                      return (
+                        <div
+                          key={`${index}-${entry.start}-${entry.label}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.5rem 0.75rem',
+                            border: isNow ? '2px solid #1D4ED8' : '1.5px solid #E2E8F0',
+                            borderRadius: '4px',
+                            background: isNow ? '#EEF2FF' : '#FFFFFF',
+                          }}
+                        >
+                          <div style={{ minWidth: '84px', fontFamily: 'ui-monospace, monospace', fontWeight: 800, fontSize: '0.85rem', color: '#0F172A' }}>
+                            {entry.start}–{entry.end}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 900, fontSize: '0.92rem', color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {entry.label}
+                            </div>
+                            {entry.detail && (
+                              <div style={{ fontSize: '0.78rem', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {entry.detail}
+                              </div>
+                            )}
+                          </div>
+                          <span
+                            style={{
+                              padding: '0.15rem 0.55rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              background: kindStyle.bg,
+                              color: kindStyle.color,
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {entry.kind === 'event' ? 'Akce' : entry.kind === 'changed' ? 'Změna' : entry.kind === 'removed' ? 'Odpadá' : `Hod. ${entry.period}`}
+                          </span>
+                          {isNow && (
+                            <span style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', background: '#1D4ED8', color: '#FFFFFF', fontSize: '0.72rem', fontWeight: 900, whiteSpace: 'nowrap' }}>
+                              TEĎ
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })
+                  })()}
+                </div>
+              )}
+            </div>
+
+            <div
+              style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #CBD5E1',
+                borderRadius: '6px',
+                padding: '1.5rem',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
             <h2 style={{ margin: '0 0 1rem', fontSize: '1.3rem', fontWeight: 900 }}>
               Ovládání rozvrhu a rotace
             </h2>
@@ -1185,6 +1461,7 @@ export default function AdminRemote() {
               )}
             </div>
           </div>
+          </>
         )}
 
         {/* Tab 2: Prezentace (Slideshow) */}

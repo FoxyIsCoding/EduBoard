@@ -12,12 +12,15 @@ import BrowserView from './board/components/remote/BrowserView'
 import ScreenCastView from './board/components/remote/ScreenCastView'
 import SlideshowView from './board/components/remote/SlideshowView'
 import AdminRemote from './board/admin/AdminRemote'
+import AdvancedPanel from './board/admin/AdvancedPanel'
 import { useBoardClock } from './board/hooks/useBoardClock'
 import { useBoardData } from './board/hooks/useBoardData'
 import { usePageRotation } from './board/hooks/usePageRotation'
 import { useRemoteControl } from './board/hooks/useRemoteControl'
 import { useScreenState } from './board/hooks/useScreenState'
 import { isLocalMode } from './board/localMode'
+import { useSettings } from './board/settings'
+import { syncServerClock } from './board/timeSync'
 import { logBorder, logScreenState, logScreenChange } from './board/logger'
 
 export default function App() {
@@ -38,6 +41,7 @@ export default function App() {
   const { remoteState, castStream } = useRemoteControl()
   const { loading, stale, fetchedAt, hasBoardData, pages, periods, timetable, timetableRows } = useBoardData()
   const { showOverlay, overlayReason } = useScreenState(timetable, loading, hasBoardData, fetchedAt)
+  const settings = useSettings()
 
   const frozenClass = remoteState?.frozenClass
   const displayPages = useMemo(() => {
@@ -116,10 +120,25 @@ export default function App() {
     return () => clearInterval(timer)
   }, [])
 
+  // NTP / clock-drift correction: measure the server clock offset on mount and re-sync periodically
+  useEffect(() => {
+    syncServerClock(true)
+    const timer = setInterval(() => syncServerClock(false), 15 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // Anti burn-in drift: slowly pan the whole kiosk viewport so no static pixels burn in
+  useEffect(() => {
+    document.body.classList.toggle('kb-drift', Boolean(settings.burnInDrift) && !isLocalMode)
+    return () => document.body.classList.remove('kb-drift')
+  }, [settings.burnInDrift])
+
   const isAdmin = route.startsWith('/admin') || route.includes('#admin')
+  const isAdvanced = route.startsWith('/advanced') || route.includes('#advanced')
+  const isPanel = isAdmin || isAdvanced
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isPanel) {
       document.body.classList.add('admin-mode')
       document.body.style.cursor = 'auto'
       document.documentElement.style.cursor = 'auto'
@@ -128,7 +147,7 @@ export default function App() {
       document.body.style.cursor = ''
       document.documentElement.style.cursor = ''
     }
-  }, [isAdmin])
+  }, [isPanel])
 
   // If navigating to /admin or #admin, show Admin Remote Control panel
   if (isAdmin) {
@@ -136,6 +155,17 @@ export default function App() {
       <ErrorBoundary>
         <div className="admin-scope" style={{ width: '100%', height: '100%', overflowY: 'auto', background: '#F8FAFC' }}>
           <AdminRemote />
+        </div>
+      </ErrorBoundary>
+    )
+  }
+
+  // If navigating to /advanced or #advanced, show the sudo-gated Advanced Panel
+  if (isAdvanced) {
+    return (
+      <ErrorBoundary>
+        <div className="admin-scope" style={{ width: '100%', height: '100%', overflowY: 'auto', background: '#F8FAFC' }}>
+          <AdvancedPanel />
         </div>
       </ErrorBoundary>
     )
@@ -235,7 +265,7 @@ export default function App() {
 
       {!effectiveShowOverlay && (
         <>
-          <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} isOffline={stale} />
+          <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} isOffline={stale && !settings.hideOfflineBadge} />
           <AccentRail progress={progress} />
 
           <main className="edupage-content">

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { isLocalMode } from '../localMode'
+import { getNow } from '../timeSync'
+import { getSettings } from '../settings'
 
 function shiftMinutes(timeStr, deltaMinutes) {
   const [h, m] = (timeStr || '00:00').split(':').map(Number)
@@ -51,8 +53,17 @@ export function useScreenState(timetable, loading, hasBoardData, fetchedAt) {
     }
 
     const timer = setInterval(() => {
-      const t = new Date()
+      const t = getNow()
       const deviceTime = `${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}`
+
+      // Experiment: never allow the overlay — always show content
+      if (getSettings().forceContentOnly) {
+        if (showOverlayRef.current) {
+          showOverlayRef.current = false
+          setShowOverlay(false)
+        }
+        return
+      }
 
       // No data loaded yet or still loading — show content
       if (loadingRef.current || !hasDataRef.current) {

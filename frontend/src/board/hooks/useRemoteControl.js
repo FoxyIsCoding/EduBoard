@@ -45,6 +45,8 @@ export function useRemoteControl() {
             const msg = JSON.parse(event.data)
             if (msg.type === 'state') {
               setRemoteState(msg.data)
+            } else if (msg.type === 'reload') {
+              window.location.reload()
             } else if (msg.type === 'webrtc_signal') {
               handleWebRTCSignal(msg.data)
             }

@@ -71,6 +71,20 @@ body.admin-mode textarea,
   overflow: hidden;
 }
 
+/* Anti burn-in drift: a very slow, small pan of the whole viewport so no static
+   pixels stay in one place. Applied via body.kb-drift (toggled from /advanced).
+   The overlay is also drifted so its text/indicator cannot burn in either. */
+@keyframes eduboard-drift {
+  from { transform: translate(0px, 0px); }
+  to { transform: translate(-5px, 4px); }
+}
+
+body.kb-drift .edupage-shell,
+body.kb-drift .board-overlay {
+  animation: eduboard-drift 60s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
 /* Pure White Top Navigation Banner */
 .edupage-topbar {
   background: var(--kiosk-nav-bg);

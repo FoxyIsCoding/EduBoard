@@ -5,6 +5,12 @@ const clockFormatter = new Intl.DateTimeFormat('cs-CZ', {
   minute: '2-digit',
 })
 
+const clock12Formatter = new Intl.DateTimeFormat('en-US', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+})
+
 const longDateFormatter = new Intl.DateTimeFormat('cs-CZ', {
   weekday: 'long',
   day: 'numeric',
@@ -12,8 +18,8 @@ const longDateFormatter = new Intl.DateTimeFormat('cs-CZ', {
   year: 'numeric',
 })
 
-export function formatClock(value) {
-  return clockFormatter.format(value)
+export function formatClock(value, hour12 = false) {
+  return (hour12 ? clock12Formatter : clockFormatter).format(value)
 }
 
 export function formatCurrentDate(now) {
