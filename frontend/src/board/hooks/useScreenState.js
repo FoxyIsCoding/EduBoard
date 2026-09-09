@@ -11,13 +11,29 @@ function shiftMinutes(timeStr, deltaMinutes) {
   return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
 }
 
-export function useScreenState(timetable, loading, hasBoardData) {
+function isAllDayEvent(item) {
+  return (
+    item.type === 'event' &&
+    (item.uniperiod === 'ad' || (item.starttime === '00:00' && item.endtime === '24:00'))
+  )
+}
+
+function isSameLocalDay(dateA, dateB) {
+  return (
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate()
+  )
+}
+
+export function useScreenState(timetable, loading, hasBoardData, fetchedAt) {
   const [showOverlay, setShowOverlay] = useState(false)
   const [overlayReason, setOverlayReason] = useState('in_class')
   const showOverlayRef = useRef(false)
   const timetableRef = useRef(timetable)
   const loadingRef = useRef(loading)
   const hasDataRef = useRef(hasBoardData)
+  const fetchedAtRef = useRef(fetchedAt)
 
   // In local mode, the display turning-off schedule is completely disabled
   const isOverlayFeatureEnabled = !isLocalMode && import.meta.env.VITE_ENABLE_BREAK_ONLY_OVERLAY === 'true'
@@ -26,7 +42,8 @@ export function useScreenState(timetable, loading, hasBoardData) {
     timetableRef.current = timetable
     loadingRef.current = loading
     hasDataRef.current = hasBoardData
-  }, [timetable, loading, hasBoardData])
+    fetchedAtRef.current = fetchedAt
+  }, [timetable, loading, hasBoardData, fetchedAt])
 
   useEffect(() => {
     if (!isOverlayFeatureEnabled) {
@@ -56,7 +73,22 @@ export function useScreenState(timetable, loading, hasBoardData) {
       }
 
       const nowStr = deviceTime
-      const allItems = timetableRef.current.classes.flatMap((cls) => cls.ttitems ?? [])
+
+      // The timetable is fetched daily. If the data we have was fetched on a
+      // previous day (e.g. offline cache from yesterday), it is not valid for
+      // today — never use it to blank the screen.
+      const fetchedAtDate = fetchedAtRef.current ? new Date(fetchedAtRef.current) : null
+      if (fetchedAtDate && !isSameLocalDay(fetchedAtDate, t)) {
+        if (showOverlayRef.current) {
+          showOverlayRef.current = false
+          setShowOverlay(false)
+        }
+        return
+      }
+
+      const allItems = timetableRef.current.classes
+        .filter((cls) => cls.id !== 'global')
+        .flatMap((cls) => (cls.ttitems ?? []).filter((item) => !isAllDayEvent(item)))
 
       // Weekend or holiday (no items) — show standby overlay (pure black)
       if (allItems.length === 0) {

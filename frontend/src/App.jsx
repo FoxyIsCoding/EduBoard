@@ -36,8 +36,8 @@ export default function App() {
   }, [])
 
   const { remoteState, castStream } = useRemoteControl()
-  const { loading, hasBoardData, pages, periods, timetable, timetableRows } = useBoardData()
-  const { showOverlay, overlayReason } = useScreenState(timetable, loading, hasBoardData)
+  const { loading, stale, fetchedAt, hasBoardData, pages, periods, timetable, timetableRows } = useBoardData()
+  const { showOverlay, overlayReason } = useScreenState(timetable, loading, hasBoardData, fetchedAt)
 
   const frozenClass = remoteState?.frozenClass
   const displayPages = useMemo(() => {
@@ -70,12 +70,14 @@ export default function App() {
       logScreenState('First render', JSON.stringify({
         loading,
         hasBoardData,
+        stale,
+        fetchedAt,
         pagesCount: pages.length,
         periodsCount: periods.length,
         hasTimetable: Boolean(timetable),
       }))
     }
-  }, [loading, hasBoardData, pages.length, periods.length, timetable])
+  }, [loading, hasBoardData, stale, fetchedAt, pages.length, periods.length, timetable])
 
   useEffect(() => {
     if (prevOverlayRef.current !== effectiveShowOverlay) {
@@ -233,7 +235,7 @@ export default function App() {
 
       {!effectiveShowOverlay && (
         <>
-          <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} />
+          <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} isOffline={stale} />
           <AccentRail progress={progress} />
 
           <main className="edupage-content">

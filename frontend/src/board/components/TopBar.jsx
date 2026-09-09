@@ -1,4 +1,4 @@
-export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode = false }) {
+export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode = false, isOffline = false }) {
   // Czech academic calendar: determine even (sudý) or odd (lichý) week
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
@@ -24,6 +24,11 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
         {isLocalMode && (
           <span style={{ fontSize: '0.72rem', color: 'var(--kiosk-brand-blue)', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '0.15rem' }}>
             Demo Mode
+          </span>
+        )}
+        {!isLocalMode && isOffline && (
+          <span style={{ fontSize: '0.72rem', color: '#B91C1C', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '0.15rem' }}>
+            Offline Mode
           </span>
         )}
       </div>
