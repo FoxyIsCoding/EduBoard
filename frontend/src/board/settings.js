@@ -8,6 +8,13 @@ export const DEFAULT_SETTINGS = {
   simulateTime: '',
   clock24h: true,
   hideOfflineBadge: false,
+  debugHud: false,
+  clockWithSeconds: false,
+  hideWeekBadge: false,
+  rotationSeconds: 15,
+  contentScale: 100,
+  refreshSeconds: 60,
+  manualClockOffsetMinutes: 0,
 }
 
 function loadSettings() {

@@ -1,4 +1,7 @@
+import { useSettings } from '../settings'
+
 export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode = false, isOffline = false }) {
+  const settings = useSettings()
   // Czech academic calendar: determine even (sudý) or odd (lichý) week
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
@@ -88,20 +91,22 @@ export default function TopBar({ pageTitle, clockLabel, dateParts, isLocalMode =
             {dateParts.fullDate}
           </span>
 
-          <span
-            style={{
-              padding: '0.12rem 0.45rem',
-              borderRadius: 'var(--kiosk-radius-sm)',
-              background: 'var(--kiosk-header-bg)',
-              border: '1px solid var(--kiosk-grid-border)',
-              color: 'var(--kiosk-text-secondary)',
-              fontSize: 'clamp(0.68rem, 0.75vw, 0.85rem)',
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-            }}
-          >
-            {weekLabel}
-          </span>
+          {!settings.hideWeekBadge && (
+            <span
+              style={{
+                padding: '0.12rem 0.45rem',
+                borderRadius: 'var(--kiosk-radius-sm)',
+                background: 'var(--kiosk-header-bg)',
+                border: '1px solid var(--kiosk-grid-border)',
+                color: 'var(--kiosk-text-secondary)',
+                fontSize: 'clamp(0.68rem, 0.75vw, 0.85rem)',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+              }}
+            >
+              {weekLabel}
+            </span>
+          )}
         </div>
       </div>
     </header>

@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { logPageRotation, logBorder } from '../logger'
 import { DEBUG_HOLD_SECONDS, ROTATE_SECONDS } from '../constants'
+import { useSettings } from '../settings'
 
 export function usePageRotation(pages, paused = false) {
+  const settings = useSettings()
+  const rotateSeconds = Math.max(3, Math.min(300, Number(settings.rotationSeconds) || ROTATE_SECONDS))
   const [pageIndex, setPageIndex] = useState(0)
   const [progress, setProgress] = useState(0)
   const manualPageUntilRef = useRef(0)
@@ -23,7 +26,7 @@ export function usePageRotation(pages, paused = false) {
 
   // Log mount
   useEffect(() => {
-    logPageRotation('MOUNTED', JSON.stringify({ pageCount, rotateSeconds: ROTATE_SECONDS, initialPaused: paused }))
+    logPageRotation('MOUNTED', JSON.stringify({ pageCount, rotateSeconds, initialPaused: paused }))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Log pause/resume transitions
@@ -73,7 +76,7 @@ export function usePageRotation(pages, paused = false) {
       }
 
       const elapsed = Date.now() - cycleStartedAtRef.current
-      const durationMs = ROTATE_SECONDS * 1000
+      const durationMs = rotateSeconds * 1000
       const nextProgress = Math.min(100, (elapsed / durationMs) * 100)
 
       if (nextProgress >= 100) {
@@ -93,7 +96,7 @@ export function usePageRotation(pages, paused = false) {
       window.clearInterval(timer)
       logPageRotation('⏱ rotation interval CLEARED', '')
     }
-  }, [hasMultiplePages])
+  }, [hasMultiplePages, rotateSeconds])
 
   useEffect(() => {
     const globalScope = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this)

@@ -7,6 +7,7 @@ import EventsPage from './board/components/EventsPage'
 import SubstitutionsPage from './board/components/SubstitutionsPage'
 import TimetablePage from './board/components/TimetablePage'
 import TopBar from './board/components/TopBar'
+import DebugHud from './board/components/DebugHud'
 import AlertBannerView from './board/components/remote/AlertBannerView'
 import BrowserView from './board/components/remote/BrowserView'
 import ScreenCastView from './board/components/remote/ScreenCastView'
@@ -38,7 +39,7 @@ export default function App() {
     }
   }, [])
 
-  const { remoteState, castStream } = useRemoteControl()
+  const { remoteState, castStream, isConnected } = useRemoteControl()
   const { loading, stale, fetchedAt, hasBoardData, pages, periods, timetable, timetableRows } = useBoardData()
   const { showOverlay, overlayReason } = useScreenState(timetable, loading, hasBoardData, fetchedAt)
   const settings = useSettings()
@@ -149,6 +150,18 @@ export default function App() {
     }
   }, [isPanel])
 
+  // Content zoom experiment: scale the whole kiosk viewport via CSS zoom (Blink/Chromium)
+  useEffect(() => {
+    const scale = Math.min(150, Math.max(50, Number(settings.contentScale) || 100)) / 100
+    const root = document.documentElement
+    if (isPanel) {
+      root.style.removeProperty('zoom')
+    } else {
+      root.style.zoom = String(scale)
+    }
+    return () => root.style.removeProperty('zoom')
+  }, [settings.contentScale, isPanel])
+
   // If navigating to /admin or #admin, show Admin Remote Control panel
   if (isAdmin) {
     return (
@@ -232,6 +245,16 @@ export default function App() {
   // Normal School Kiosk Mode (Timetable, Substitutions, Events)
   return (
     <div className="edupage-shell">
+      {settings.debugHud && (
+        <DebugHud
+          showOverlay={effectiveShowOverlay}
+          overlayReason={overlayReason}
+          fetchedAt={fetchedAt}
+          remoteState={remoteState}
+          isConnected={isConnected}
+        />
+      )}
+
       <div className={`board-overlay${effectiveShowOverlay ? '' : ' hidden'}`}>
         {effectiveShowOverlay && overlayReason === 'in_class' && (
           <>

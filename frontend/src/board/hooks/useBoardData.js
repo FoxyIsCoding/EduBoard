@@ -9,6 +9,7 @@ import {
   buildPages,
 } from '../boardData'
 import { REFRESH_SECONDS } from '../constants'
+import { useSettings } from '../settings'
 
 const OFFLINE_CACHE_KEY = 'eduboard_payload_cache'
 const OFFLINE_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000
@@ -49,6 +50,8 @@ function saveOfflineCache(payload, lastSavedAt = 0) {
 }
 
 export function useBoardData() {
+  const settings = useSettings()
+  const refreshSeconds = Math.max(30, Math.min(600, Number(settings.refreshSeconds) || REFRESH_SECONDS))
   const cached = useRef(null)
   if (cached.current === null) {
     cached.current = loadOfflineCache()
@@ -62,9 +65,10 @@ export function useBoardData() {
   const hasPayloadRef = useRef(Boolean(cached.current.payload))
   const refreshCountRef = useRef(0)
   const prevTimetableRef = useRef(null)
+  const didInitialLoadRef = useRef(false)
 
   logBorder('📦 useBoardData MOUNTED', 'big')
-  logDataRefresh('INIT', JSON.stringify({ refreshInterval: `${REFRESH_SECONDS}s`, timestamp: new Date().toISOString() }))
+  logDataRefresh('INIT', JSON.stringify({ refreshInterval: `${refreshSeconds}s`, timestamp: new Date().toISOString() }))
   if (cached.current.payload) {
     logDataRefresh('🗄 offline cache loaded', JSON.stringify({ classes: cached.current.payload.timetable?.classes?.length ?? 0 }))
   }
@@ -152,19 +156,22 @@ export function useBoardData() {
       }
     }
 
-    loadBoard(false)
+    if (!didInitialLoadRef.current) {
+      didInitialLoadRef.current = true
+      loadBoard(false)
+    }
 
-    logDataRefresh(`⏱ refresh timer set for every ${REFRESH_SECONDS}s`, '')
+    logDataRefresh(`⏱ refresh timer set for every ${refreshSeconds}s`, '')
     const refreshTimer = window.setInterval(() => {
       loadBoard(true)
-    }, REFRESH_SECONDS * 1000)
+    }, refreshSeconds * 1000)
 
     return () => {
       cancelled = true
       window.clearInterval(refreshTimer)
       logDataRefresh('⏹ CLEANUP (unmount)', '')
     }
-  }, [])
+  }, [refreshSeconds])
 
   const periods = useMemo(() => getPeriods(payload?.lookup), [payload?.lookup])
 

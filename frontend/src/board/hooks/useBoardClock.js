@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { logClockTick, logBorder } from '../logger'
 import { formatClock, formatDateParts } from '../formatters'
 import { getNow } from '../timeSync'
-import { getSettings } from '../settings'
+import { useSettings } from '../settings'
 
 export function useBoardClock() {
+  const settings = useSettings()
   const [now, setNow] = useState(() => getNow())
   let tickCount = 0
 
@@ -34,11 +35,12 @@ export function useBoardClock() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const dateParts = useMemo(() => formatDateParts(now), [now])
-  const hour12 = getSettings().clock24h === false
+  const hour12 = settings.clock24h === false
+  const withSeconds = Boolean(settings.clockWithSeconds)
 
   return {
     now,
-    clockLabel: formatClock(now, hour12),
+    clockLabel: formatClock(now, hour12, withSeconds),
     dateParts,
   }
 }

@@ -11,6 +11,19 @@ const clock12Formatter = new Intl.DateTimeFormat('en-US', {
   hour12: true,
 })
 
+const clockSecondsFormatter = new Intl.DateTimeFormat('cs-CZ', {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+})
+
+const clock12SecondsFormatter = new Intl.DateTimeFormat('en-US', {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: true,
+})
+
 const longDateFormatter = new Intl.DateTimeFormat('cs-CZ', {
   weekday: 'long',
   day: 'numeric',
@@ -18,7 +31,8 @@ const longDateFormatter = new Intl.DateTimeFormat('cs-CZ', {
   year: 'numeric',
 })
 
-export function formatClock(value, hour12 = false) {
+export function formatClock(value, hour12 = false, withSeconds = false) {
+  if (withSeconds) return (hour12 ? clock12SecondsFormatter : clockSecondsFormatter).format(value)
   return (hour12 ? clock12Formatter : clockFormatter).format(value)
 }
 

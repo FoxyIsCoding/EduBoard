@@ -114,8 +114,35 @@ function Toggle({ label, sub, checked, onChange }) {
   )
 }
 
+function Slider({ label, sub, value, min, max, step = 1, unit = '', onChange }) {
+  return (
+    <div style={{ padding: '0.7rem 0.9rem', border: '1.5px solid #CBD5E1', borderRadius: '6px', background: '#FFFFFF' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
+        <div>
+          <div style={{ fontWeight: 800, color: '#0F172A' }}>{label}</div>
+          {sub && <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '0.15rem' }}>{sub}</div>}
+        </div>
+        <div style={{ fontWeight: 900, color: '#1D4ED8', fontVariantNumeric: 'tabular-nums' }}>
+          {value}
+          {unit}
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ width: '100%', marginTop: '0.5rem', cursor: 'pointer' }}
+      />
+    </div>
+  )
+}
+
 export default function AdvancedPanel() {
   const settings = useSettings()
+  const currentOffset = Number(settings.manualClockOffsetMinutes) || 0
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || '')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
@@ -802,6 +829,55 @@ export default function AdvancedPanel() {
                 checked={settings.hideOfflineBadge}
                 onChange={(v) => saveSettings({ hideOfflineBadge: v })}
               />
+              <Toggle
+                label="Ladicí HUD"
+                sub="Zobrazí v rohu obrazovky diagnostiku běhu — posun hodin, stav overlaye, stáří dat a WebSocket."
+                checked={settings.debugHud}
+                onChange={(v) => saveSettings({ debugHud: v })}
+              />
+              <Toggle
+                label="Hodiny se sekundami"
+                sub="Zobrazí v hodinách také sekundy (aktualizace každou sekundu)."
+                checked={settings.clockWithSeconds}
+                onChange={(v) => saveSettings({ clockWithSeconds: v })}
+              />
+              <Toggle
+                label="Skrýt odznak týdne"
+                sub="Schová štítek „Sudý týden“ / „Lichý týden“ u data."
+                checked={settings.hideWeekBadge}
+                onChange={(v) => saveSettings({ hideWeekBadge: v })}
+              />
+
+              <Slider
+                label="Interval otáčení stránek"
+                sub="Jak dlouho se každá stránka (rozvrh / suplování / akce) zobrazuje."
+                value={Number(settings.rotationSeconds) || 15}
+                min={5}
+                max={60}
+                step={1}
+                unit=" s"
+                onChange={(v) => saveSettings({ rotationSeconds: v })}
+              />
+              <Slider
+                label="Interval obnovování dat"
+                sub="Jak často se znovu stahují data z EduPage (min. 30 s)."
+                value={Number(settings.refreshSeconds) || 60}
+                min={30}
+                max={600}
+                step={5}
+                unit=" s"
+                onChange={(v) => saveSettings({ refreshSeconds: v })}
+              />
+              <Slider
+                label="Zvětšení obsahu"
+                sub="Zvětší / zmenší celý obsah obrazovky (test proti vypalování a čitelnosti)."
+                value={Number(settings.contentScale) || 100}
+                min={50}
+                max={150}
+                step={5}
+                unit=" %"
+                onChange={(v) => saveSettings({ contentScale: v })}
+              />
             </div>
 
             <div style={{ marginTop: '1.25rem', padding: '1rem', border: '1.5px solid #CBD5E1', borderRadius: '6px', background: '#F8FAFC' }}>
@@ -819,6 +895,47 @@ export default function AdvancedPanel() {
                 {settings.simulateTime && (
                   <button onClick={() => saveSettings({ simulateTime: '' })} style={ghostBtn}>
                     Vypnout simulaci
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1.25rem', padding: '1rem', border: '1.5px solid #CBD5E1', borderRadius: '6px', background: '#F8FAFC' }}>
+              <div style={{ fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem' }}>Manuální posun času</div>
+              <div style={{ fontSize: '0.82rem', color: '#64748B', marginBottom: '0.75rem' }}>
+                Posune hodiny i logiku overlaye o daný počet minut (test, že se displej přepíná ve správný čas).
+              </div>
+              <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => saveSettings({ manualClockOffsetMinutes: Math.max(-120, currentOffset - 5) })}
+                  style={ghostBtn}
+                >
+                  −5 min
+                </button>
+                <button
+                  onClick={() => saveSettings({ manualClockOffsetMinutes: Math.max(-120, currentOffset - 1) })}
+                  style={ghostBtn}
+                >
+                  −1 min
+                </button>
+                <span style={{ fontWeight: 900, color: '#0F172A', fontVariantNumeric: 'tabular-nums', minWidth: '4.5rem', textAlign: 'center' }}>
+                  {currentOffset >= 0 ? '+' : ''}{currentOffset} min
+                </span>
+                <button
+                  onClick={() => saveSettings({ manualClockOffsetMinutes: Math.min(120, currentOffset + 1) })}
+                  style={ghostBtn}
+                >
+                  +1 min
+                </button>
+                <button
+                  onClick={() => saveSettings({ manualClockOffsetMinutes: Math.min(120, currentOffset + 5) })}
+                  style={ghostBtn}
+                >
+                  +5 min
+                </button>
+                {currentOffset !== 0 && (
+                  <button onClick={() => saveSettings({ manualClockOffsetMinutes: 0 })} style={ghostBtn}>
+                    Vynulovat
                   </button>
                 )}
               </div>

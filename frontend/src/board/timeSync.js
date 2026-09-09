@@ -40,10 +40,11 @@ export async function syncServerClock(force = false) {
   return state
 }
 
-/** Current "effective" time: device clock corrected by the measured server offset,
- *  overridden by the simulateTime experiment when it is active. */
+/** Current "effective" time: device clock corrected by the measured server offset and
+ *  any manual experiment offset, overridden by the simulateTime experiment when active. */
 export function getNow() {
-  const base = new Date(Date.now() + state.offsetMs)
+  const manualOffsetMin = Number(getSettings().manualClockOffsetMinutes) || 0
+  const base = new Date(Date.now() + state.offsetMs + manualOffsetMin * 60 * 1000)
   const simulate = String(getSettings().simulateTime || '').trim()
   if (simulate) {
     const [hRaw, mRaw] = simulate.replace('.', ':').split(':')
