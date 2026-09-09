@@ -848,6 +848,16 @@ def advanced_sync_clock(password: str = Depends(require_sudo_password)):
     return advanced.sync_clock(password)
 
 
+@app.get("/api/advanced/display")
+def advanced_display(token: str = Depends(require_sudo_password)):
+    return advanced.get_display_info()
+
+
+@app.post("/api/advanced/display")
+def advanced_display_set(payload: dict = Body(...), token: str = Depends(require_sudo_password)):
+    return advanced.set_refresh_rate(payload.get("output", ""), payload.get("mode", ""))
+
+
 # Frontend static files and SPA route mounting
 dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
 

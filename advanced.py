@@ -1,6 +1,8 @@
 import logging
 import os
+import re
 import secrets
+import shlex
 import shutil
 import subprocess
 import time
@@ -15,6 +17,15 @@ BASE_DIR = Path(__file__).resolve().parent
 ENV_FILE = BASE_DIR / ".env"
 FRONTEND_DIR = BASE_DIR / "frontend"
 SERVICE_NAME = os.getenv("EDUBOARD_SERVICE", "EduBoard.service")
+
+# Local testing mode mirrors main.py's detection. In LOCAL_MODE the Advanced
+# panel accepts a fixed dev password so it can be exercised without real sudo
+# credentials; production is unaffected.
+LOCAL_MODE = (
+    os.getenv("LOCAL_MODE", "0").lower() in ("1", "true", "yes")
+    or os.getenv("EDUBOARD_LOCAL_MODE", "0").lower() in ("1", "true", "yes")
+)
+LOCAL_DEV_PASSWORD = os.getenv("EDUBOARD_ADVANCED_DEV_PASSWORD", "pass")
 
 SESSION_TTL_SECONDS = 30 * 60
 
@@ -97,6 +108,8 @@ def _load_sessions_password(token: str) -> str:
 
 
 def verify_sudo_password(password: str) -> bool:
+    if LOCAL_MODE and password == LOCAL_DEV_PASSWORD:
+        return True
     result = _run_sudo(password, "true", timeout=10)
     return result["ok"]
 
@@ -476,3 +489,81 @@ def sync_clock(password: str) -> dict:
         log.append({"step": label, "code": r["code"], "output": r["output"]})
     ok = all(entry["code"] == 0 for entry in log)
     return {"ok": ok, "steps": log}
+
+
+# --- Monitor refresh rate control (wlr-randr, Sway kiosk session) ---
+
+
+def _parse_wlr_randr(raw: str) -> dict:
+    """Parse `wlr-randr` output into per-output name / status / current mode / modes."""
+    outputs = []
+    name = None
+    status = None
+    current = None
+    modes: list = []
+
+    def flush() -> None:
+        nonlocal name, status, current, modes
+        if name is not None:
+            outputs.append(
+                {
+                    "name": name,
+                    "connected": bool(status) and "disconnected" not in status,
+                    "current": current,
+                    "modes": modes,
+                }
+            )
+        name, status, current, modes = None, None, None, []
+
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if line and not line.startswith((" ", "\t")):
+            flush()
+            name = stripped
+            continue
+        mode_match = re.match(r"Mode\s+\d+:\s+(.+)", stripped)
+        if mode_match and mode_match.group(1) not in modes:
+            modes.append(mode_match.group(1))
+            continue
+        current_match = re.match(r"Current\s+mode:\s+(.+)", stripped)
+        if current_match:
+            current = current_match.group(1)
+            continue
+        if "connected" in stripped or "disconnected" in stripped:
+            status = stripped
+    flush()
+    return {"available": True, "outputs": outputs}
+
+
+def get_display_info() -> dict:
+    """List Wayland outputs and their available refresh rates via wlr-randr."""
+    bin_path = shutil.which("wlr-randr")
+    if not bin_path:
+        return {"available": False, "reason": "wlr-randr není nainstalovaný", "outputs": []}
+    if not os.environ.get("WAYLAND_DISPLAY"):
+        return {"available": False, "reason": "Chybí Wayland relace (WAYLAND_DISPLAY)", "outputs": []}
+    r = _run(bin_path, timeout=10)
+    if not r["ok"]:
+        msg = (r["output"] or "").strip()
+        return {"available": False, "reason": msg or "Nepodařilo se načíst výstupy (wlr-randr).", "outputs": []}
+    parsed = _parse_wlr_randr(r["output"])
+    parsed["connected"] = [o for o in parsed["outputs"] if o["connected"]]
+    return parsed
+
+
+def set_refresh_rate(output: str, mode: str) -> dict:
+    """Apply a validated refresh-rate mode to a connected output."""
+    info = get_display_info()
+    if not info.get("available"):
+        return {"ok": False, "error": info.get("reason", "wlr-randr nedostupný")}
+    target = next((o for o in info["outputs"] if o.get("connected") and o["name"] == output), None)
+    if not target:
+        return {"ok": False, "error": f"Neznámý nebo odpojený výstup '{output}'."}
+    if mode not in target["modes"]:
+        return {"ok": False, "error": f"Režim '{mode}' není pro výstup {output} dostupný."}
+    bin_path = shutil.which("wlr-randr")
+    cmd = f"{bin_path} --output {shlex.quote(output)} --mode {shlex.quote(mode)}"
+    r = _run(cmd, timeout=15)
+    if not r["ok"]:
+        return {"ok": False, "error": (r["output"] or "").strip() or "wlr-randr režim neprošlo.", "output": r["output"]}
+    return {"ok": True, "output": r["output"], "info": get_display_info()}

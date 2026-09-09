@@ -155,6 +155,8 @@ export default function AdvancedPanel() {
   // System
   const [status, setStatus] = useState(null)
   const [serviceOutput, setServiceOutput] = useState('')
+  const [displayInfo, setDisplayInfo] = useState(null)
+  const [displaySelected, setDisplaySelected] = useState({})
 
   // Git
   const [git, setGit] = useState(null)
@@ -195,13 +197,24 @@ export default function AdvancedPanel() {
   const loadStatus = useCallback(
     () =>
       run(async () => {
-        const [st, branchesData] = await Promise.all([
+        const [st, branchesData, displayData] = await Promise.all([
           api('/status', { token }),
           api('/branches', { token }),
+          api('/display', { token }),
         ])
         setStatus(st)
         setGit(st?.git ?? null)
         setBranches(branchesData)
+        setDisplayInfo(displayData)
+        setDisplaySelected((prev) => {
+          const next = { ...prev }
+          for (const out of displayData?.outputs ?? []) {
+            if (out.connected && out.current && !next[out.name]) {
+              next[out.name] = out.current
+            }
+          }
+          return next
+        })
         return st
       }),
     [run, token],
@@ -509,6 +522,77 @@ export default function AdvancedPanel() {
             ) : (
               <div style={{ color: '#64748B' }}>Načítám stav systému…</div>
             )}
+
+            <div style={{ marginTop: '1.25rem', borderTop: '1.5px solid #E2E8F0', paddingTop: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900 }}>Monitor — obnovovací frekvence</h3>
+                <button
+                  onClick={() =>
+                    run(async () => {
+                      const d = await api('/display', { token })
+                      setDisplayInfo(d)
+                      return { message: 'Výstupy monitoru načteny' }
+                    })
+                  }
+                  disabled={busy}
+                  style={ghostBtn}
+                >
+                  <RefreshCw size={14} style={{ marginRight: '0.3rem' }} />
+                  Znovu načíst
+                </button>
+              </div>
+
+              {displayInfo?.available === false ? (
+                <div style={{ padding: '0.6rem 0.75rem', borderRadius: '4px', background: '#FEF2F2', color: '#991B1B', fontSize: '0.85rem', fontWeight: 700 }}>
+                  Ovládání monitoru není k dispozici: {displayInfo.reason}
+                </div>
+              ) : !displayInfo ? (
+                <div style={{ color: '#64748B', fontSize: '0.85rem' }}>Načítám výstupy…</div>
+              ) : (displayInfo.outputs || []).length === 0 ? (
+                <div style={{ color: '#64748B', fontSize: '0.85rem' }}>Žádné připojené výstupy (wlr-randr nenašel žádný režim).</div>
+              ) : (
+                <div style={{ display: 'grid', gap: '0.6rem' }}>
+                  {(displayInfo.outputs || []).filter((o) => o.connected).map((out) => (
+                    <div
+                      key={out.name}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.6rem 0.75rem', border: '1.5px solid #E2E8F0', borderRadius: '6px' }}
+                    >
+                      <div style={{ fontWeight: 900, color: '#0F172A', minWidth: '8rem' }}>{out.name}</div>
+                      {out.current && (
+                        <span style={{ padding: '0.15rem 0.5rem', borderRadius: '9999px', background: '#EEF2FF', color: '#1D4ED8', fontSize: '0.78rem', fontWeight: 800, fontFamily: 'ui-monospace, monospace' }}>
+                          nyní {out.current}
+                        </span>
+                      )}
+                      <select
+                        value={displaySelected[out.name] ?? out.current ?? ''}
+                        onChange={(e) => setDisplaySelected((prev) => ({ ...prev, [out.name]: e.target.value }))}
+                        style={{ padding: '0.4rem 0.5rem', border: '1.5px solid #CBD5E1', borderRadius: '4px', fontWeight: 700, flex: '1 1 14rem', minWidth: '10rem' }}
+                      >
+                        {(out.modes || []).map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() =>
+                          run(async () => {
+                            const mode = displaySelected[out.name] || out.current
+                            const res = await api('/display', { method: 'POST', body: { output: out.name, mode }, token })
+                            if (res?.info) setDisplayInfo(res.info)
+                            return { message: res?.ok ? `Přepnuto na ${mode} Hz` : `Změna frekvence se nepovedla: ${res?.error || ''}` }
+                          })
+                        }
+                        disabled={busy}
+                        style={primaryBtn}
+                      >
+                        Nastavit
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginTop: '1.25rem' }}>
               <button
