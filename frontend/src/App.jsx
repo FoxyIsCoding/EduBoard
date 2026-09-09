@@ -43,6 +43,7 @@ export default function App() {
   const { loading, stale, fetchedAt, hasBoardData, pages, periods, timetable, timetableRows } = useBoardData()
   const { showOverlay, overlayReason } = useScreenState(timetable, loading, hasBoardData, fetchedAt)
   const settings = useSettings()
+  const contentZoom = Math.min(1.5, Math.max(0.5, (Number(settings.contentScale) || 100) / 100))
 
   const frozenClass = remoteState?.frozenClass
   const displayPages = useMemo(() => {
@@ -149,18 +150,6 @@ export default function App() {
       document.documentElement.style.cursor = ''
     }
   }, [isPanel])
-
-  // Content zoom experiment: scale the whole kiosk viewport via CSS zoom (Blink/Chromium)
-  useEffect(() => {
-    const scale = Math.min(150, Math.max(50, Number(settings.contentScale) || 100)) / 100
-    const root = document.documentElement
-    if (isPanel) {
-      root.style.removeProperty('zoom')
-    } else {
-      root.style.zoom = String(scale)
-    }
-    return () => root.style.removeProperty('zoom')
-  }, [settings.contentScale, isPanel])
 
   // If navigating to /admin or #admin, show Admin Remote Control panel
   if (isAdmin) {
@@ -291,7 +280,7 @@ export default function App() {
           <TopBar pageTitle={pageTitle} clockLabel={clockLabel} dateParts={dateParts} isLocalMode={isLocalMode} isOffline={stale && !settings.hideOfflineBadge} />
           <AccentRail progress={progress} />
 
-          <main className="edupage-content">
+          <main className="edupage-content" style={{ zoom: contentZoom }}>
             <ErrorBoundary>
               <div
                 key={activePageKey}
