@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from remote_hub import remote_hub, SLIDES_DIR
 import advanced
+import blocked_classes
 
 # Setup logging
 logging.basicConfig(
@@ -34,14 +35,6 @@ LOCAL_MODE = (
     or "--local" in sys.argv
     or "--mock" in sys.argv
 )
-
-# Classes hidden from the timetable display and the freeze list (e.g. pseudo-classes).
-# Extend via EDUBOARD_BLOCKED_CLASSES (comma-separated class IDs/names).
-BLOCKED_CLASS_IDS = {"ppo"} | {
-    c.strip().lower()
-    for c in os.getenv("EDUBOARD_BLOCKED_CLASSES", "").split(",")
-    if c.strip()
-}
 
 LOCAL_MOCK_LOOKUP = {
     "classes": {
@@ -524,7 +517,7 @@ class EduBoard:
 
         data = {"classes": []}
         for row in res.get("r", {}).get("rows", []):
-            if str(row.get("id", "") or "").strip().lower() in BLOCKED_CLASS_IDS:
+            if blocked_classes.is_blocked(row.get("id")):
                 continue
             class_data = {"id": row.get("id"), "ttitems": []}
             for item in row.get("ttitems", []):
@@ -663,6 +656,31 @@ def check_auth(authorization: Optional[str] = Header(None), x_admin_pin: Optiona
     if not remote_hub.verify_auth(token):
         raise HTTPException(status_code=401, detail="Vyžadováno přihlášení (neplatný PIN)")
     return token
+
+
+@app.get("/api/remote/blocked")
+async def get_remote_blocked(
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    return {"blocked": blocked_classes.get_blocked()}
+
+
+@app.post("/api/remote/blocked")
+async def post_remote_blocked(
+    payload: dict = Body(...),
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    class_id = (payload.get("id") or "").strip()
+    if not class_id:
+        raise HTTPException(400, "Missing class id")
+    blocked = blocked_classes.toggle_blocked(class_id)
+    edub._cache.clear()
+    logger.info("Toggled blocked class: %s -> %s", class_id, blocked)
+    return {"ok": True, "blocked": blocked}
 
 
 @app.post("/api/remote/state")

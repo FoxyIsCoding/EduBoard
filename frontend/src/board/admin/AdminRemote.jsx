@@ -20,9 +20,13 @@ import {
   Radio,
   Server,
   Activity,
+  Users,
+  Columns,
 } from 'lucide-react'
 import { cleanEventName } from '../formatters'
 import { getNow } from '../timeSync'
+import ClassesPanel from './ClassesPanel'
+import SplitPanel from './SplitPanel'
 
 const SLIDE_TRANSITIONS = [
   { id: 'fade', label: 'Měkké prolínání' },
@@ -53,22 +57,20 @@ const SLIDE_FITS = [
   { id: 'fill', label: 'Natáhnout' },
 ]
 
-const BLOCKED_CLASS_IDS = new Set(['ppo'])
-
 function lookupName(lookup, table, id) {
   const value = lookup?.[table]?.data?.[id]
   if (typeof value === 'object' && value !== null) return value.short || value.name || id
   return String(value ?? id)
 }
 
-function buildTimeline(lookup, timetable, events) {
+function buildTimeline(lookup, timetable, events, blocked = new Set()) {
   const entries = []
   const seen = new Set()
   const className = (id) => lookupName(lookup, 'classes', id)
   const subjectName = (id) => lookupName(lookup, 'subjects', id)
 
   for (const row of timetable?.classes ?? []) {
-    if (BLOCKED_CLASS_IDS.has(String(row.id).trim().toLowerCase())) continue
+    if (blocked.has(String(row.id).trim().toLowerCase())) continue
     for (const item of row.ttitems ?? []) {
       if (item.type === 'event' || !item.starttime || !item.endtime) continue
       const key = `${item.uniperiod}:${item.starttime}`
@@ -602,6 +604,7 @@ export default function AdminRemote() {
   })
   const [connectedDisplays, setConnectedDisplays] = useState(0)
   const [classesList, setClassesList] = useState([])
+  const [blockedClasses, setBlockedClasses] = useState([])
   const [health, setHealth] = useState(null)
   const [timeline, setTimeline] = useState([])
   const [nowTick, setNowTick] = useState(() => getNow())
@@ -633,6 +636,20 @@ export default function AdminRemote() {
     }
   }, [pin])
 
+  const fetchBlocked = useCallback(async (token) => {
+    try {
+      const res = await fetch('/api/remote/blocked', {
+        headers: { 'X-Admin-PIN': token || pin },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setBlockedClasses((data.blocked ?? []).map((b) => String(b).toLowerCase()))
+      }
+    } catch (err) {
+      console.warn('[AdminRemote] Failed to fetch blocked classes:', err)
+    }
+  }, [pin])
+
   async function verifyToken(token) {
     try {
       const res = await fetch('/api/remote/auth', {
@@ -645,6 +662,7 @@ export default function AdminRemote() {
         localStorage.setItem('eduboard_admin_pin', token)
         setAuthError('')
         fetchState(token)
+        fetchBlocked(token)
       } else {
         setIsAuthenticated(false)
         setAuthError('Neplatný administrátorský PIN.')
@@ -682,6 +700,7 @@ export default function AdminRemote() {
             localStorage.setItem('eduboard_admin_pin', pin)
             setAuthError('')
             fetchState(pin)
+            fetchBlocked(pin)
           } else {
             setIsAuthenticated(false)
             setAuthError('Neplatný administrátorský PIN.')
@@ -694,11 +713,12 @@ export default function AdminRemote() {
     return () => {
       cancelled = true
     }
-  }, [pin, fetchState])
+  }, [pin, fetchState, fetchBlocked])
 
   // Load available school classes for freeze dropdown + today's schedule timeline +
   // backend health snapshot. Re-used by the "refresh now" / "reload displays" buttons.
   const loadScheduleAndHealth = useCallback(async () => {
+    const blocked = new Set(blockedClasses)
     try {
       const [timetable, data, events] = await Promise.all([
         fetch('/api/timetable').then((r) => r.json()),
@@ -715,7 +735,7 @@ export default function AdminRemote() {
       const cls = []
       for (const row of timetable?.classes ?? []) {
         const id = String(row?.id ?? '')
-        if (!id || BLOCKED_CLASS_IDS.has(id.trim().toLowerCase())) continue
+        if (!id || blocked.has(id.trim().toLowerCase())) continue
         const name = lookup[id] || id
         if (!name || seen.has(name)) continue
         seen.add(name)
@@ -723,7 +743,7 @@ export default function AdminRemote() {
       }
       cls.sort((a, b) => a.localeCompare(b, 'cs'))
       if (cls.length) setClassesList(cls)
-      setTimeline(buildTimeline(data, timetable, events))
+      setTimeline(buildTimeline(data, timetable, events, blocked))
     } catch {
       // ignore — the panel still works without live schedule data
     }
@@ -734,7 +754,7 @@ export default function AdminRemote() {
     } catch {
       // ignore
     }
-  }, [])
+  }, [blockedClasses])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -765,6 +785,21 @@ export default function AdminRemote() {
     await adminPost('/api/remote/reload')
     await loadScheduleAndHealth()
   }
+
+  // Called by ClassesPanel after a toggle — persist the new blocked list
+  // locally and purge caches so the TVs/hub re-fetch the filtered timetable.
+  const handleBlockedChange = useCallback(
+    async (blockedList) => {
+      setBlockedClasses((blockedList ?? []).map((b) => String(b).toLowerCase()))
+      try {
+        await adminPost('/api/remote/reload')
+      } catch {
+        // ignore — state still updated for the next refresh
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pin],
+  )
 
   // WebSocket connection for live status and WebRTC signaling
   useEffect(() => {
@@ -1179,10 +1214,12 @@ export default function AdminRemote() {
         >
           {[
             { id: 'timetable', label: 'Rozvrh', icon: Calendar },
+            { id: 'classes', label: 'Třídy', icon: Users },
             { id: 'slideshow', label: 'Prezentace', icon: ImageIcon },
             { id: 'browser', label: 'Webová URL', icon: Globe },
             { id: 'cast', label: 'Sdílet plochu', icon: Cast },
             { id: 'alert', label: 'Hlášení', icon: AlertTriangle },
+            { id: 'split', label: 'Split', icon: Columns },
           ].map((tab) => {
             const Icon = tab.icon
             const isSelected = activeTab === tab.id
@@ -1462,6 +1499,11 @@ export default function AdminRemote() {
             </div>
           </div>
           </>
+        )}
+
+        {/* Tab: Viditelné třídy (Classes) */}
+        {activeTab === 'classes' && (
+          <ClassesPanel pin={pin} onToggle={handleBlockedChange} />
         )}
 
         {/* Tab 2: Prezentace (Slideshow) */}
@@ -2003,6 +2045,14 @@ export default function AdminRemote() {
               </div>
             </form>
           </div>
+        )}
+
+        {/* Tab: Split (Rozdělená obrazovka) */}
+        {activeTab === 'split' && (
+          <SplitPanel
+            remoteState={remoteState}
+            onUpdate={(partial) => updateRemoteState(partial)}
+          />
         )}
 
         {/* Global Settings Card: Auto-revert & TV Power */}

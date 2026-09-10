@@ -20,7 +20,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 SLIDES_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_STATE: Dict[str, Any] = {
-    "mode": "normal",  # normal | slideshow | browser | cast | alert | standby
+    "mode": "normal",  # normal | slideshow | browser | cast | alert | standby | split
     "frozenClass": None,
     "images": [],
     "slideIntervalMs": 8000,
@@ -34,6 +34,8 @@ DEFAULT_STATE: Dict[str, Any] = {
     "autoRevertSeconds": None,
     "revertAt": None,
     "tvPower": True,
+    "splitLeft": "timetable",   # timetable | events | substitutions
+    "splitRight": "events",     # timetable | events | substitutions
     "updatedAt": time.time(),
 }
 

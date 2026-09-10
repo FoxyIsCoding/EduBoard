@@ -7,6 +7,7 @@ import EventsPage from './board/components/EventsPage'
 import SubstitutionsPage from './board/components/SubstitutionsPage'
 import TimetablePage from './board/components/TimetablePage'
 import TopBar from './board/components/TopBar'
+import SplitView from './board/components/SplitView'
 import DebugHud from './board/components/DebugHud'
 import AlertBannerView from './board/components/remote/AlertBannerView'
 import BrowserView from './board/components/remote/BrowserView'
@@ -40,7 +41,7 @@ export default function App() {
   }, [])
 
   const { remoteState, castStream, isConnected } = useRemoteControl()
-  const { loading, stale, fetchedAt, hasBoardData, pages, periods, timetable, timetableRows } = useBoardData()
+  const { loading, stale, fetchedAt, hasBoardData, pages, periods, timetable, timetableRows, events, substitutions } = useBoardData()
   const { showOverlay, overlayReason, scheduleDay } = useScreenState(timetable, loading, hasBoardData, fetchedAt)
   const settings = useSettings()
   const contentZoom = Math.min(1.5, Math.max(0.5, (Number(settings.contentScale) || 100) / 100))
@@ -227,6 +228,26 @@ export default function App() {
     return (
       <div className="edupage-shell">
         <ScreenCastView stream={castStream} />
+      </div>
+    )
+  }
+
+  // Split Mode — two content panes (timetable + events/substitutions) side by side
+  if (remoteState?.mode === 'split') {
+    return (
+      <div className="edupage-shell">
+        <SplitView
+          rows={timetableRows}
+          periods={periods}
+          events={events}
+          substitutions={substitutions}
+          splitLeft={remoteState?.splitLeft || 'timetable'}
+          splitRight={remoteState?.splitRight || 'events'}
+          clockLabel={clockLabel}
+          dateParts={dateParts}
+          isLocalMode={isLocalMode}
+          isOffline={stale && !settings.hideOfflineBadge}
+        />
       </div>
     )
   }

@@ -32,6 +32,40 @@ export function collectDayItems(classes) {
     .flatMap((cls) => (cls.ttitems ?? []).filter((item) => !isAllDayEvent(item)))
 }
 
+// Canonical bell schedule of the school day. Hardcoded on purpose: lessons are
+// spent inside period slots, so even when a class is split into double hours
+// (two periods back to back, possibly overlapping different classes' slots),
+// the real breaks between periods must stay visible. The timetable is only used
+// to detect which hours are actually occupied (see buildDaySegments).
+export const BELL_SCHEDULE = [
+  // 1. hodina
+  { start: '08:00', end: '08:45', kind: 'in_class' },
+  { start: '08:45', end: '08:55', kind: 'break' },
+  // 2. hodina
+  { start: '08:55', end: '09:40', kind: 'in_class' },
+  { start: '09:40', end: '10:00', kind: 'break' }, // velká svačinová přestávka
+  // 3. hodina
+  { start: '10:00', end: '10:45', kind: 'in_class' },
+  { start: '10:45', end: '10:55', kind: 'break' },
+  // 4. hodina
+  { start: '10:55', end: '11:40', kind: 'in_class' },
+  { start: '11:40', end: '11:50', kind: 'break' },
+  // 5. hodina
+  { start: '11:50', end: '12:35', kind: 'in_class' },
+  { start: '12:35', end: '12:45', kind: 'break' },
+  // 6. hodina
+  { start: '12:45', end: '13:30', kind: 'in_class' },
+  { start: '13:30', end: '14:25', kind: 'break' }, // polední přestávka
+  // 7. hodina
+  { start: '14:25', end: '15:10', kind: 'in_class' },
+  { start: '15:10', end: '15:15', kind: 'break' },
+  // 8. hodina
+  { start: '15:15', end: '16:00', kind: 'in_class' },
+  { start: '16:00', end: '16:05', kind: 'break' },
+  // 9. hodina
+  { start: '16:05', end: '16:50', kind: 'in_class' },
+]
+
 // Returns:
 //   []  → no timetable items at all (weekend/holiday → black the whole day)
 //   null → items exist but none carry usable times (never blank the screen)
@@ -44,22 +78,13 @@ export function buildDaySegments(classes) {
   const ends = items.map((i) => i.endtime).filter(Boolean)
   if (starts.length === 0 || ends.length === 0) return null
 
+  // Only the occupied window is derived from the timetable: the first lesson
+  // (opens an arrival/"nástup" window) and the last lesson end (after it the
+  // board fully turns off). The structure in between is the fixed bell schedule.
   const schoolStart = starts.reduce((a, b) => (a < b ? a : b))
+  const schoolEnd = ends.reduce((a, b) => (a > b ? a : b))
+  if (schoolEnd <= schoolStart) return []
   const morningStart = shiftMinutes(schoolStart, -45)
-
-  const merged = []
-  const sorted = items
-    .map((i) => ({ start: i.starttime, end: i.endtime }))
-    .filter((p) => p.start && p.end)
-    .sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end))
-  for (const p of sorted) {
-    const last = merged[merged.length - 1]
-    if (last && p.start <= last.end) {
-      if (p.end > last.end) last.end = p.end
-    } else {
-      merged.push({ start: p.start, end: p.end })
-    }
-  }
 
   const segments = []
   const push = (start, end, kind) => {
@@ -69,13 +94,14 @@ export function buildDaySegments(classes) {
 
   push('00:00', morningStart, 'after')
   push(morningStart, schoolStart, 'morning')
-  let cursor = schoolStart
-  for (const p of merged) {
-    push(cursor, p.start, 'break')
-    push(p.start, p.end, 'in_class')
-    cursor = p.end > cursor ? p.end : cursor
+  for (const seg of BELL_SCHEDULE) {
+    // Clip each slot to the actually occupied school day (skip hours that are
+    // over, truncate one that outlives the real last lesson).
+    const start = seg.start > schoolStart ? seg.start : schoolStart
+    const end = seg.end < schoolEnd ? seg.end : schoolEnd
+    push(start, end, seg.kind)
   }
-  push(cursor, '24:00', 'after')
+  push(schoolEnd, '24:00', 'after')
   return segments
 }
 
