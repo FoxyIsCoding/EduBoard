@@ -3,34 +3,46 @@ export default function EmptyPage({ title, copy }) {
     <section
       style={{
         height: '100%',
-        borderRadius: '12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        background: 'var(--md-sys-color-surface-container)',
+        padding: '2rem',
       }}
     >
-      <md-outlined-card
+      <div
+        className="edupage-card"
         style={{
-          padding: '2.2rem 2.6rem',
-          borderRadius: '12px',
-          maxWidth: '70ch',
-          borderColor: 'var(--board-border-medium)',
-          background: 'var(--md-sys-color-surface-container-high)',
+          padding: '2.8rem 3.6rem',
+          maxWidth: '650px',
+          background: 'var(--kiosk-card-bg)',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
         }}
       >
-        <h2 style={{ margin: 0, fontSize: 'clamp(2rem, 3vw, 3.2rem)', lineHeight: 1.05 }}>{title}</h2>
+        <h2
+          style={{
+            margin: 0,
+            fontSize: 'clamp(2rem, 3.2vw, 3.6rem)',
+            fontWeight: 900,
+            lineHeight: 1.1,
+            color: 'var(--kiosk-text-primary)',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {title}
+        </h2>
         <p
           style={{
-            margin: '0.9rem 0 0',
-            color: 'var(--md-sys-color-on-surface-variant)',
-            fontSize: 'clamp(1.05rem, 1.5vw, 1.6rem)',
+            margin: '1rem 0 0',
+            color: 'var(--kiosk-text-secondary)',
+            fontSize: 'clamp(1.05rem, 1.45vw, 1.65rem)',
+            lineHeight: 1.45,
+            fontWeight: 500,
           }}
         >
           {copy}
         </p>
-      </md-outlined-card>
+      </div>
     </section>
   )
 }

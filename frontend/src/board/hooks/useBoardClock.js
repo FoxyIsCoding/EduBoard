@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { logClockTick, logBorder } from '../logger'
 import { formatClock, formatDateParts } from '../formatters'
+import { getNow } from '../timeSync'
+import { useSettings } from '../settings'
 
 export function useBoardClock() {
-  const [now, setNow] = useState(new Date())
+  const settings = useSettings()
+  const [now, setNow] = useState(() => getNow())
   let tickCount = 0
 
   logBorder('⏰ useBoardClock MOUNTED', 'big')
@@ -13,7 +16,7 @@ export function useBoardClock() {
 
     const timer = window.setInterval(() => {
       tickCount++
-      const t = new Date()
+      const t = getNow()
       setNow(t)
 
       // Log every 15 seconds (not every second to avoid spam)
@@ -32,10 +35,12 @@ export function useBoardClock() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const dateParts = useMemo(() => formatDateParts(now), [now])
+  const hour12 = settings.clock24h === false
+  const withSeconds = Boolean(settings.clockWithSeconds)
 
   return {
     now,
-    clockLabel: formatClock(now),
+    clockLabel: formatClock(now, hour12, withSeconds),
     dateParts,
   }
 }

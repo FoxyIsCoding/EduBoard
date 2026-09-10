@@ -1,8 +1,3 @@
-:root {
-  --board-shape-large: 16px;
-  --board-shape-medium: 12px;
-}
-
 *,
 *::before,
 *::after {
@@ -15,201 +10,296 @@ body,
   width: 100%;
   height: 100%;
   margin: 0;
+  padding: 0;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   cursor: none;
-}
-
-body {
-  font-family: var(--board-font-family);
-  background: var(--md-sys-color-surface);
-  color: var(--md-sys-color-on-surface);
-}
-
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
+  background: var(--kiosk-bg);
+  color: var(--kiosk-text-primary);
+  font-family: var(--kiosk-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-.board-shell {
-  width: 100%;
-  height: 100%;
-  padding: var(--board-kiosk-gutter);
+/* Admin Remote Controller: Restore visible pointer and text cursors */
+body.admin-mode,
+body.admin-mode *,
+.admin-scope,
+.admin-scope * {
+  cursor: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+}
+
+body.admin-mode button,
+body.admin-mode a,
+body.admin-mode input,
+body.admin-mode select,
+body.admin-mode label,
+body.admin-mode [role="button"],
+.admin-scope button,
+.admin-scope a,
+.admin-scope input,
+.admin-scope select,
+.admin-scope label,
+.admin-scope [role="button"] {
+  cursor: pointer !important;
+}
+
+body.admin-mode input[type="text"],
+body.admin-mode input[type="password"],
+body.admin-mode input[type="number"],
+body.admin-mode input[type="url"],
+body.admin-mode textarea,
+.admin-scope input[type="text"],
+.admin-scope input[type="password"],
+.admin-scope input[type="number"],
+.admin-scope input[type="url"],
+.admin-scope textarea {
+  cursor: text !important;
+}
+
+/* Master Kiosk Viewport Shell */
+.edupage-shell {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--kiosk-bg);
+  overflow: hidden;
+}
+
+/* Anti burn-in drift: a very slow, small pan of the whole viewport so no static
+   pixels stay in one place. Applied via body.kb-drift (toggled from /advanced).
+   The overlay is also drifted so its text/indicator cannot burn in either. */
+@keyframes eduboard-drift {
+  from { transform: translate(0px, 0px); }
+  to { transform: translate(-5px, 4px); }
+}
+
+body.kb-drift .edupage-shell,
+body.kb-drift .board-overlay {
+  animation: eduboard-drift 60s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Pure White Top Navigation Banner */
+.edupage-topbar {
+  background: var(--kiosk-nav-bg);
+  color: var(--kiosk-nav-text);
+  border-bottom: 1.5px solid var(--kiosk-nav-border);
+  min-height: clamp(52px, 7.5vh, 76px);
+  padding: 0 clamp(1rem, 1.8vw, 2.4rem);
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: var(--board-kiosk-gap);
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  z-index: 10;
 }
 
-.board-surface {
-  border-radius: var(--board-shape-large);
-  border: 1px solid var(--board-border-subtle);
-  background: var(--md-sys-color-surface-container);
-}
-
-.expressive-progress-track {
-  position: relative;
-  height: 12px;
+/* Progress Rail */
+.edupage-progress-rail {
+  height: 3px;
   width: 100%;
-  border-radius: 10px;
+  background: var(--kiosk-nav-border);
   overflow: hidden;
-  background: var(--board-progress-track-bg);
+  flex-shrink: 0;
 }
 
-.expressive-progress-active {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  border-radius: 10px;
-  overflow: hidden;
-  min-width: 8px;
-  background: var(--md-sys-color-primary);
-  transition: width 220ms linear;
-}
-
-.expressive-progress-wave {
-  width: 220%;
+.edupage-progress-fill {
   height: 100%;
-  fill: var(--md-sys-color-primary);
-  animation: waveDrift var(--expressive-wave-duration, 1200ms) linear infinite;
+  background: var(--kiosk-brand-blue);
+  transition: width 200ms linear;
 }
 
-.expressive-progress-stop {
-  position: absolute;
-  top: 50%;
-  inset-inline-end: 0;
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  transform: translate(-4px, -50%);
-  background: var(--md-sys-color-primary);
+.edupage-progress-fill.is-indeterminate {
+  animation: kioskIndeterminate 1.5s infinite ease-in-out;
 }
 
-.expressive-progress-active.is-indeterminate {
-  animation: indeterminateTravel calc(var(--expressive-wave-duration, 1200ms) * 1.8) ease-in-out infinite;
+@keyframes kioskIndeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
 }
 
-[dir='rtl'] .expressive-progress-wave {
-  animation-name: waveDriftRtl;
+/* Main Display Viewport */
+.edupage-content {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: clamp(0.4rem, 0.65vw, 0.85rem);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-[dir='rtl'] .expressive-progress-active.is-indeterminate {
-  animation-name: indeterminateTravelRtl;
+.edupage-page-view {
+  width: 100%;
+  height: 100%;
+  animation: pageFadeIn 180ms ease-out;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0.45;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes waveDrift {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-54.545%);
-  }
+/* Timetable Grid System */
+.edupage-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: clamp(3px, 0.35vw, 6px);
+  background: var(--kiosk-grid-border);
+  padding: clamp(3px, 0.35vw, 6px);
+  border-radius: var(--kiosk-radius-md);
+  border: 1.5px solid var(--kiosk-grid-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-@keyframes waveDriftRtl {
-  from {
-    transform: translateX(-54.545%);
-  }
-  to {
-    transform: translateX(0);
-  }
+/* Timetable Cell / Card */
+.edupage-card {
+  position: relative;
+  background: var(--kiosk-card-bg);
+  border: 1.5px solid var(--kiosk-grid-border);
+  border-radius: var(--kiosk-radius-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
 }
 
-@keyframes indeterminateTravel {
-  0% {
-    inset-inline-start: -40%;
-  }
-  50% {
-    inset-inline-start: 30%;
-  }
-  100% {
-    inset-inline-start: 100%;
-  }
+/* Active period header */
+.edupage-card.is-active-period-header {
+  background: var(--kiosk-active-header-bg) !important;
+  color: var(--kiosk-active-header-text) !important;
+  border-color: var(--kiosk-active-header-bg) !important;
 }
 
-@keyframes indeterminateTravelRtl {
-  0% {
-    inset-inline-start: 100%;
-  }
-  50% {
-    inset-inline-start: 30%;
-  }
-  100% {
-    inset-inline-start: -40%;
-  }
+/* Active period cell */
+.edupage-card.is-active-period-cell {
+  border-color: var(--kiosk-active-cell-border) !important;
+  border-width: 2px !important;
+  background: var(--kiosk-active-cell-bg) !important;
 }
 
-/* --- Board overlay (screen off) --- */
+/* Substitution State: Odpadá (Cancelled) */
+.edupage-card.is-cancelled {
+  background: var(--kiosk-status-cancelled-bg) !important;
+  border-color: var(--kiosk-status-cancelled-border) !important;
+  border-width: 1.5px !important;
+}
+
+/* Substitution State: Změna (Changed) */
+.edupage-card.is-changed {
+  background: var(--kiosk-status-changed-bg) !important;
+  border-color: var(--kiosk-status-changed-border) !important;
+  border-width: 1.5px !important;
+}
+
+/* Event State: Akce */
+.edupage-card.is-event {
+  background: var(--kiosk-status-event-bg) !important;
+  border-color: var(--kiosk-status-event-border) !important;
+}
+
+/* Pill Badges */
+.edupage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--kiosk-radius-sm);
+  font-size: clamp(0.7rem, 0.8vw, 0.9rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.edupage-badge.badge-room {
+  background: var(--kiosk-room-bg);
+  color: var(--kiosk-room-text);
+}
+
+.edupage-badge.badge-cancelled {
+  background: var(--kiosk-status-cancelled-badge);
+  color: #FFFFFF;
+}
+
+.edupage-badge.badge-changed {
+  background: var(--kiosk-status-changed-badge);
+  color: #FFFFFF;
+}
+
+.edupage-badge.badge-event {
+  background: var(--kiosk-status-event-badge);
+  color: #FFFFFF;
+}
+
+.edupage-badge.badge-active {
+  background: #FFFFFF;
+  color: var(--kiosk-brand-blue);
+}
+
+/* Standby Overlay — always pure black regardless of light/dark theme,
+   since it mimics the TV power-off state to preserve the backlight */
 .board-overlay {
   position: fixed;
   inset: 0;
-  background: #000;
+  background: #000000;
+  color: #FFFFFF;
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 1;
-  transition: opacity 800ms ease;
+  transition: opacity 400ms ease;
 }
+
 .board-overlay.hidden {
   opacity: 0;
   pointer-events: none;
 }
+
 .board-overlay-indicator {
-  width: 24px;
-  height: 24px;
+  position: absolute;
+  left: 50%;
+  bottom: 16vh;
+  width: 13px;
+  height: 13px;
+  margin-left: -7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.03);
-  animation: overlay-breath 4s ease-in-out infinite;
-}
-@keyframes overlay-breath {
-  0%, 100% { opacity: 0.02; transform: scale(1); }
-  50% { opacity: 0.06; transform: scale(1.05); }
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 12px 2px rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+  animation: overlay-breath 3.5s ease-in-out infinite;
 }
 
-/* Blinking ASCII activity indicator during lesson standby */
+@keyframes overlay-breath {
+  0%, 100% { opacity: 0.22; transform: translate3d(0, 0, 0) scale(1); }
+  50% { opacity: 0.85; transform: translate3d(0, -3px, 0) scale(1.1); }
+}
+
 .board-ascii-indicator {
   position: absolute;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-  font-size: clamp(1rem, 1.4vw, 1.25rem);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(0.9rem, 1.2vw, 1.15rem);
   font-weight: 600;
   letter-spacing: 0.15em;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.85);
   user-select: none;
   pointer-events: none;
   z-index: 10000;
 }
 
 .board-ascii-indicator.top-right {
-  top: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
-  right: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
-}
-
-.board-ascii-indicator.bottom-right {
-  bottom: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
-  right: var(--board-kiosk-gutter, clamp(1.5rem, 2.5vw, 2.85rem));
+  top: 1rem;
+  right: 1.5rem;
 }
 
 .board-ascii-blink {
@@ -218,10 +308,142 @@ body {
 }
 
 @keyframes ascii-blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.08;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.1; }
+}
+
+/* Slideshow transitions (20 types) */
+.slide-anim {
+  animation-duration: 750ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.slide-anim-fade { animation-name: edupage-slide-fade; }
+.slide-anim-crossfade { animation-name: edupage-slide-crossfade; }
+.slide-anim-slide-left { animation-name: edupage-slide-left; }
+.slide-anim-slide-right { animation-name: edupage-slide-right; }
+.slide-anim-slide-up { animation-name: edupage-slide-up; }
+.slide-anim-slide-down { animation-name: edupage-slide-down; }
+.slide-anim-zoom-in { animation-name: edupage-slide-zoom-in; }
+.slide-anim-zoom-out { animation-name: edupage-slide-zoom-out; }
+.slide-anim-zoom-blur { animation-name: edupage-slide-zoom-blur; }
+.slide-anim-blur-in { animation-name: edupage-slide-blur-in; }
+.slide-anim-flip-x { animation-name: edupage-slide-flip-x; }
+.slide-anim-flip-y { animation-name: edupage-slide-flip-y; }
+.slide-anim-rotate-in { animation-name: edupage-slide-rotate-in; }
+.slide-anim-wipe-left { animation-name: edupage-slide-wipe-left; }
+.slide-anim-wipe-right { animation-name: edupage-slide-wipe-right; }
+.slide-anim-wipe-up { animation-name: edupage-slide-wipe-up; }
+.slide-anim-wipe-down { animation-name: edupage-slide-wipe-down; }
+.slide-anim-iris-in { animation-name: edupage-slide-iris-in; }
+.slide-anim-ken-burns {
+  animation-name: edupage-slide-ken-burns;
+  animation-duration: 12s;
+  animation-timing-function: linear;
+}
+.slide-anim-bounce-in {
+  animation-name: edupage-slide-bounce-in;
+  animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes edupage-slide-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes edupage-slide-crossfade {
+  from { opacity: 0.25; filter: brightness(0.9); }
+  to { opacity: 1; filter: brightness(1); }
+}
+
+@keyframes edupage-slide-left {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes edupage-slide-right {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes edupage-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes edupage-slide-down {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes edupage-slide-zoom-in {
+  from { transform: scale(0.55); opacity: 0.4; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes edupage-slide-zoom-out {
+  from { transform: scale(1.4); opacity: 0.4; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes edupage-slide-zoom-blur {
+  from { transform: scale(1.2); filter: blur(10px); opacity: 0.5; }
+  to { transform: scale(1); filter: blur(0); opacity: 1; }
+}
+
+@keyframes edupage-slide-blur-in {
+  from { filter: blur(14px); opacity: 0; }
+  to { filter: blur(0); opacity: 1; }
+}
+
+@keyframes edupage-slide-flip-x {
+  from { transform: rotateX(90deg); opacity: 0.5; }
+  to { transform: rotateX(0deg); opacity: 1; }
+}
+
+@keyframes edupage-slide-flip-y {
+  from { transform: rotateY(90deg); opacity: 0.5; }
+  to { transform: rotateY(0deg); opacity: 1; }
+}
+
+@keyframes edupage-slide-rotate-in {
+  from { transform: rotate(-8deg) scale(0.82); opacity: 0.4; }
+  to { transform: rotate(0deg) scale(1); opacity: 1; }
+}
+
+@keyframes edupage-slide-wipe-left {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes edupage-slide-wipe-right {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes edupage-slide-wipe-up {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes edupage-slide-wipe-down {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes edupage-slide-iris-in {
+  from { clip-path: circle(0% at 50% 50%); }
+  to { clip-path: circle(75% at 50% 50%); }
+}
+
+@keyframes edupage-slide-ken-burns {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.12) translate(2.5%, -2%); }
+}
+
+@keyframes edupage-slide-bounce-in {
+  0% { transform: translateY(-60px); opacity: 0; }
+  60% { transform: translateY(12px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
 }

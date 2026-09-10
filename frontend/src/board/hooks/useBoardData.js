@@ -1,5 +1,5 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
-import { logBorder, logDataRefresh, logScreenState, logError } from '../logger'
+import { logBorder, logDataRefresh, logScreenState, logError, logWarn } from '../logger'
 import {
   fetchBoardPayload,
   getPeriods,
@@ -9,17 +9,69 @@ import {
   buildPages,
 } from '../boardData'
 import { REFRESH_SECONDS } from '../constants'
+import { useSettings } from '../settings'
+
+const OFFLINE_CACHE_KEY = 'eduboard_payload_cache'
+const OFFLINE_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000
+const OFFLINE_CACHE_WRITE_INTERVAL_MS = 2 * 60 * 60 * 1000
+
+function loadOfflineCache() {
+  try {
+    const raw = window.localStorage.getItem(OFFLINE_CACHE_KEY)
+    if (!raw) return { payload: null, cachedAt: null, stale: false }
+    const entry = JSON.parse(raw)
+    if (!entry?.payload || !entry?.savedAt) return { payload: null, cachedAt: null, stale: false }
+    const ageMs = Date.now() - Number(entry.savedAt)
+    if (Number.isNaN(ageMs) || ageMs < 0) return { payload: null, cachedAt: null, stale: false }
+    if (ageMs > OFFLINE_CACHE_MAX_AGE_MS) {
+      logWarn('🗄 offline cache too old, ignoring', `${Math.round(ageMs / 3600000)}h old`)
+      window.localStorage.removeItem(OFFLINE_CACHE_KEY)
+      return { payload: null, cachedAt: null, stale: false }
+    }
+    return { payload: entry.payload, cachedAt: Number(entry.savedAt), stale: true }
+  } catch {
+    return { payload: null, cachedAt: null, stale: false }
+  }
+}
+
+function saveOfflineCache(payload, lastSavedAt = 0) {
+  const now = Date.now()
+  if (now - lastSavedAt < OFFLINE_CACHE_WRITE_INTERVAL_MS) return false
+  try {
+    window.localStorage.setItem(
+      OFFLINE_CACHE_KEY,
+      JSON.stringify({ payload, savedAt: now }),
+    )
+    return true
+  } catch {
+    logError('🗄 could not write offline cache', '')
+    return false
+  }
+}
 
 export function useBoardData() {
-  const [payload, setPayload] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const settings = useSettings()
+  const refreshSeconds = Math.max(30, Math.min(600, Number(settings.refreshSeconds) || REFRESH_SECONDS))
+  const cached = useRef(null)
+  if (cached.current === null) {
+    cached.current = loadOfflineCache()
+  }
+  const [payload, setPayload] = useState(() => cached.current.payload)
+  const [loading, setLoading] = useState(() => !cached.current.payload)
+  const [stale, setStale] = useState(() => cached.current.stale)
+  const [fetchedAt, setFetchedAt] = useState(() => cached.current.cachedAt ?? null)
+  const lastSavedAtRef = useRef(cached.current.cachedAt ?? 0)
   const inFlightRef = useRef(false)
-  const hasPayloadRef = useRef(false)
+  const hasPayloadRef = useRef(Boolean(cached.current.payload))
   const refreshCountRef = useRef(0)
   const prevTimetableRef = useRef(null)
+  const didInitialLoadRef = useRef(false)
 
   logBorder('📦 useBoardData MOUNTED', 'big')
-  logDataRefresh('INIT', JSON.stringify({ refreshInterval: `${REFRESH_SECONDS}s`, timestamp: new Date().toISOString() }))
+  logDataRefresh('INIT', JSON.stringify({ refreshInterval: `${refreshSeconds}s`, timestamp: new Date().toISOString() }))
+  if (cached.current.payload) {
+    logDataRefresh('🗄 offline cache loaded', JSON.stringify({ classes: cached.current.payload.timetable?.classes?.length ?? 0 }))
+  }
 
   useEffect(() => {
     hasPayloadRef.current = Boolean(payload)
@@ -84,30 +136,42 @@ export function useBoardData() {
           startTransition(() => {
             setPayload(next)
           })
+          setStale(false)
+          setFetchedAt(Date.now())
           hasPayloadRef.current = true
+          if (saveOfflineCache(next, lastSavedAtRef.current)) {
+            lastSavedAtRef.current = Date.now()
+          }
         }
       } catch (loadError) {
         logError(`❌ loadBoard error (${label})`, loadError.message)
         console.error(loadError)
+        if (hasPayloadRef.current && !cancelled) {
+          setStale(true)
+          logWarn('🗄 offline mode — serving cached/stale data', '')
+        }
       } finally {
         inFlightRef.current = false
         if (!cancelled) setLoading(false)
       }
     }
 
-    loadBoard(false)
+    if (!didInitialLoadRef.current) {
+      didInitialLoadRef.current = true
+      loadBoard(false)
+    }
 
-    logDataRefresh(`⏱ refresh timer set for every ${REFRESH_SECONDS}s`, '')
+    logDataRefresh(`⏱ refresh timer set for every ${refreshSeconds}s`, '')
     const refreshTimer = window.setInterval(() => {
       loadBoard(true)
-    }, REFRESH_SECONDS * 1000)
+    }, refreshSeconds * 1000)
 
     return () => {
       cancelled = true
       window.clearInterval(refreshTimer)
       logDataRefresh('⏹ CLEANUP (unmount)', '')
     }
-  }, [])
+  }, [refreshSeconds])
 
   const periods = useMemo(() => getPeriods(payload?.lookup), [payload?.lookup])
 
@@ -133,9 +197,14 @@ export function useBoardData() {
 
   return {
     loading,
+    stale,
+    fetchedAt,
     hasBoardData: Boolean(payload?.lookup && payload?.timetable),
     pages,
     periods,
     timetable: payload?.timetable,
+    timetableRows,
+    events,
+    substitutions,
   }
 }

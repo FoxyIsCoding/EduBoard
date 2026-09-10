@@ -11,10 +11,13 @@ from typing import Any, Dict, Optional
 import httpx
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from remote_hub import remote_hub, SLIDES_DIR
+import advanced
+import blocked_classes
 
 # Setup logging
 logging.basicConfig(
@@ -32,14 +35,6 @@ LOCAL_MODE = (
     or "--local" in sys.argv
     or "--mock" in sys.argv
 )
-
-# Classes hidden from the timetable display and the freeze list (e.g. pseudo-classes).
-# Extend via EDUBOARD_BLOCKED_CLASSES (comma-separated class IDs/names).
-BLOCKED_CLASS_IDS = {"ppo"} | {
-    c.strip().lower()
-    for c in os.getenv("EDUBOARD_BLOCKED_CLASSES", "").split(",")
-    if c.strip()
-}
 
 LOCAL_MOCK_LOOKUP = {
     "classes": {
@@ -522,7 +517,7 @@ class EduBoard:
 
         data = {"classes": []}
         for row in res.get("r", {}).get("rows", []):
-            if str(row.get("id", "") or "").strip().lower() in BLOCKED_CLASS_IDS:
+            if blocked_classes.is_blocked(row.get("id")):
                 continue
             class_data = {"id": row.get("id"), "ttitems": []}
             for item in row.get("ttitems", []):
@@ -544,8 +539,18 @@ async def lifespan(app: FastAPI):
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, edub.login)
 
+    async def watchdog_loop():
+        while True:
+            try:
+                await remote_hub.check_auto_revert()
+            except Exception as e:
+                logger.error(f"Error in remote watchdog loop: {e}")
+            await asyncio.sleep(2)
+
     asyncio.create_task(try_startup_login())
+    watchdog_task = asyncio.create_task(watchdog_loop())
     yield
+    watchdog_task.cancel()
 
 
 app = FastAPI(title="EduBoard", lifespan=lifespan)
@@ -587,20 +592,327 @@ def get_health():
     }
 
 
-# Frontend static files mounting
+# --- Remote Control & Kiosk WebSocket Hub ---
+
+@app.websocket("/ws/kiosk")
+async def websocket_kiosk(websocket: WebSocket, role: str = "display"):
+    if role == "controller":
+        await remote_hub.connect_controller(websocket)
+        try:
+            while True:
+                data = await websocket.receive_json()
+                msg_type = data.get("type")
+                if msg_type == "webrtc_signal":
+                    await remote_hub.relay_webrtc_signal(websocket, data)
+                elif msg_type == "state_update":
+                    token = data.get("token")
+                    if remote_hub.verify_auth(token):
+                        await remote_hub.update_state(data.get("data", {}))
+                    else:
+                        await websocket.send_json({"type": "error", "message": "Neplatný PIN / heslo"})
+        except WebSocketDisconnect:
+            remote_hub.disconnect_controller(websocket)
+    elif role == "preview":
+        await remote_hub.connect_preview(websocket)
+        try:
+            while True:
+                await websocket.receive_text()
+        except WebSocketDisconnect:
+            remote_hub.disconnect_preview(websocket)
+    else:
+        await remote_hub.connect_display(websocket)
+        try:
+            while True:
+                data = await websocket.receive_json()
+                msg_type = data.get("type")
+                if msg_type == "webrtc_signal":
+                    await remote_hub.relay_webrtc_signal(websocket, data)
+        except WebSocketDisconnect:
+            remote_hub.disconnect_display(websocket)
+
+
+@app.get("/api/remote/state")
+def get_remote_state():
+    return remote_hub.state
+
+
+@app.post("/api/remote/auth")
+def post_remote_auth(payload: dict = Body(...)):
+    pin = payload.get("pin") or payload.get("password")
+    if remote_hub.verify_auth(pin):
+        return {"ok": True, "token": pin}
+    raise HTTPException(status_code=401, detail="Neplatný PIN nebo administrátorské heslo")
+
+
+def check_auth(authorization: Optional[str] = Header(None), x_admin_pin: Optional[str] = Header(None)):
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:].strip()
+    elif x_admin_pin:
+        token = x_admin_pin.strip()
+    elif authorization:
+        token = authorization.strip()
+
+    if not remote_hub.verify_auth(token):
+        raise HTTPException(status_code=401, detail="Vyžadováno přihlášení (neplatný PIN)")
+    return token
+
+
+@app.get("/api/remote/blocked")
+async def get_remote_blocked(
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    return {"blocked": blocked_classes.get_blocked()}
+
+
+@app.post("/api/remote/blocked")
+async def post_remote_blocked(
+    payload: dict = Body(...),
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    class_id = (payload.get("id") or "").strip()
+    if not class_id:
+        raise HTTPException(400, "Missing class id")
+    blocked = blocked_classes.toggle_blocked(class_id)
+    edub._cache.clear()
+    logger.info("Toggled blocked class: %s -> %s", class_id, blocked)
+    return {"ok": True, "blocked": blocked}
+
+
+@app.post("/api/remote/state")
+async def post_remote_state(
+    payload: dict = Body(...),
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    updated = await remote_hub.update_state(payload)
+    return {"ok": True, "state": updated}
+
+
+@app.get("/api/remote/slides")
+def get_remote_slides():
+    return {"slides": remote_hub.state.get("images", [])}
+
+
+@app.post("/api/remote/slides")
+async def post_remote_slide(
+    payload: dict = Body(...),
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    b64_data = payload.get("data")
+    if not b64_data:
+        raise HTTPException(status_code=400, detail="Chybí obrazová data (base64)")
+    caption = payload.get("caption", "")
+    item = remote_hub.save_slide_image(b64_data, caption)
+    await remote_hub.broadcast_state()
+    return {"ok": True, "slide": item}
+
+
+@app.post("/api/remote/refresh")
+async def post_remote_refresh(
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    edub._cache.clear()
+    logger.info("Admin requested EduPage cache refresh — cache cleared.")
+    return {"ok": True, "cacheCleared": True, "displaysReloaded": False}
+
+
+@app.post("/api/remote/reload")
+async def post_remote_reload(
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    edub._cache.clear()
+    await remote_hub.broadcast_reload()
+    logger.info("Admin requested full display reload — all kiosk displays reloading.")
+    return {"ok": True, "cacheCleared": True, "displaysReloaded": True}
+
+
+@app.delete("/api/remote/slides/{slide_id}")
+async def delete_remote_slide(
+    slide_id: str,
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    deleted = remote_hub.delete_slide_image(slide_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Snímek nebyl nalezen")
+    await remote_hub.broadcast_state()
+    return {"ok": True}
+
+
+@app.get("/api/remote/slides/{filename}")
+def serve_slide_image(filename: str):
+    fpath = SLIDES_DIR / filename
+    if fpath.exists() and fpath.is_file():
+        return FileResponse(fpath)
+    raise HTTPException(status_code=404, detail="Soubor nenalezen")
+
+
+@app.post("/api/remote/cec")
+async def post_cec_power(
+    payload: dict = Body(...),
+    authorization: Optional[str] = Header(None),
+    x_admin_pin: Optional[str] = Header(None),
+):
+    check_auth(authorization, x_admin_pin)
+    power_on = payload.get("power", True)
+    await remote_hub.update_state({"tvPower": power_on})
+
+    cmd = "echo 'on 0' | cec-client -s -d 1" if power_on else "echo 'standby 0' | cec-client -s -d 1"
+    try:
+        proc = await asyncio.create_subprocess_shell(cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+        await asyncio.wait_for(proc.communicate(), timeout=3.0)
+    except Exception:
+        pass
+
+    return {"ok": True, "power": power_on}
+
+
+# --- Advanced / Dev Panel (sudo password-gated remote administration) ---
+
+
+@app.get("/api/time")
+def api_time():
+    now = datetime.now().astimezone()
+    return {
+        "iso": now.isoformat(),
+        "epoch_ms": int(now.timestamp() * 1000),
+        "epoch_s": int(now.timestamp()),
+        "utc_offset_seconds": int(now.utcoffset().total_seconds()),
+    }
+
+
+def require_sudo_password(x_sudo_token: Optional[str] = Header(None)) -> str:
+    return advanced.require_token(x_sudo_token)
+
+
+@app.post("/api/advanced/auth")
+def advanced_auth(payload: dict = Body(...)):
+    password = payload.get("password") or ""
+    token = advanced.create_session(password)
+    return {"ok": True, "token": token, "expires_in": advanced.SESSION_TTL_SECONDS}
+
+
+@app.post("/api/advanced/logout")
+def advanced_logout(x_sudo_token: Optional[str] = Header(None)):
+    if x_sudo_token:
+        advanced.drop_session(x_sudo_token)
+    return {"ok": True}
+
+
+@app.get("/api/advanced/session")
+def advanced_session(token: str = Depends(require_sudo_password)):
+    expires = advanced.session_expires(token)
+    return {"ok": True, "expires_in": max(0, int(expires - time.time()))}
+
+
+@app.get("/api/advanced/status")
+def advanced_status(token: str = Depends(require_sudo_password)):
+    return advanced.system_status()
+
+
+@app.get("/api/advanced/branches")
+def advanced_branches(token: str = Depends(require_sudo_password)):
+    return advanced.list_branches()
+
+
+@app.get("/api/advanced/logs")
+def advanced_logs(lines: int = 200, password: str = Depends(require_sudo_password)):
+    return advanced.read_logs(lines=lines, password=password)
+
+
+@app.get("/api/advanced/env")
+def advanced_env(token: str = Depends(require_sudo_password)):
+    return advanced.read_env("")
+
+
+@app.post("/api/advanced/env")
+def advanced_env_save(payload: dict = Body(...), token: str = Depends(require_sudo_password)):
+    return advanced.write_env(payload.get("content", ""))
+
+
+@app.post("/api/advanced/update")
+def advanced_update(token: str = Depends(require_sudo_password)):
+    return advanced.run_update()
+
+
+@app.post("/api/advanced/switch-branch")
+def advanced_switch_branch(payload: dict = Body(...), token: str = Depends(require_sudo_password)):
+    branch = (payload.get("branch") or "").strip()
+    if not branch:
+        raise HTTPException(status_code=400, detail="Chybí název větve.")
+    return advanced.switch_branch(branch)
+
+
+@app.post("/api/advanced/service")
+def advanced_service(payload: dict = Body(...), password: str = Depends(require_sudo_password)):
+    return advanced.service_control(payload.get("action", ""), password)
+
+
+@app.post("/api/advanced/sync-clock")
+def advanced_sync_clock(password: str = Depends(require_sudo_password)):
+    return advanced.sync_clock(password)
+
+
+@app.get("/api/advanced/display")
+def advanced_display(token: str = Depends(require_sudo_password)):
+    return advanced.get_display_info()
+
+
+@app.post("/api/advanced/display")
+def advanced_display_set(payload: dict = Body(...), token: str = Depends(require_sudo_password)):
+    return advanced.set_refresh_rate(payload.get("output", ""), payload.get("mode", ""))
+
+
+# Frontend static files and SPA route mounting
 dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
+
+def frontend_fallback():
+    return HTMLResponse(
+        "<!DOCTYPE html><html><head><title>EduBoard</title></head>"
+        "<body style='font-family:sans-serif;padding:2rem;background:#1a1c1f;color:#e4e6eb;text-align:center;'>"
+        "<h2>EduBoard is Starting</h2>"
+        "<p>Frontend dist directory has not been built yet. Run <code>npm run build</code> inside the <code>frontend/</code> folder.</p>"
+        "</body></html>"
+    )
+
+@app.get("/admin")
+@app.get("/admin/{path:path}")
+@app.get("/advanced")
+@app.get("/advanced/{path:path}")
+def serve_admin():
+    admin_index = dist_dir / "index.html"
+    if admin_index.exists():
+        return FileResponse(admin_index)
+    return frontend_fallback()
+
+class SafeStaticFiles(StaticFiles):
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            if scope["type"] == "websocket":
+                await send({"type": "websocket.close", "code": 1000})
+            return
+        await super().__call__(scope, receive, send)
+
+
 if dist_dir.exists():
-    app.mount("/", StaticFiles(directory=dist_dir, html=True), name="frontend")
+    app.mount("/", SafeStaticFiles(directory=dist_dir, html=True), name="frontend")
 else:
     @app.get("/")
-    def frontend_fallback():
-        return HTMLResponse(
-            "<!DOCTYPE html><html><head><title>EduBoard</title></head>"
-            "<body style='font-family:sans-serif;padding:2rem;background:#1a1c1f;color:#e4e6eb;text-align:center;'>"
-            "<h2>EduBoard is Starting</h2>"
-            "<p>Frontend dist directory has not been built yet. Run <code>npm run build</code> inside the <code>frontend/</code> folder.</p>"
-            "</body></html>"
-        )
+    def serve_frontend_root():
+        return frontend_fallback()
 
 
 if __name__ == "__main__":

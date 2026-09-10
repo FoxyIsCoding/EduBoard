@@ -18,6 +18,12 @@ export function logScreenState(msg, data = '') {
   console.log(`%c🖥 SCREEN ${msg}`, BORDERS.screen, data)
 }
 
+const SCHEDULE_STYLE = 'border:1px solid #14b8a6; background:#134e4a33; color:#5eead4; font-weight:bold; padding:2px 6px; border-radius:4px;'
+
+export function logScheduleDay(msg, data = '') {
+  console.info(`%c📅 ROZVRH ${msg}`, SCHEDULE_STYLE, data)
+}
+
 export function logScreenTick(msg, data = '') {
   if (!isDebug) return
   tickCounter++

@@ -26,61 +26,98 @@ export default function TimetablePage({ rows, periods }) {
   while (paddedRows.length < CLASSES_PER_PAGE) paddedRows.push(null)
 
   return (
-    <section
+    <div
+      className="edupage-grid"
       style={{
-        width: '100%',
-        height: '100%',
-        display: 'grid',
-        gridTemplateColumns: `minmax(140px, 11vw) repeat(${periods.length}, minmax(0, 1fr))`,
-        gridTemplateRows: `minmax(85px, 9.5vh) repeat(${CLASSES_PER_PAGE}, minmax(clamp(70px, 11vh, 180px), 1fr))`,
-        gap: '0.45rem',
+        gridTemplateColumns: `minmax(120px, 9.5vw) repeat(${periods.length}, minmax(0, 1fr))`,
+        gridTemplateRows: `minmax(65px, 8vh) repeat(${CLASSES_PER_PAGE}, minmax(clamp(65px, 10.5vh, 180px), 1fr))`,
       }}
     >
-      <md-filled-tonal-card
+      {/* Top-left Corner Header */}
+      <div
+        className="edupage-card"
         style={{
-          borderRadius: 'var(--board-shape-medium)',
           display: 'grid',
           placeItems: 'center',
-          background: 'var(--md-sys-color-surface-container-high)',
-          '--md-filled-tonal-card-container-color': 'var(--md-sys-color-surface-container-high)',
+          background: 'var(--kiosk-header-bg)',
         }}
       >
-        <span style={{ color: 'var(--md-sys-color-on-surface-variant)', fontWeight: 600, fontSize: '0.78rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Třída</span>
-      </md-filled-tonal-card>
-
-      {periods.map((period, pIdx) => (
-        <md-outlined-card
-          key={period.period}
+        <span
           style={{
-            borderRadius: '12px',
-            borderColor: pIdx === activePeriod
-              ? 'var(--md-sys-color-primary)'
-              : 'var(--board-border-subtle)',
-            borderStyle: 'solid',
-            borderWidth: pIdx === activePeriod ? '2px' : '1px',
-            padding: '0',
+            color: 'var(--kiosk-text-primary)',
+            fontWeight: 900,
+            fontSize: 'clamp(0.95rem, 1.2vw, 1.35rem)',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
           }}
         >
-          <md-filled-tonal-card
+          Třída
+        </span>
+      </div>
+
+      {/* Period Headers */}
+      {periods.map((period, pIdx) => {
+        const isActive = pIdx === activePeriod
+        return (
+          <div
+            key={period.period}
+            className={`edupage-card ${isActive ? 'is-active-period-header' : ''}`}
             style={{
-              borderRadius: 'var(--board-shape-medium)',
-              display: 'grid',
-              placeItems: 'center',
-              padding: '0.3rem',
-              background: 'var(--md-sys-color-surface-container-high)',
-              '--md-filled-tonal-card-container-color': 'var(--md-sys-color-surface-container-high)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0.25rem 0.2rem',
+              background: isActive ? undefined : 'var(--kiosk-header-bg)',
             }}
           >
-            <div style={{ fontSize: 'clamp(1.65rem, 2vw, 2.2rem)', lineHeight: 1, fontWeight: 700, color: 'var(--md-sys-color-primary)' }}>{period.short}</div>
-            <div style={{ marginTop: '0.22rem', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)', fontSize: 'clamp(0.74rem, 0.86vw, 0.96rem)', fontWeight: 500 }}>
-              {period.start}
-              <br />
-              {period.end}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 'clamp(1.5rem, 2.1vw, 2.4rem)',
+                  lineHeight: 1,
+                  fontWeight: 900,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {period.short}
+              </span>
+              {isActive && (
+                <span
+                  className="edupage-badge badge-active"
+                  style={{ fontSize: '0.62rem', padding: '0.08rem 0.35rem' }}
+                >
+                  Probíhá
+                </span>
+              )}
             </div>
-          </md-filled-tonal-card>
-        </md-outlined-card>
-      ))}
 
+            <div
+              style={{
+                marginTop: '0.15rem',
+                textAlign: 'center',
+                color: isActive ? 'rgba(255, 255, 255, 0.9)' : 'var(--kiosk-text-secondary)',
+                fontSize: 'clamp(0.7rem, 0.82vw, 0.96rem)',
+                fontWeight: 700,
+                lineHeight: 1.15,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              <span>{period.start}</span>
+              <span style={{ marginInline: '0.15rem', opacity: 0.6 }}>–</span>
+              <span>{period.end}</span>
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Class Rows */}
       {paddedRows.map((row, rowIndex) => {
         const rowCells = periods.map((period, periodIndex) => {
           const cell = row?.cells?.[String(period.period)] ?? null
@@ -98,59 +135,51 @@ export default function TimetablePage({ rows, periods }) {
 
         return (
           <Fragment key={row?.id ?? `empty-row-${rowIndex}`}>
-            <md-outlined-card
+            {/* Class Label Column */}
+            <div
+              className="edupage-card"
               style={{
-                borderRadius: '12px',
                 display: 'grid',
                 placeItems: 'center',
-                borderColor: 'var(--board-border-subtle)',
-                borderStyle: 'solid',
-                borderWidth: '1px',
-                background: row
-                  ? 'var(--md-sys-color-surface-container-high)'
-                  : 'var(--board-surface-dim)',
-                padding: '0.45rem',
+                background: row ? 'var(--kiosk-card-bg)' : 'var(--kiosk-card-empty)',
+                padding: '0.35rem',
               }}
             >
               <span
                 style={{
-                  fontSize: 'clamp(1.7rem, 2.35vw, 3.25rem)',
-                  fontWeight: 700,
-                  letterSpacing: '-0.03em',
-                  color: row ? 'var(--md-sys-color-on-surface)' : 'var(--md-sys-color-on-surface-variant)',
+                  fontSize: 'clamp(1.8rem, 2.5vw, 3.4rem)',
+                  fontWeight: 900,
+                  letterSpacing: '-0.02em',
+                  color: row ? 'var(--kiosk-text-primary)' : 'var(--kiosk-text-muted)',
                   textAlign: 'center',
+                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {row?.name ?? '—'}
               </span>
-            </md-outlined-card>
+            </div>
 
+            {/* Lesson Grid Cells */}
             {rowCells.map(({ cell, periodIndex, consumed }) => {
               if (consumed) return null
               const span = cell?.span ?? 1
               const isActiveCol = periodIndex === activePeriod
               return (
-                <md-outlined-card
+                <div
                   key={`${row?.id ?? `empty-${rowIndex}`}-${periodIndex}`}
                   style={{
                     gridColumn: span > 1 ? `span ${span}` : undefined,
                     minWidth: 0,
-                    borderRadius: '12px',
-                    borderColor: isActiveCol && cell && cell.layout !== 'blank'
-                      ? 'var(--md-sys-color-primary)'
-                      : 'var(--board-border-subtle)',
-                    borderStyle: 'solid',
-                    borderWidth: isActiveCol && cell && cell.layout !== 'blank' ? '2px' : '1px',
-                    overflow: 'hidden',
+                    height: '100%',
                   }}
                 >
-                  <LessonCard cell={cell} />
-                </md-outlined-card>
+                  <LessonCard cell={cell} isActive={isActiveCol} />
+                </div>
               )
             })}
           </Fragment>
         )
       })}
-    </section>
+    </div>
   )
 }

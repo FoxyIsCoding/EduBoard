@@ -1,157 +1,171 @@
-function toneStyle(tone) {
-  if (tone === 'event') {
-    return {
-      borderColor: 'rgba(34, 197, 94, 0.85)',
-      background: 'rgba(22, 163, 74, 0.1)',
-      badgeBg: 'rgba(22, 163, 74, 0.22)',
-      badgeColor: 'var(--md-sys-color-badge-success)',
-      rail: '#2cd67b',
-    }
-  }
-  if (tone === 'changed') {
-    return {
-      borderColor: 'rgba(251, 191, 36, 0.88)',
-      background: 'rgba(245, 158, 11, 0.12)',
-      badgeBg: 'rgba(245, 158, 11, 0.24)',
-      badgeColor: 'var(--md-sys-color-badge-warning)',
-      rail: '#ffb020',
-    }
-  }
-  return { borderColor: 'var(--board-border-subtle)', background: 'var(--md-sys-color-surface-container-high)' }
-}
+function LessonEntry({ entry, compact = false, isCancelled = false, isChanged = false }) {
+  const rooms = (entry.metaLines ?? []).filter((l) => /^U\d|LAB|INF|Těl|Aul|Díl/i.test(l) || l.length <= 8)
+  const teachers = (entry.metaLines ?? []).filter((l) => !rooms.includes(l))
 
-function LessonEntry({ entry, compact = false }) {
   return (
-    <div style={{ minWidth: 0 }}>
-      {entry.kicker ? (
+    <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+      <div>
+        {entry.kicker && (
+          <div
+            style={{
+              color: isChanged ? 'var(--kiosk-status-changed-text)' : 'var(--kiosk-brand-blue)',
+              fontWeight: 800,
+              fontSize: compact ? '0.62rem' : '0.72rem',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {entry.kicker}
+          </div>
+        )}
+
         <div
           style={{
-            color: 'var(--md-sys-color-primary)',
-            fontWeight: 700,
-            fontSize: compact ? '0.62rem' : '0.74rem',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            marginTop: compact ? '0.04rem' : '0.12rem',
+            fontWeight: 900,
+            fontSize: compact ? 'clamp(0.85rem, 1vw, 1.15rem)' : 'clamp(1.05rem, 1.25vw, 1.55rem)',
+            lineHeight: 1.15,
+            color: isCancelled
+              ? 'var(--kiosk-status-cancelled-text)'
+              : isChanged
+                ? 'var(--kiosk-status-changed-text)'
+                : 'var(--kiosk-text-primary)',
+            textDecoration: isCancelled ? 'line-through' : 'none',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
           }}
         >
-          {entry.kicker}
+          {entry.title}
         </div>
-      ) : null}
+      </div>
+
       <div
         style={{
-          marginTop: compact ? '0.1rem' : '0.2rem',
-          fontWeight: 800,
-          fontSize: compact ? 'clamp(0.82rem, 0.9vw, 1.06rem)' : 'clamp(0.95rem, 1.05vw, 1.42rem)',
-          lineHeight: compact ? 1.08 : 1.15,
+          marginTop: '0.2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.3rem',
           overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
         }}
       >
-        {entry.title}
-      </div>
-      {(entry.metaLines ?? []).slice(0, compact ? 1 : 2).map((line, index) => (
-        <div
-          key={`${line}-${index}`}
+        <span
           style={{
-            marginTop: compact ? '0.06rem' : '0.12rem',
-            color: 'var(--md-sys-color-on-surface-variant)',
-            fontSize: compact ? 'clamp(0.64rem, 0.68vw, 0.86rem)' : 'clamp(0.72rem, 0.76vw, 1rem)',
+            color: 'var(--kiosk-text-secondary)',
+            fontSize: compact ? 'clamp(0.68rem, 0.76vw, 0.9rem)' : 'clamp(0.78rem, 0.88vw, 1.05rem)',
+            fontWeight: 700,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            flex: 1,
           }}
         >
-          {line}
-        </div>
-      ))}
+          {teachers.join(', ')}
+        </span>
+
+        {rooms.length > 0 && (
+          <span
+            className="edupage-badge badge-room"
+            style={{
+              fontSize: compact ? '0.64rem' : '0.76rem',
+              padding: '0.12rem 0.4rem',
+              fontWeight: 900,
+              flexShrink: 0,
+            }}
+          >
+            {rooms.join(', ')}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
 
-export default function LessonCard({ cell }) {
+export default function LessonCard({ cell, isActive = false }) {
   if (!cell || cell.layout === 'blank') {
     return (
       <div
+        className="edupage-card"
         style={{
           height: '100%',
-          borderRadius: 'var(--board-shape-medium)',
-          background: 'var(--md-sys-color-surface-container)',
-          border: '1px solid var(--board-border-subtle)',
+          background: 'var(--kiosk-card-empty)',
+          borderStyle: 'dashed',
         }}
       />
     )
   }
 
-  const cardStyle = toneStyle(cell.tone)
-  const showSubstitutionTag = cell.tone === 'event' || cell.tone === 'changed'
-  const compactSplit = cell.layout === 'split'
+  const isChanged = cell.tone === 'changed'
+  const isCancelled = cell.tone === 'empty'
+  const isEvent = cell.tone === 'event'
+  const isSplit = cell.layout === 'split'
+
+  let modifierClass = ''
+  if (isCancelled) modifierClass = 'is-cancelled'
+  else if (isChanged) modifierClass = 'is-changed'
+  else if (isEvent) modifierClass = 'is-event'
+  else if (isActive) modifierClass = 'is-active-period-cell'
 
   return (
-    <md-outlined-card
+    <article
+      className={`edupage-card ${modifierClass}`}
       style={{
-        position: 'relative',
         height: '100%',
-        borderRadius: 'var(--board-shape-medium)',
-        borderColor: cardStyle.borderColor,
-        background: cardStyle.background,
-        overflow: 'hidden',
+        padding: isSplit ? '0.35rem 0.5rem' : '0.55rem 0.75rem',
+        justifyContent: 'space-between',
       }}
     >
-      {showSubstitutionTag ? (
-        <div
-          style={{
-            height: '6px',
-            width: '100%',
-            background: cardStyle.rail,
-          }}
-        />
-      ) : null}
-      <div style={{ padding: '0.58rem 0.8rem 0.68rem' }}>
-        {showSubstitutionTag ? (
+      {/* Top Status Header if cancelled or changed */}
+      {(isChanged || isCancelled || isEvent) && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.15rem' }}>
           <span
-            style={{
-              display: 'inline-block',
-              marginBottom: compactSplit ? '0.18rem' : '0.38rem',
-              padding: compactSplit ? '0.05rem 0.36rem' : '0.08rem 0.46rem',
-              borderRadius: '999px',
-              background: cardStyle.badgeBg,
-              color: cardStyle.badgeColor,
-              fontSize: compactSplit ? '0.56rem' : '0.66rem',
-              lineHeight: 1.35,
-              letterSpacing: '0.08em',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-            }}
+            className={`edupage-badge ${
+              isCancelled
+                ? 'badge-cancelled'
+                : isChanged
+                  ? 'badge-changed'
+                  : 'badge-event'
+            }`}
+            style={{ fontSize: '0.62rem', padding: '0.1rem 0.38rem' }}
           >
-            {cell.tone === 'changed' ? 'Změna' : 'Akce'}
+            {isCancelled ? 'Odpadá' : isChanged ? 'Změna' : 'Akce'}
           </span>
-        ) : null}
-        <div
-          style={{
-            height: '100%',
-            display: 'grid',
-            gridTemplateRows: `repeat(${cell.entries.length}, minmax(0, 1fr))`,
-            gap: compactSplit ? '0.14rem' : '0.34rem',
-          }}
-        >
-          {cell.entries.map((entry, index) => (
+        </div>
+      )}
+
+      {isSplit ? (
+        <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '0.35rem', height: '100%' }}>
+          {cell.entries.map((entry, idx) => (
             <div
-              key={`${entry.title}-${index}`}
+              key={idx}
               style={{
-                minHeight: 0,
-                overflow: 'hidden',
-                borderTop: index > 0 ? '1px solid var(--board-border-subtle)' : 'none',
-                paddingTop: index > 0 ? (compactSplit ? '0.16rem' : '0.35rem') : 0,
+                borderTop: idx > 0 ? '1px dashed var(--kiosk-grid-border)' : 'none',
+                paddingTop: idx > 0 ? '0.25rem' : '0',
               }}
             >
-              <LessonEntry entry={entry} compact={compactSplit} />
+              <LessonEntry
+                entry={entry}
+                compact
+                isCancelled={isCancelled}
+                isChanged={isChanged}
+              />
             </div>
           ))}
         </div>
-      </div>
-    </md-outlined-card>
+      ) : (
+        cell.entries.map((entry, idx) => (
+          <LessonEntry
+            key={idx}
+            entry={entry}
+            isCancelled={isCancelled}
+            isChanged={isChanged}
+          />
+        ))
+      )}
+    </article>
   )
 }
