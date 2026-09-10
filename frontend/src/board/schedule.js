@@ -56,14 +56,11 @@ export const BELL_SCHEDULE = [
   // 6. hodina
   { start: '12:45', end: '13:30', kind: 'in_class' },
   { start: '13:30', end: '14:25', kind: 'break' }, // polední přestávka
-  // 7. hodina
+  // 8. hodina (7. se v tomto rozvrhu neučí)
   { start: '14:25', end: '15:10', kind: 'in_class' },
   { start: '15:10', end: '15:15', kind: 'break' },
-  // 8. hodina
+  // 9. hodina — poslední možná
   { start: '15:15', end: '16:00', kind: 'in_class' },
-  { start: '16:00', end: '16:05', kind: 'break' },
-  // 9. hodina
-  { start: '16:05', end: '16:50', kind: 'in_class' },
 ]
 
 // Returns:
