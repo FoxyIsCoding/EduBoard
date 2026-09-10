@@ -3,6 +3,7 @@ import { useTimeSync, getNow } from '../timeSync'
 import { useSettings } from '../settings'
 import { formatClock } from '../formatters'
 import { isLocalMode } from '../localMode'
+import { findActiveSegment } from '../schedule'
 
 function fmtOffset(ms) {
   if (ms == null || !Number.isFinite(ms)) return '–'
@@ -19,7 +20,7 @@ function fmtAge(ms) {
   return `${Math.floor(m / 60)}h ${m % 60}m`
 }
 
-export default function DebugHud({ showOverlay, overlayReason, fetchedAt, remoteState, isConnected }) {
+export default function DebugHud({ showOverlay, overlayReason, fetchedAt, remoteState, isConnected, scheduleDay }) {
   const [now, setNow] = useState(() => getNow())
   const { offsetMs, synced } = useTimeSync()
   const settings = useSettings()
@@ -33,6 +34,9 @@ export default function DebugHud({ showOverlay, overlayReason, fetchedAt, remote
   const ageMs = fetchedAt ? now.getTime() - fetchedAt : null
   const manualOffset = Number(settings.manualClockOffsetMinutes) || 0
   const mode = remoteState?.mode ?? 'normal'
+
+  const nowStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const active = scheduleDay ? findActiveSegment(scheduleDay.segments, nowStr) : null
 
   const chip = (label, value, state = 'ok') => (
     <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'baseline' }}>
@@ -49,6 +53,13 @@ export default function DebugHud({ showOverlay, overlayReason, fetchedAt, remote
       </span>
     </div>
   )
+
+  const SEGMENT_STYLE = {
+    morning: { color: '#34D399', label: 'nástup' },
+    break: { color: '#34D399', label: 'přestávka' },
+    in_class: { color: '#F87171', label: 'výuka' },
+    after: { color: '#64748B', label: 'černá' },
+  }
 
   return (
     <div
@@ -88,6 +99,57 @@ export default function DebugHud({ showOverlay, overlayReason, fetchedAt, remote
         {chip('seconds', settings.clockWithSeconds ? 'on' : 'off')}
         {chip('week', settings.hideWeekBadge ? 'hidden' : 'shown')}
         {chip('demo', isLocalMode ? 'local' : 'live', isLocalMode ? 'warn' : 'ok')}
+      </div>
+      <div
+        style={{
+          gridColumn: '1 / -1',
+          marginTop: '0.35rem',
+          borderTop: '1px dashed rgba(148, 163, 184, 0.35)',
+          paddingTop: '0.4rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.25rem 0.3rem',
+          alignItems: 'center',
+          maxWidth: '640px',
+        }}
+      >
+        {!scheduleDay && <span style={{ color: '#94A3B8' }}>rozvrh: –</span>}
+        {scheduleDay && (
+          <>
+            <span style={{ color: '#67E8F9', fontWeight: 700, marginRight: '0.2rem' }}>
+              {scheduleDay.valid ? '' : '⚠ '}
+              {new Date(`${scheduleDay.dayKey}T12:00:00`).toLocaleDateString('cs-CZ', { weekday: 'short', day: '2-digit' })}
+            </span>
+            {scheduleDay.segments === null && (
+              <span style={{ color: '#F87171' }}>rozvrh bez časů</span>
+            )}
+            {scheduleDay.segments?.length === 0 && (
+              <span style={{ color: '#64748B' }}>celý den černá (bez rozvrhu)</span>
+            )}
+            {(scheduleDay.segments?.length ?? 0) > 0 &&
+              scheduleDay.segments.map((s, i) => {
+                const isActive = active === s
+                const p = SEGMENT_STYLE[s.kind]
+                return (
+                  <span
+                    key={`${s.start}-${i}`}
+                    style={{
+                      padding: '1px 5px',
+                      borderRadius: '4px',
+                      color: p.color,
+                      fontWeight: isActive ? 900 : 700,
+                      background: isActive
+                        ? `color-mix(in srgb, ${p.color} 22%, transparent)`
+                        : 'transparent',
+                      outline: isActive ? `1px solid ${p.color}` : 'none',
+                    }}
+                  >
+                    {s.start}–{s.end} {p.label}
+                  </span>
+                )
+              })}
+          </>
+        )}
       </div>
     </div>
   )

@@ -41,7 +41,7 @@ export default function App() {
 
   const { remoteState, castStream, isConnected } = useRemoteControl()
   const { loading, stale, fetchedAt, hasBoardData, pages, periods, timetable, timetableRows } = useBoardData()
-  const { showOverlay, overlayReason } = useScreenState(timetable, loading, hasBoardData, fetchedAt)
+  const { showOverlay, overlayReason, scheduleDay } = useScreenState(timetable, loading, hasBoardData, fetchedAt)
   const settings = useSettings()
   const contentZoom = Math.min(1.5, Math.max(0.5, (Number(settings.contentScale) || 100) / 100))
 
@@ -241,36 +241,41 @@ export default function App() {
           fetchedAt={fetchedAt}
           remoteState={remoteState}
           isConnected={isConnected}
+          scheduleDay={scheduleDay}
         />
       )}
 
       <div className={`board-overlay${effectiveShowOverlay ? '' : ' hidden'}`}>
-        {effectiveShowOverlay && overlayReason === 'in_class' && (
+        {effectiveShowOverlay && (
           <>
-            <div className="board-ascii-indicator top-right" aria-label="System active">
-              [ <span className="board-ascii-blink">*</span> ]
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div className="board-overlay-indicator" style={{ margin: '0 auto 1.4rem' }} />
-              <div style={{ fontSize: 'clamp(1.5rem, 2.2vw, 2.4rem)', letterSpacing: '0.04em', fontWeight: 900, color: '#FFFFFF' }}>
-                Výuka probíhá
-              </div>
-              <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.45rem)', marginTop: '0.5rem', color: 'rgba(255, 255, 255, 0.72)' }}>
-                Obrazovka se aktivuje o přestávce
-              </div>
-              <div
-                style={{
-                  fontSize: 'clamp(2.6rem, 4vw, 4.8rem)',
-                  fontWeight: 900,
-                  marginTop: '1.5rem',
-                  color: '#FFFFFF',
-                  letterSpacing: '0.02em',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {clockLabel}
-              </div>
-            </div>
+            <div className="board-overlay-indicator" aria-hidden="true" />
+            {overlayReason === 'in_class' && (
+              <>
+                <div className="board-ascii-indicator top-right" aria-label="System active">
+                  [ <span className="board-ascii-blink">*</span> ]
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 'clamp(1.5rem, 2.2vw, 2.4rem)', letterSpacing: '0.04em', fontWeight: 900, color: '#FFFFFF' }}>
+                    Výuka probíhá
+                  </div>
+                  <div style={{ fontSize: 'clamp(1rem, 1.3vw, 1.45rem)', marginTop: '0.5rem', color: 'rgba(255, 255, 255, 0.72)' }}>
+                    Obrazovka se aktivuje o přestávce
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 'clamp(2.6rem, 4vw, 4.8rem)',
+                      fontWeight: 900,
+                      marginTop: '1.5rem',
+                      color: '#FFFFFF',
+                      letterSpacing: '0.02em',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {clockLabel}
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

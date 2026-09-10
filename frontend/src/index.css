@@ -267,16 +267,22 @@ body.kb-drift .board-overlay {
 }
 
 .board-overlay-indicator {
-  width: 20px;
-  height: 20px;
+  position: absolute;
+  left: 50%;
+  bottom: 16vh;
+  width: 13px;
+  height: 13px;
+  margin-left: -7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  animation: overlay-breath 3s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 12px 2px rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+  animation: overlay-breath 3.5s ease-in-out infinite;
 }
 
 @keyframes overlay-breath {
-  0%, 100% { opacity: 0.2; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.1); }
+  0%, 100% { opacity: 0.22; transform: translate3d(0, 0, 0) scale(1); }
+  50% { opacity: 0.85; transform: translate3d(0, -3px, 0) scale(1.1); }
 }
 
 .board-ascii-indicator {
