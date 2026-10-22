@@ -124,7 +124,7 @@ export default function DebugHud({ showOverlay, overlayReason, fetchedAt, remote
               <span style={{ color: '#F87171' }}>rozvrh bez časů</span>
             )}
             {scheduleDay.segments?.length === 0 && (
-              <span style={{ color: '#64748B' }}>celý den černá (bez rozvrhu)</span>
+              <span style={{ color: '#64748B' }}>celý den černá (víkend)</span>
             )}
             {(scheduleDay.segments?.length ?? 0) > 0 &&
               scheduleDay.segments.map((s, i) => {

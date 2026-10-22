@@ -42,7 +42,7 @@ export default function App() {
 
   const { remoteState, castStream, isConnected } = useRemoteControl()
   const { loading, stale, fetchedAt, hasBoardData, pages, periods, timetable, timetableRows, events, substitutions } = useBoardData()
-  const { showOverlay, overlayReason, scheduleDay } = useScreenState(timetable, loading, hasBoardData, fetchedAt)
+  const { showOverlay, overlayReason, scheduleDay } = useScreenState()
   const settings = useSettings()
   const contentZoom = Math.min(1.5, Math.max(0.5, (Number(settings.contentScale) || 100) / 100))
 
