@@ -246,6 +246,8 @@ class EduBoard:
         self.headers: Dict[str, str] = {}
         self.last_login_time: Optional[float] = None
         self._cache: Dict[str, Dict[str, Any]] = {}
+        self._login_failures = 0
+        self._next_login_at = 0.0
 
     def _is_cache_valid(self, key: str, ttl_seconds: int) -> bool:
         if key in self._cache:
@@ -260,6 +262,25 @@ class EduBoard:
     def _get_cache(self, key: str) -> Optional[Any]:
         return self._cache.get(key, {}).get("data")
 
+    # EduPage rate-limits (and eventually abuse-blocks) repeated login attempts.
+    # When a login fails, wait before trying again so a transient block can clear
+    # instead of being kept alive by a busy retry loop.
+    LOGIN_BACKOFF_BASE_SECONDS = 120
+    LOGIN_BACKOFF_MAX_SECONDS = 1800
+
+    def _register_login_failure(self):
+        self._login_failures += 1
+        delay = min(
+            self.LOGIN_BACKOFF_BASE_SECONDS * (2 ** (self._login_failures - 1)),
+            self.LOGIN_BACKOFF_MAX_SECONDS,
+        )
+        self._next_login_at = time.time() + delay
+        logger.warning(
+            "EduPage login failed (%d in a row); backing off %ds before the next attempt",
+            self._login_failures,
+            delay,
+        )
+
     def login(self) -> bool:
         """Authenticate with EduPage and obtain session cookies."""
         if LOCAL_MODE:
@@ -268,6 +289,10 @@ class EduBoard:
 
         if not self.SCHOOL_SUBDOMAIN or not self.PASSWORD:
             logger.warning("SCHOOL_SUBDOMAIN or PASSWORD not set in .env")
+            return False
+
+        # Respect the backoff window after a failed attempt (no network call).
+        if time.time() < self._next_login_at:
             return False
 
         base_url = f"https://{self.SCHOOL_SUBDOMAIN}.edupage.org"
@@ -296,13 +321,17 @@ class EduBoard:
                 if cookie:
                     self.cookies["nb_pwd_hash"] = cookie
                     self.last_login_time = time.time()
+                    self._login_failures = 0
+                    self._next_login_at = 0.0
                     logger.info("EduPage authentication successful.")
                     return True
                 else:
                     logger.error(f"EduPage login failed: {res_data}")
+                    self._register_login_failure()
                     return False
         except Exception as exc:
             logger.error(f"Error connecting to EduPage during login: {exc}")
+            self._register_login_failure()
             return False
 
     def _post_edupage(self, url: str, payload: dict, retried: bool = False) -> Optional[dict]:
